@@ -52,28 +52,7 @@ transformed parameters {
     vector[C] XB[R, S];
     vector[V] beta[R];
 
-    { // these curly braces are required so that the variables below have local scope
-        int variable_i = 1;
-        int raw_variable_i = 1;
-        for (i in 1:A)
-        {
-            if (V_attribute[i] > 1)
-            {
-                int v = V_attribute[i];
-                for (j in 2:v)
-                    theta[variable_i + j - 1] = theta_raw[raw_variable_i + j - 2];
-                theta[variable_i] = -sum(theta_raw[raw_variable_i:(raw_variable_i + v - 2)]);
-                variable_i = variable_i + v;
-                raw_variable_i = raw_variable_i + v - 1;
-            }
-            else
-            {
-                theta[variable_i] = theta_raw[raw_variable_i];
-                variable_i = variable_i + 1;
-                raw_variable_i = raw_variable_i + 1;
-            }
-        }
-    }
+    theta = completeTheta(theta_raw, A, V, V_attribute);
 
     sigma = 2.5 * tan(sigma_unif);
     L_sigma = diag_pre_multiply(sigma, L_omega);

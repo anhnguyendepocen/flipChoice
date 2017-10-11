@@ -40,9 +40,39 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8, 
 
     result <- list()
     result$respondent.parameters <- computeRespPars(stan.fit, dat)
-    result$stan.fit <- stan.fit
+    result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
     class(result) <- "FitChoice"
     result
+}
+
+#' @title ReduceStanFitSize
+#' @description This function reduces the size of the stan.fit object to reduce the time
+#' it takes to return it from the R server.
+#' @param stan.fit A stanfit object.
+#' @return A stanfit object with a reduced size.
+#' @export
+ReduceStanFitSize <- function(stan.fit)
+{
+    # Replace stanmodel with a dummy as stanmodel makes the output many times larger,
+    # and is not required for diagnostic plots.
+    dummy.stanmodel <- ""
+    class(dummy.stanmodel) <- "stanmodel"
+    stan.fit@stanmodel <- dummy.stanmodel
+
+    # Set samples to zero to save space
+    nms <- names(stan.fit@sim$samples[[1]])
+    re <- paste(c("XB", "beta", "standard_normal", "theta_raw", "sigma_unif", "L_omega", "L_sigma",
+                  "posterior_prob", "class_weights"), collapse = "|")
+    nms <- nms[grepl(re, nms)]
+    for (i in 1:stan.fit@sim$chains)
+    {
+        for (nm in nms)
+            stan.fit@sim$samples[[i]][[nm]] <- 0
+        attr(stan.fit@sim$samples[[i]], "inits") <- NULL
+        attr(stan.fit@sim$samples[[i]], "mean_pars") <- NULL
+    }
+    stan.fit@inits <- list()
+    stan.fit
 }
 
 computeRespPars <- function(stan.fit, dat)

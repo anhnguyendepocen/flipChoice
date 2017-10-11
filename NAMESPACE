@@ -3,6 +3,7 @@
 S3method(print,FitChoice)
 export(FitChoiceModel)
 export(LeftOutQuestions)
+export(ReduceStanFitSize)
 export(RespondentParameters)
 importFrom(flipData,CalibrateWeight)
 importFrom(flipData,CleanSubset)
