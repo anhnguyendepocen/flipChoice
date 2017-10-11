@@ -19,6 +19,9 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8, 
                      Y = dat$Y.in,
                      X = dat$X.in)
 
+    if (n.classes > 1)
+        stan.dat$P <- n.classes
+
     if (.Platform$OS.type == "unix")
     {
         # Loads a precompiled stan model called mod from sysdata.rda to avoid recompiling.
@@ -32,14 +35,14 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8, 
     }
     else # windows
     {
-        stan.file <- "exec/choicemodel.stan"
+        stan.file <- if (n.classes > 1) "exec/mixtureofnormals.stan" else "exec/choicemodel.stan"
         stan.fit <- stan(file = stan.file, data = stan.dat, iter = n.iterations,
                          chains = n.chains, seed = seed,
                          control = list(max_treedepth = max.tree.depth, adapt_delta = adapt.delta))
     }
 
     result <- list()
-    result$respondent.parameters <- computeRespPars(stan.fit, dat)
+    result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset)
     result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
     class(result) <- "FitChoice"
     result
@@ -75,15 +78,35 @@ ReduceStanFitSize <- function(stan.fit)
     stan.fit
 }
 
-computeRespPars <- function(stan.fit, dat)
+#' @title ComputeRespPars
+#' @description Compute respondent parameters from a stanfit object.
+#' @param stan.fit A stanfit object.
+#' @param var.names Variable names
+#' @param subset Subset vector
+#' @return A matrix of respondent parameters
+#' @export
+ComputeRespPars <- function(stan.fit, var.names, subset)
 {
-    subset <- dat$subset
-
     beta <- extract(stan.fit, pars=c("beta"))$beta
-    resp.pars.subset <- colMeans(beta, dims = 1)
+    n.respondents <- dim(beta)[2]
+    n.variables <- dim(beta)[4]
+    resp.pars.subset <- matrix(NA, n.respondents, n.variables)
+    if (length(dim(beta)) == 4) # n.classes > 1
+    {
+        pp <- exp(extract(stan.fit, pars=c("posterior_prob"))$posterior_prob)
+        for (i in 1:n.respondents)
+            pp[, i, ] <- pp[, i, ] / rowSums(pp[, i, ])
+
+        for (j in 1:n.variables)
+            for (i in 1:n.respondents)
+                resp.pars.subset[i, j] <- mean(beta[, i, , j] * pp[, i, ])
+            resp.pars.subset
+    }
+    else
+        resp.pars.subset <- colMeans(beta, dims = 1)
 
     result <- matrix(NA, nrow = length(subset), ncol = ncol(resp.pars.subset))
     result[subset, ] <- resp.pars.subset
-    colnames(result) <- dat$var.names
+    colnames(result) <- var.names
     result
 }

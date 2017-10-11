@@ -27,9 +27,10 @@ functions {
 }
 
 data {
-    int<lower=2> C; // Number of alternatives (choices) in each scenario
+    int<lower=2> C; // Number of alternatives (choices) in each question
     int<lower=1> R; // Number of respondents
-    int<lower=1> S; // Number of scenarios per respondent
+    int<lower=1> S; // Number of questions per respondent
+    int<lower=1> P; // Number of classes
     int<lower=1> A; // Number of attributes
     int<lower=1> V; // Number of variables
     int<lower=1> V_raw; // Number of raw variables
@@ -39,44 +40,53 @@ data {
 }
 
 parameters {
-    vector[V_raw] theta_raw;
-    cholesky_factor_corr[V] L_omega;
-    vector<lower=0, upper=pi()/2>[V] sigma_unif;
-    vector[V] standard_normal[R];
+    vector[V_raw] theta_raw[P];
+    cholesky_factor_corr[V] L_omega[P];
+    vector<lower=0, upper=pi()/2>[V] sigma_unif[P];
+    vector[V] standard_normal[R, P];
+    simplex[P] class_weights;
 }
 
 transformed parameters {
-    vector[V] theta;
-    vector<lower=0>[V] sigma;
-    matrix[V, V] L_sigma;
-    vector[C] XB[R, S];
-    vector[V] beta[R];
+    vector<lower=0>[V] sigma[P];
+    matrix[V, V] L_sigma[P];
+    vector[V] theta[P]; // sums to zero
+    vector[V] beta[R, P];
+    vector[P] posterior_prob[R];
 
-    theta = completeTheta(theta_raw, A, V, V_attribute);
+    for (p in 1:P)
+    {
+        sigma[p] = 2.5 * tan(sigma_unif[p]);
+        L_sigma[p] = diag_pre_multiply(sigma[p], L_omega[p]);
 
-    sigma = 2.5 * tan(sigma_unif);
-    L_sigma = diag_pre_multiply(sigma, L_omega);
+        theta[p] = completeTheta(theta_raw[p], A, V, V_attribute);
+
+        for (r in 1:R)
+            beta[r, p] = theta[p] + L_sigma[p] * standard_normal[r, p];
+    }
 
     for (r in 1:R)
     {
-        beta[r] = theta + L_sigma * standard_normal[r];
-        for (s in 1:S)
-            XB[r, s] = X[r, s] * beta[r];
+        for (p in 1:P)
+        {
+            real prob = log(class_weights[p]);
+            for (s in 1:S)
+                prob = prob + categorical_logit_lpmf(Y[r, s] | X[r, s] * beta[r, p]);
+            posterior_prob[r, p] = prob;
+        }
     }
 }
 
 model {
-    //priors
-    theta_raw ~ normal(0, 10);
-    L_omega ~ lkj_corr_cholesky(4);
-
-    for (r in 1:R)
-        standard_normal[r] ~ normal(0, 1);
+    for (p in 1:P)
+    {
+        theta_raw[p] ~ normal(0, 10);
+        L_omega[p] ~ lkj_corr_cholesky(4);
+        for (r in 1:R)
+            standard_normal[r, p] ~ normal(0, 1);
+    }
 
     //likelihood
-    for (r in 1:R) {
-        for (s in 1:S) {
-            Y[r, s] ~ categorical_logit(XB[r, s]);
-        }
-    }
+    for (r in 1:R)
+        target += log_sum_exp(posterior_prob[r]);
 }
