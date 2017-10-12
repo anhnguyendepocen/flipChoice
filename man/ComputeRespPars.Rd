@@ -4,7 +4,7 @@
 \alias{ComputeRespPars}
 \title{ComputeRespPars}
 \usage{
-ComputeRespPars(stan.fit, var.names, subset)
+ComputeRespPars(stan.fit, var.names, subset, variable.scales = NULL)
 }
 \arguments{
 \item{stan.fit}{A stanfit object.}

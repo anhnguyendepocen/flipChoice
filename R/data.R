@@ -43,7 +43,7 @@ processExperimentData <- function(experiment.data, subset, weights, n.questions.
         {
             X.in[r, , , ] <- X.list$X[r, !left.out[, r], , ]
             Y.in[r, ] <- Y[r, !left.out[, r]]
-            X.out[r, , , ] <- Xlist$X[r, left.out[, r], , ]
+            X.out[r, , , ] <- X.list$X[r, left.out[, r], , ]
             Y.out[r, ] <- Y[r, left.out[, r]]
         }
     }
