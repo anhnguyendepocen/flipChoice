@@ -42,7 +42,8 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8, 
     }
 
     result <- list()
-    result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset)
+    result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset,
+                                                    dat$variable.scales)
     result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
     class(result) <- "FitChoice"
     result
@@ -85,14 +86,14 @@ ReduceStanFitSize <- function(stan.fit)
 #' @param subset Subset vector
 #' @return A matrix of respondent parameters
 #' @export
-ComputeRespPars <- function(stan.fit, var.names, subset)
+ComputeRespPars <- function(stan.fit, var.names, subset, variable.scales = NULL)
 {
     beta <- extract(stan.fit, pars=c("beta"))$beta
-    n.respondents <- dim(beta)[2]
-    n.variables <- dim(beta)[4]
-    resp.pars.subset <- matrix(NA, n.respondents, n.variables)
     if (length(dim(beta)) == 4) # n.classes > 1
     {
+        n.respondents <- dim(beta)[2]
+        n.variables <- dim(beta)[4]
+        resp.pars.subset <- matrix(NA, n.respondents, n.variables)
         pp <- exp(extract(stan.fit, pars=c("posterior_prob"))$posterior_prob)
         for (i in 1:n.respondents)
             pp[, i, ] <- pp[, i, ] / rowSums(pp[, i, ])
@@ -104,6 +105,9 @@ ComputeRespPars <- function(stan.fit, var.names, subset)
     }
     else
         resp.pars.subset <- colMeans(beta, dims = 1)
+
+    if (!is.null(variable.scales))
+        resp.pars.subset <- t(t(resp.pars.subset) * variable.scales)
 
     result <- matrix(NA, nrow = length(subset), ncol = ncol(resp.pars.subset))
     result[subset, ] <- resp.pars.subset

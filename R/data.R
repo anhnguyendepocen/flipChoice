@@ -31,7 +31,7 @@ processExperimentData <- function(experiment.data, subset, weights, n.questions.
     n.variables <- sum(n.attribute.variables)
     n.raw.variables <- sum(sapply(n.attribute.variables - 1, function(x) max(x, 1)))
     var.names <- variableNames(attribute.data, n.attributes, n.questions, n.choices, n.variables)
-    X <- createDesignMatrix(attribute.data, n.attributes, n.questions, n.choices, n.variables)
+    X.list <- createDesignMatrix(attribute.data, n.attributes, n.questions, n.choices, n.variables)
     if (n.questions.left.out > 0)
     {
         left.out <- LeftOutQuestions(n.respondents, n.questions, n.questions.left.out, seed)
@@ -41,15 +41,15 @@ processExperimentData <- function(experiment.data, subset, weights, n.questions.
         Y.out <- matrix(NA, nrow = n.respondents, ncol = n.questions.left.out)
         for (r in 1:n.respondents)
         {
-            X.in[r, , , ] <- X[r, !left.out[, r], , ]
+            X.in[r, , , ] <- X.list$X[r, !left.out[, r], , ]
             Y.in[r, ] <- Y[r, !left.out[, r]]
-            X.out[r, , , ] <- X[r, left.out[, r], , ]
+            X.out[r, , , ] <- Xlist$X[r, left.out[, r], , ]
             Y.out[r, ] <- Y[r, left.out[, r]]
         }
     }
     else
     {
-        X.in <- X
+        X.in <- X.list$X
         Y.in <- Y
         X.out <- NULL
         Y.out <- NULL
@@ -70,7 +70,8 @@ processExperimentData <- function(experiment.data, subset, weights, n.questions.
                    X.out = X.out,
                    Y.out = Y.out,
                    subset = subset,
-                   weights = weights)
+                   weights = weights,
+                   variable.scales = X.list$variable.scales)
     result
 }
 
@@ -81,16 +82,20 @@ completeLevels <- function(attribute.data)
     unique.names <- unique(nms)
     for (nm in unique.names)
     {
-        complete.levels <- unique(unlist(lapply(attribute.data[nms == nm], levels)))
-        ind <- (1:length(attribute.data))[nms == nm]
-        for (i in ind)
+        att <- attribute.data[nms == nm]
+        if (is.factor(att[[1]]))
         {
-            att <- attribute.data[[i]]
-            lvls <- levels(att)
-            map <- rep(NA, length(lvls))
-            for (j in 1:length(lvls))
-                map[j] <- (1:length(complete.levels))[lvls[j] == complete.levels]
-            attribute.data[[i]] <- factor(complete.levels[map[att]], levels = complete.levels)
+            complete.levels <- unique(unlist(lapply(att, levels)))
+            ind <- (1:length(attribute.data))[nms == nm]
+            for (i in ind)
+            {
+                att.q <- attribute.data[[i]]
+                lvls <- levels(att.q)
+                map <- rep(NA, length(lvls))
+                for (j in 1:length(lvls))
+                    map[j] <- (1:length(complete.levels))[lvls[j] == complete.levels]
+                attribute.data[[i]] <- factor(complete.levels[map[att.q]], levels = complete.levels)
+            }
         }
     }
     attribute.data
@@ -100,6 +105,7 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions, n.choi
 {
     n.qc <- n.questions * n.choices
     n.respondents <- nrow(attribute.data)
+    variable.scales <- rep(1, n.variables)
 
     c <- 1
     X <- array(dim = c(n.respondents, n.questions, n.choices, n.variables))
@@ -119,7 +125,11 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions, n.choi
                         X[r, q, j, numeric.v[r] - 1 + c] <- 1
                 }
                 else
-                    X[, q, j, c] <- v
+                {
+                    scaled.v <- scale(v)
+                    X[, q, j, c] <- scaled.v
+                    variable.scales[c] <- attr(scaled.v, "scaled:scale")
+                }
             }
         }
         if (is.factor(v))
@@ -127,7 +137,7 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions, n.choi
         else
             c <- c + 1
     }
-    X
+    list(X = X, variable.scales = variable.scales)
 }
 
 nAttributeVariables <- function(attribute.data, n.attributes, n.questions, n.choices)
@@ -157,7 +167,7 @@ variableNames <- function(attribute.data, n.attributes, n.questions, n.choices, 
         {
             lvls <- levels(v)
             for (j in 1:length(lvls))
-                result[ind + j - 1] <- paste(nms[col], lvls[j])
+                result[ind + j - 1] <- paste0(nms[col], ": ", lvls[j])
             ind <- ind + length(lvls)
         }
         else
