@@ -27,8 +27,6 @@ FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL, weight
     result$subset <- subset
     result$weights <- weights
     result$output <- "Probabilities"
-    resp.pars <- result$respondent.parameters[dat$subset, ]
-    result$respondent.probabilities <- exp(resp.pars) / rowSums(exp(resp.pars))
     result$is.choice.model <- TRUE
     result
 }
@@ -89,7 +87,7 @@ RespondentParameters <- function(object)
 #' @description Print a FitChoice object
 #' @param x FitMaxDiff object.
 #' @param ... further arguments passed to or from other methods.
-#' @importFrom flipFormat HistTable MaxDiffTableClasses FormatAsPercent FormatAsReal
+#' @importFrom flipFormat HistTable FormatAsPercent FormatAsReal
 #' @export
 print.FitChoice <- function(x, ...)
 {
@@ -114,12 +112,21 @@ print.FitChoice <- function(x, ...)
     else
         paste0("Prediction accuracy (in-sample): ", FormatAsPercent(x$in.sample.accuracy, 3))
 
-    probs <- x$respondent.probabilities
-    stats.table <- matrix(NA, nrow = ncol(probs), ncol = 1)
-    for (i in 1:ncol(probs))
-        stats.table[i, 1] <- FormatAsReal(mean(probs[, i], na.rm = TRUE) * 100, decimals = 1)
-    colnames(stats.table) <- "Mean Probability (%)"
+    resp.pars <- x$respondent.parameters
+    bin.min <- floor(min(resp.pars))
+    bin.max <- ceiling(max(resp.pars))
 
-    HistTable(100 * probs, title = title, subtitle = subtitle, footer = footer,
-              bin.size = 5, bin.min = 0, bin.max = 100, hist.width = 100, hist.height = 20, stats.table)
+    n.variables <- ncol(resp.pars)
+    stats.table <- matrix(NA, nrow = n.variables, ncol = 2)
+    for (i in 1:n.variables)
+    {
+        stats.table[i, 1] <- FormatAsReal(mean(resp.pars[, i], na.rm = TRUE), decimals = 1)
+        stats.table[i, 2] <- FormatAsReal(sd(resp.pars[, i], na.rm = TRUE), decimals = 1)
+    }
+    colnames(stats.table) <- c("Mean", "Standard Deviation")
+
+    HistTable(resp.pars, title = title, subtitle = subtitle, footer = footer,
+              bin.size = 0.2, bin.min = bin.min, bin.max = bin.max, hist.width = 300,
+              hist.height = 20, color.negative = TRUE, show.tooltips = FALSE,
+              histogram.column.name = "Respondent parameters", stats.table)
 }
