@@ -109,6 +109,7 @@ print.FitChoice <- function(x, ...)
     footer <- paste0(footer, "Choices per question: ", x$n.choices, "; ")
     footer <- paste0(footer, "Number of attributes: ", x$n.attributes, "; ")
     footer <- paste0(footer, "Number of variables: ", x$n.variables, "; ")
+    footer <- paste0(footer, "Blue and red bars indicate positive and negative parameters respectively; ")
 
     subtitle <- if (!is.na(x$out.sample.accuracy))
         paste0("Prediction accuracy (leave-", x$n.questions.left.out , "-out cross-validation): ",
