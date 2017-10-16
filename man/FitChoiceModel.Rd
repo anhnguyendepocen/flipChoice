@@ -7,7 +7,7 @@
 FitChoiceModel(experiment.data, n.classes = 1, subset = NULL,
   weights = NULL, seed = 123, tasks.left.out = 0, hb.iterations = 500,
   hb.chains = 8, hb.max.tree.depth = 10, hb.adapt.delta = 0.8,
-  hb.keep.samples = FALSE)
+  hb.keep.samples = FALSE, no.stanfit = FALSE)
 }
 \arguments{
 \item{experiment.data}{A data.frame from an Experiment question}
@@ -31,6 +31,8 @@ FitChoiceModel(experiment.data, n.classes = 1, subset = NULL,
 \item{hb.adapt.delta}{http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup}
 
 \item{hb.keep.samples}{Whether to keep the samples of all the parameters in the output.}
+
+\item{no.stanfit}{Whether to leave out the stanfit property}
 }
 \description{
 Fit a choice-based conjoint model using methods such as Hierarchical Bayes

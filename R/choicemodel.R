@@ -11,14 +11,16 @@
 #' @param hb.max.tree.depth http://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded
 #' @param hb.adapt.delta http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
 #' @param hb.keep.samples Whether to keep the samples of all the parameters in the output.
+#' @param no.stanfit Whether to leave out the stanfit property
 #' @export
 FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL, weights = NULL, seed = 123,
                            tasks.left.out = 0, hb.iterations = 500, hb.chains = 8, hb.max.tree.depth = 10,
-                           hb.adapt.delta = 0.8, hb.keep.samples = FALSE)
+                           hb.adapt.delta = 0.8, hb.keep.samples = FALSE, no.stanfit = FALSE)
 {
     dat <- processExperimentData(experiment.data, subset, weights, tasks.left.out, seed)
     result <- hierarchicalBayesChoiceModel(dat, hb.iterations, hb.chains, hb.max.tree.depth,
-                                           hb.adapt.delta, seed, hb.keep.samples, n.classes)
+                                           hb.adapt.delta, seed, hb.keep.samples, n.classes,
+                                           no.stanfit = no.stanfit)
     result <- accuracyResults(dat, result)
     result$algorithm <- "HB-Stan"
     result$n.questions.left.out <- tasks.left.out
