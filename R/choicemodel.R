@@ -28,8 +28,11 @@ FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL, weight
     result$n.classes <- n.classes
     result$subset <- subset
     result$weights <- weights
-    result$output <- "Probabilities"
-    result$is.choice.model <- TRUE
+    result$n.respondents <- dat$n.respondents
+    result$n.questions <- dat$n.questions
+    result$n.choices <- dat$n.choices
+    result$n.attributes <- dat$n.attributes
+    result$n.variables <- dat$n.variables
     result
 }
 
@@ -97,16 +100,15 @@ print.FitChoice <- function(x, ...)
     footer <- paste0("n = ", x$n.respondents, "; ")
     if (!is.null(x$subset) && !all(x$subset))
         footer <- paste0(footer, "Filters have been applied; ")
-    if (!is.null(x$weights))
-        footer <- paste0(footer, "Weights have been applied; Effective sample size: ",
-                         FormatAsReal(x$effective.sample.size, decimals = 2), "; ")
     footer <- paste0(footer, "Number of questions: ", x$n.questions, "; ")
     if (x$n.questions.left.out > 0)
     {
         footer <- paste0(footer, "Questions used in estimation: ", x$n.questions - x$n.questions.left.out, "; ")
         footer <- paste0(footer, "Questions left out: ", x$n.questions.left.out, "; ")
     }
-    footer <- paste0(footer, "Alternatives per question: ", x$n.alternatives.per.task, "; ")
+    footer <- paste0(footer, "Choices per question: ", x$n.choices, "; ")
+    footer <- paste0(footer, "Number of attributes: ", x$n.attributes, "; ")
+    footer <- paste0(footer, "Number of variables: ", x$n.variables, "; ")
 
     subtitle <- if (!is.na(x$out.sample.accuracy))
         paste0("Prediction accuracy (leave-", x$n.questions.left.out , "-out cross-validation): ",
