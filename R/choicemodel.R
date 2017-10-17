@@ -109,8 +109,20 @@ RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
     }
     colnames(stats.table) <- c("Mean", "Standard Deviation")
 
+    bin.range <- bin.max - bin.min
+    bin.size <- if (bin.range < 5)
+        0.05
+    else if (bin.range < 10)
+        0.1
+    else if (bin.range < 20)
+        0.2
+    else if (bin.range < 50)
+        0.5
+    else
+        1
+
     HistTable(resp.pars, title = title, subtitle = subtitle, footer = footer,
-              bin.size = 0.2, bin.min = bin.min, bin.max = bin.max, hist.width = 300,
+              bin.size = bin.size, bin.min = bin.min, bin.max = bin.max, hist.width = 300,
               hist.height = 20, color.negative = TRUE, show.tooltips = FALSE,
               histogram.column.name = "Respondent parameters", stats.table)
 }
