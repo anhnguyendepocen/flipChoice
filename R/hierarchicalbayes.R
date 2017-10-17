@@ -1,7 +1,7 @@
 #' @importFrom rstan rstan_options stan extract sampling
 hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8, max.tree.depth = 10,
                                          adapt.delta = 0.8, seed = 123, keep.samples = FALSE,
-                                         n.classes = 1, no.stanfit = FALSE)
+                                         n.classes = 1, include.stanfit = TRUE)
 {
     # We want to replace this call with a proper integration of rstan into this package
     require(rstan)
@@ -44,7 +44,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8, 
     result <- list()
     result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset,
                                                     dat$variable.scales)
-    if (!no.stanfit)
+    if (include.stanfit)
     {
         result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
         result$beta.draws <- extract(stan.fit, pars=c("beta"))$beta
