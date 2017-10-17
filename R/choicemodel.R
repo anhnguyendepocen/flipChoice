@@ -20,7 +20,7 @@ FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL, weight
     dat <- processExperimentData(experiment.data, subset, weights, tasks.left.out, seed)
     result <- hierarchicalBayesChoiceModel(dat, hb.iterations, hb.chains, hb.max.tree.depth,
                                            hb.adapt.delta, seed, hb.keep.samples, n.classes,
-                                           hb.stanfit = hb.stanfit)
+                                           hb.stanfit)
     result <- accuracyResults(dat, result)
     result$algorithm <- "HB-Stan"
     result$n.questions.left.out <- tasks.left.out
