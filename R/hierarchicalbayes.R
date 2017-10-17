@@ -45,7 +45,10 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8, 
     result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset,
                                                     dat$variable.scales)
     if (!no.stanfit)
+    {
         result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
+        result$beta.draws <- extract(stan.fit, pars=c("beta"))$beta
+    }
     class(result) <- "FitChoice"
     result
 }
