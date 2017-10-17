@@ -88,6 +88,33 @@ RespondentParameters <- function(object)
     as.data.frame(object$respondent.parameters)
 }
 
+#' \code{RespondentParametersTable}
+#' @description Produces a formattable table with histograms of respondent parameters.
+#' @param resp.pars A matrix of respondent parameters
+#' @param title Table title.
+#' @param subtitle Table subtitle.
+#' @param footer Table footer.
+#' @export
+RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
+{
+    bin.min <- floor(min(resp.pars))
+    bin.max <- ceiling(max(resp.pars))
+
+    n.variables <- ncol(resp.pars)
+    stats.table <- matrix(NA, nrow = n.variables, ncol = 2)
+    for (i in 1:n.variables)
+    {
+        stats.table[i, 1] <- FormatAsReal(mean(resp.pars[, i], na.rm = TRUE), decimals = 1)
+        stats.table[i, 2] <- FormatAsReal(sd(resp.pars[, i], na.rm = TRUE), decimals = 1)
+    }
+    colnames(stats.table) <- c("Mean", "Standard Deviation")
+
+    HistTable(resp.pars, title = title, subtitle = subtitle, footer = footer,
+              bin.size = 0.2, bin.min = bin.min, bin.max = bin.max, hist.width = 300,
+              hist.height = 20, color.negative = TRUE, show.tooltips = FALSE,
+              histogram.column.name = "Respondent parameters", stats.table)
+}
+
 #' @title print.FitChoice
 #' @description Print a FitChoice object
 #' @param x FitMaxDiff object.
@@ -117,21 +144,5 @@ print.FitChoice <- function(x, ...)
     else
         paste0("Prediction accuracy (in-sample): ", FormatAsPercent(x$in.sample.accuracy, 3))
 
-    resp.pars <- x$respondent.parameters
-    bin.min <- floor(min(resp.pars))
-    bin.max <- ceiling(max(resp.pars))
-
-    n.variables <- ncol(resp.pars)
-    stats.table <- matrix(NA, nrow = n.variables, ncol = 2)
-    for (i in 1:n.variables)
-    {
-        stats.table[i, 1] <- FormatAsReal(mean(resp.pars[, i], na.rm = TRUE), decimals = 1)
-        stats.table[i, 2] <- FormatAsReal(sd(resp.pars[, i], na.rm = TRUE), decimals = 1)
-    }
-    colnames(stats.table) <- c("Mean", "Standard Deviation")
-
-    HistTable(resp.pars, title = title, subtitle = subtitle, footer = footer,
-              bin.size = 0.2, bin.min = bin.min, bin.max = bin.max, hist.width = 300,
-              hist.height = 20, color.negative = TRUE, show.tooltips = FALSE,
-              histogram.column.name = "Respondent parameters", stats.table)
+    RespondentParametersTable(x$respondent.parameters, title, subtitle, footer)
 }
