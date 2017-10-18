@@ -114,12 +114,14 @@ RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
         0.05
     else if (bin.range < 10)
         0.1
-    else if (bin.range < 20)
-        0.2
+    else if (bin.range < 25)
+        0.25
     else if (bin.range < 50)
         0.5
     else
         1
+
+    footer <- paste0(footer, "Bar width: ", bin.size, "; ")
 
     HistTable(resp.pars, title = title, subtitle = subtitle, footer = footer,
               bin.size = bin.size, bin.min = bin.min, bin.max = bin.max, hist.width = 300,
