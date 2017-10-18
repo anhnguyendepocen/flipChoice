@@ -97,8 +97,8 @@ RespondentParameters <- function(object)
 #' @export
 RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
 {
-    bin.min <- floor(min(resp.pars))
-    bin.max <- ceiling(max(resp.pars))
+    bin.max <- max(ceiling(max(resp.pars)), -floor(min(resp.pars)))
+    bin.min <- -bin.max
 
     n.variables <- ncol(resp.pars)
     stats.table <- matrix(NA, nrow = n.variables, ncol = 2)
@@ -109,17 +109,7 @@ RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
     }
     colnames(stats.table) <- c("Mean", "Standard Deviation")
 
-    bin.range <- bin.max - bin.min
-    bin.size <- if (bin.range < 5)
-        0.05
-    else if (bin.range < 10)
-        0.1
-    else if (bin.range < 25)
-        0.25
-    else if (bin.range < 50)
-        0.5
-    else
-        1
+    bin.size <- (bin.max - bin.min) / 50
 
     footer <- paste0(footer, "Bar width: ", bin.size, "; ")
 
