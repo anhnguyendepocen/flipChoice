@@ -117,7 +117,7 @@ RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
     HistTable(resp.pars, title = title, subtitle = subtitle, footer = footer,
               bin.size = bin.size, bin.min = bin.min, bin.max = bin.max, hist.width = 300,
               hist.height = 20, color.negative = TRUE, show.tooltips = FALSE,
-              histogram.column.name = "Respondent Parameters", stats.table)
+              histogram.column.name = "Respondent Coefficients", stats.table)
 }
 
 #' @title print.FitChoice
