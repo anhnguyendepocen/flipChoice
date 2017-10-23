@@ -95,6 +95,7 @@ RespondentParameters <- function(object)
 #' @param subtitle Table subtitle.
 #' @param footer Table footer.
 #' @importFrom flipFormat FormatAsReal
+#' @importFrom stats sd
 #' @export
 RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
 {

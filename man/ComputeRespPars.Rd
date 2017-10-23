@@ -12,6 +12,8 @@ ComputeRespPars(stan.fit, var.names, subset, variable.scales = NULL)
 \item{var.names}{Variable names}
 
 \item{subset}{Subset vector}
+
+\item{variable.scales}{Scale factors for numeric parameters.}
 }
 \value{
 A matrix of respondent parameters

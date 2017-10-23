@@ -88,6 +88,7 @@ ReduceStanFitSize <- function(stan.fit)
 #' @param stan.fit A stanfit object.
 #' @param var.names Variable names
 #' @param subset Subset vector
+#' @param variable.scales Scale factors for numeric parameters.
 #' @return A matrix of respondent parameters
 #' @export
 ComputeRespPars <- function(stan.fit, var.names, subset, variable.scales = NULL)
