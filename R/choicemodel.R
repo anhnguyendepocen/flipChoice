@@ -6,6 +6,8 @@
 #' @param weights An optional vector of sampling or frequency weights.
 #' @param seed Random seed.
 #' @param tasks.left.out Number of questions to leave out for cross-validation.
+#' @param normal.covariance The form of the covariance matrix for Hierarchical Bayes.
+#' Can be 'Full, 'Spherical', 'Diagonal'.
 #' @param hb.iterations The number of iterations in Hierarchical Bayes.
 #' @param hb.chains The number of chains in Hierarchical Bayes.
 #' @param hb.max.tree.depth http://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded
@@ -13,14 +15,17 @@
 #' @param hb.keep.samples Whether to keep the samples of all the parameters in the output.
 #' @param hb.stanfit Whether to include the stanfit property.
 #' @export
-FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL, weights = NULL, seed = 123,
-                           tasks.left.out = 0, hb.iterations = 500, hb.chains = 8, hb.max.tree.depth = 10,
-                           hb.adapt.delta = 0.8, hb.keep.samples = FALSE, hb.stanfit = TRUE)
+FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL,
+                           weights = NULL, seed = 123, tasks.left.out = 0,
+                           normal.covariance = "Full", hb.iterations = 500,
+                           hb.chains = 8, hb.max.tree.depth = 10,
+                           hb.adapt.delta = 0.8, hb.keep.samples = FALSE,
+                           hb.stanfit = TRUE)
 {
     dat <- processExperimentData(experiment.data, subset, weights, tasks.left.out, seed)
     result <- hierarchicalBayesChoiceModel(dat, hb.iterations, hb.chains, hb.max.tree.depth,
                                            hb.adapt.delta, seed, hb.keep.samples, n.classes,
-                                           hb.stanfit)
+                                           hb.stanfit, normal.covariance)
     result <- accuracyResults(dat, result)
     result$algorithm <- "HB-Stan"
     result$n.questions.left.out <- tasks.left.out

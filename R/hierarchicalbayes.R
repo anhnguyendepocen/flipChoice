@@ -1,7 +1,10 @@
 #' @importFrom rstan rstan_options stan extract sampling
-hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8, max.tree.depth = 10,
-                                         adapt.delta = 0.8, seed = 123, keep.samples = FALSE,
-                                         n.classes = 1, include.stanfit = TRUE)
+hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
+                                         max.tree.depth = 10,
+                                         adapt.delta = 0.8, seed = 123,
+                                         keep.samples = FALSE, n.classes = 1,
+                                         include.stanfit = TRUE,
+                                         normal.covariance = "Full")
 {
     # We want to replace this call with a proper integration of rstan into this package
     require(rstan)
@@ -22,6 +25,11 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8, 
     if (n.classes > 1)
         stan.dat$P <- n.classes
 
+    if (normal.covariance == "Diagonal")
+        stan.dat$U <- dat$n.variables
+    else if (normal.covariance == "Spherical")
+        stan.dat$U <- 1
+
     if (.Platform$OS.type == "unix")
     {
         # Loads a precompiled stan model called mod from sysdata.rda to avoid recompiling.
@@ -35,7 +43,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8, 
     }
     else # windows
     {
-        stan.file <- if (n.classes > 1) "exec/mixtureofnormals.stan" else "exec/choicemodel.stan"
+        stan.file <- stanFileName(n.classes, normal.covariance)
         stan.fit <- stan(file = stan.file, data = stan.dat, iter = n.iterations,
                          chains = n.chains, seed = seed,
                          control = list(max_treedepth = max.tree.depth, adapt_delta = adapt.delta))
@@ -118,4 +126,22 @@ ComputeRespPars <- function(stan.fit, var.names, subset, variable.scales = NULL)
     result[subset, ] <- resp.pars.subset
     colnames(result) <- var.names
     result
+}
+
+stanFileName <- function(n.classes, normal.covariance)
+{
+    if (n.classes == 1)
+    {
+        if (normal.covariance == "Full")
+            "exec/choicemodel.stan"
+        else
+            "exec/diagonal.stan"
+    }
+    else
+    {
+        if (normal.covariance == "Full")
+            "exec/mixtureofnormals.stan"
+        else
+            "exec/diagonalmixture.stan"
+    }
 }
