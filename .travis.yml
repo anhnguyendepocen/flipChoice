@@ -3,7 +3,7 @@ r:
   - release
 dist: trusty  # ubuntu 14.04 has additional libraries available
 sudo: required
-cache: true
+cache: false
 warnings_are_errors: false
 
 # install debian libraries to match R-servers
@@ -36,6 +36,6 @@ notifications:
 # Warning notifications and downstream package builds are implemented
 # by calling R functions so they can be updated in this package without
 # committing a new change to .travis.yml in each repository
-after_success:
+after_success: 
   - Rscript -e "require(travisCI); NotifyWarnings(); TriggerDownstreamBuilds()"
   - travis_wait Rscript -e "travisCI::CheckCoverage()"
