@@ -5,9 +5,10 @@
 \title{FitChoiceModel}
 \usage{
 FitChoiceModel(experiment.data, n.classes = 1, subset = NULL,
-  weights = NULL, seed = 123, tasks.left.out = 0, hb.iterations = 500,
-  hb.chains = 8, hb.max.tree.depth = 10, hb.adapt.delta = 0.8,
-  hb.keep.samples = FALSE, hb.stanfit = TRUE)
+  weights = NULL, seed = 123, tasks.left.out = 0,
+  normal.covariance = "Full", hb.iterations = 500, hb.chains = 8,
+  hb.max.tree.depth = 10, hb.adapt.delta = 0.8, hb.keep.samples = FALSE,
+  hb.stanfit = TRUE)
 }
 \arguments{
 \item{experiment.data}{A data.frame from an Experiment question}
@@ -21,6 +22,9 @@ FitChoiceModel(experiment.data, n.classes = 1, subset = NULL,
 \item{seed}{Random seed.}
 
 \item{tasks.left.out}{Number of questions to leave out for cross-validation.}
+
+\item{normal.covariance}{The form of the covariance matrix for Hierarchical Bayes.
+Can be 'Full, 'Spherical', 'Diagonal'.}
 
 \item{hb.iterations}{The number of iterations in Hierarchical Bayes.}
 
