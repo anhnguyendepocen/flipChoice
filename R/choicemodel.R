@@ -98,7 +98,7 @@ RespondentParameters <- function(object)
 #' @export
 RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
 {
-    bin.max <- max(ceiling(max(resp.pars)), -floor(min(resp.pars)))
+    bin.max <- max(ceiling(max(resp.pars, na.rm = TRUE)), -floor(min(resp.pars, na.rm = TRUE)))
     bin.min <- -bin.max
 
     n.variables <- ncol(resp.pars)
