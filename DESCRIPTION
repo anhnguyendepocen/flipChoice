@@ -12,6 +12,7 @@ Imports: flipData,
          flipFormat,
          rstan
 Suggests: testthat
-Remotes: Displayr/flipData
+Remotes: Displayr/flipData,
+         Displayr/flipFormat
 RoxygenNote: 6.0.1
 Depends: R(>= 2.10.0)
