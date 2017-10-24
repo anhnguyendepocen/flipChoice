@@ -42,7 +42,7 @@ data {
 
 parameters {
     vector[V_raw] theta_raw[P];
-    vector<lower=0, upper=pi()/2>[V] sigma_unif[U];
+    vector<lower=0, upper=pi()/2>[U] sigma_unif[P];
     vector[V] standard_normal[R, P];
     simplex[P] class_weights;
 }
