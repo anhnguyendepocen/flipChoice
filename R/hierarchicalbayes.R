@@ -91,6 +91,7 @@ ReduceStanFitSize <- function(stan.fit)
         attr(stan.fit@sim$samples[[i]], "mean_pars") <- NULL
     }
     stan.fit@inits <- list()
+    stan.fit@.MISC <- new.env()
     stan.fit
 }
 
