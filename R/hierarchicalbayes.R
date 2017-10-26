@@ -124,7 +124,7 @@ ComputeRespPars <- function(stan.fit, var.names, subset, variable.scales = NULL)
         resp.pars.subset <- colMeans(beta, dims = 1)
 
     if (!is.null(variable.scales))
-        resp.pars.subset <- t(t(resp.pars.subset) * variable.scales)
+        resp.pars.subset <- t(t(resp.pars.subset) / variable.scales)
 
     result <- matrix(NA, nrow = length(subset), ncol = ncol(resp.pars.subset))
     result[subset, ] <- resp.pars.subset

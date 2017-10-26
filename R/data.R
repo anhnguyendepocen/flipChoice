@@ -126,9 +126,9 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions, n.choi
                 }
                 else
                 {
-                    scaled.v <- scale(v)
+                    scaled.v <- 0.5 * scale(v)
                     X[, q, j, c] <- scaled.v
-                    variable.scales[c] <- attr(scaled.v, "scaled:scale")
+                    variable.scales[c] <- 2 * attr(scaled.v, "scaled:scale")
                 }
             }
         }
