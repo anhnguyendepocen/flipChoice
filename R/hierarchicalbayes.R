@@ -137,17 +137,22 @@ stanFileName <- function(n.classes, normal.covariance)
     if (n.classes == 1)
     {
         if (normal.covariance == "Full")
-            "exec/choicemodel.stan"
+            result <- "exec/choicemodel.stan"
         else
-            "exec/diagonal.stan"
+            result <- "exec/diagonal.stan"
     }
     else
     {
         if (normal.covariance == "Full")
-            "exec/mixtureofnormals.stan"
+            result <- "exec/mixtureofnormals.stan"
         else
-            "exec/diagonalmixture.stan"
+            result <- "exec/diagonalmixture.stan"
     }
+
+    if (!dir.exists("exec")) # not unit testing
+        result <- paste0("tests/testthat/", result)
+
+    result
 }
 
 stanModel <- function(n.classes, normal.covariance)

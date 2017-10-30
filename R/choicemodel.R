@@ -22,6 +22,9 @@ FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL,
                            hb.adapt.delta = 0.8, hb.keep.samples = FALSE,
                            hb.stanfit = TRUE)
 {
+    if (!is.null(weights))
+        stop("Weights are not able to be applied for Hierarchical Bayes.")
+
     dat <- processExperimentData(experiment.data, subset, weights, tasks.left.out, seed)
     result <- hierarchicalBayesChoiceModel(dat, hb.iterations, hb.chains, hb.max.tree.depth,
                                            hb.adapt.delta, seed, hb.keep.samples, n.classes,

@@ -10,7 +10,7 @@ processExperimentData <- function(experiment.data, subset, weights, n.questions.
         weights <- CalibrateWeight(weights)
     }
     else
-        weights <- rep(1, length(subset))
+        weights <- rep(1, sum(subset))
 
     nms <- names(experiment.data)
     choice.name <- nms[1]
