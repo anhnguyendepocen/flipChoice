@@ -37,6 +37,7 @@ data {
     int<lower=1,upper=C> Y[R, S]; // choices
     matrix[C, V] X[R, S]; // matrix of attributes for each obs
     int<lower=1> U; // Number of standard deviation parameters
+    vector[V_raw] prior_sd; // Prior sd for theta_raw
 }
 
 parameters {
@@ -73,7 +74,8 @@ transformed parameters {
 
 model {
     //priors
-    theta_raw ~ normal(0, 10);
+    for (v in 1:V_raw)
+        theta_raw[v] ~ normal(0, prior_sd[v]);
 
     for (r in 1:R)
         standard_normal[r] ~ normal(0, 1);

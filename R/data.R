@@ -128,6 +128,7 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions, n.choi
                 {
                     scaled.v <- 0.5 * scale(v)
                     X[, q, j, c] <- scaled.v
+                    # this is 2 times the standard deviation of v
                     variable.scales[c] <- 2 * attr(scaled.v, "scaled:scale")
                 }
             }

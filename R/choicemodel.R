@@ -14,13 +14,16 @@
 #' @param hb.adapt.delta http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
 #' @param hb.keep.samples Whether to keep the samples of all the parameters in the output.
 #' @param hb.stanfit Whether to include the stanfit property.
+#' @param hb.prior.sd The standard deviations for the priors of the mean parameters theta_raw.
+#' @param hb.warnings Whether to show warnings from Stan.
 #' @export
 FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL,
                            weights = NULL, seed = 123, tasks.left.out = 0,
                            normal.covariance = "Full", hb.iterations = 500,
                            hb.chains = 8, hb.max.tree.depth = 10,
                            hb.adapt.delta = 0.8, hb.keep.samples = FALSE,
-                           hb.stanfit = TRUE)
+                           hb.stanfit = TRUE, hb.prior.sd = NULL,
+                           hb.warnings = TRUE)
 {
     if (!is.null(weights))
         stop("Weights are not able to be applied for Hierarchical Bayes.")
@@ -28,7 +31,8 @@ FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL,
     dat <- processExperimentData(experiment.data, subset, weights, tasks.left.out, seed)
     result <- hierarchicalBayesChoiceModel(dat, hb.iterations, hb.chains, hb.max.tree.depth,
                                            hb.adapt.delta, seed, hb.keep.samples, n.classes,
-                                           hb.stanfit, normal.covariance)
+                                           hb.stanfit, normal.covariance, hb.prior.sd,
+                                           hb.warnings)
     result <- accuracyResults(dat, result)
     result$algorithm <- "HB-Stan"
     result$n.questions.left.out <- tasks.left.out

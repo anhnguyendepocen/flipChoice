@@ -36,6 +36,7 @@ data {
     int<lower=1> V_attribute[A]; // Number of variables in each attribute
     int<lower=1,upper=C> Y[R, S]; // choices
     matrix[C, V] X[R, S]; // matrix of attributes for each obs
+    vector[V_raw] prior_sd; // Prior sd for theta_raw
 }
 
 parameters {
@@ -67,7 +68,8 @@ transformed parameters {
 
 model {
     //priors
-    theta_raw ~ normal(0, 10);
+    for (v in 1:V_raw)
+        theta_raw[v] ~ normal(0, prior_sd[v]);
     L_omega ~ lkj_corr_cholesky(4);
 
     for (r in 1:R)

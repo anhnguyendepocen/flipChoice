@@ -4,7 +4,9 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                          adapt.delta = 0.8, seed = 123,
                                          keep.samples = FALSE, n.classes = 1,
                                          include.stanfit = TRUE,
-                                         normal.covariance = "Full")
+                                         normal.covariance = "Full",
+                                         prior.sd = NULL,
+                                         stan.warnings = TRUE)
 {
     # We want to replace this call with a proper integration of rstan into this package
     require(rstan)
@@ -12,6 +14,61 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     # allows Stan chains to run in parallel on multiprocessor machines
     options(mc.cores = parallel::detectCores())
 
+    stan.dat <- createStanData(dat, n.classes, normal.covariance, prior.sd)
+
+    if (stan.warnings)
+        stan.fit <- runStanSampling(stan.dat, n.classes, n.iterations,
+                                    n.chains, normal.covariance,
+                                    max.tree.depth, adapt.delta, seed)
+    else
+        suppressWarnings(stan.fit <- runStanSampling(stan.dat, n.classes,
+                                                     n.iterations, n.chains,
+                                                     normal.covariance,
+                                                     max.tree.depth,
+                                                     adapt.delta, seed))
+
+    result <- list()
+    result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset,
+                                                    dat$variable.scales)
+    if (include.stanfit)
+    {
+        result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
+        result$beta.draws <- extract(stan.fit, pars=c("beta"))$beta
+    }
+    class(result) <- "FitChoice"
+    result
+}
+
+runStanSampling <- function(stan.dat, n.classes, n.iterations, n.chains,
+                            normal.covariance, max.tree.depth, adapt.delta,
+                            seed)
+{
+    if (.Platform$OS.type == "unix")
+    {
+        # Loads a precompiled stan model called mod from sysdata.rda to avoid recompiling.
+        # The R code used to generate mod on a linux machine is:
+        # mod <- rstan::stan_model(model_code = model.code)
+        # devtools::use_data(mod, internal = TRUE, overwrite = TRUE)
+        # where model.code is the stan code as a string.
+        # Ideally we would want to recompile when the package is built (similar to Rcpp)
+        m <- stanModel(n.classes, normal.covariance)
+        result <- sampling(m, data = stan.dat, chains = n.chains,
+                             iter = n.iterations, seed = seed,
+                             control = list(max_treedepth = max.tree.depth,
+                                            adapt_delta = adapt.delta))
+    }
+    else # windows
+    {
+        stan.file <- stanFileName(n.classes, normal.covariance)
+        result <- stan(file = stan.file, data = stan.dat, iter = n.iterations,
+                         chains = n.chains, seed = seed,
+                         control = list(max_treedepth = max.tree.depth, adapt_delta = adapt.delta))
+    }
+    result
+}
+
+createStanData <- function(dat, n.classes, normal.covariance, prior.sd)
+{
     stan.dat <- list(C = dat$n.choices,
                      R = dat$n.respondents,
                      S = dat$n.questions.left.in,
@@ -30,38 +87,31 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     else if (normal.covariance == "Spherical")
         stan.dat$U <- 1
 
-    if (.Platform$OS.type == "unix")
+    if (is.null(prior.sd))
+        stan.dat$prior_sd <- rep(2, dat$n.raw.variables) # default prior mean parameter SD
+    else if (!is.numeric(prior.sd) || length(prior.sd) != dat$n.raw.variables)
+        stop("The supplied parameter prior.sd is inappropriate.")
+    else
     {
-        # Loads a precompiled stan model called mod from sysdata.rda to avoid recompiling.
-        # The R code used to generate mod on a linux machine is:
-        # mod <- rstan::stan_model(model_code = model.code)
-        # devtools::use_data(mod, internal = TRUE, overwrite = TRUE)
-        # where model.code is the stan code as a string.
-        # Ideally we would want to recompile when the package is built (similar to Rcpp)
-        m <- stanModel(n.classes, normal.covariance)
-        stan.fit <- sampling(m, data = stan.dat, chains = n.chains,
-                             iter = n.iterations, seed = seed,
-                             control = list(max_treedepth = max.tree.depth,
-                                            adapt_delta = adapt.delta))
-    }
-    else # windows
-    {
-        stan.file <- stanFileName(n.classes, normal.covariance)
-        stan.fit <- stan(file = stan.file, data = stan.dat, iter = n.iterations,
-                         chains = n.chains, seed = seed,
-                         control = list(max_treedepth = max.tree.depth, adapt_delta = adapt.delta))
+        stan.dat$prior_sd <- prior.sd
+
+        # Need to scale the prior SD of numeric variables
+        n.attribute.variables <- dat$n.attribute.variables
+        n.attributes <- dat$n.attributes
+        n.attribute.raw.variables <- pmax(dat$n.attribute.variables - 1, 1)
+        for (i in 1:n.attributes)
+        {
+            if (n.attribute.variables[i] == 1)
+            {
+                index.all <- sum(n.attribute.variables[1:i])
+                index.raw <- sum(n.attribute.raw.variables[1:i])
+                stan.dat$prior_sd[index.raw] <- prior.sd[index.raw] *
+                                                dat$variable.scales[index.all]
+            }
+        }
     }
 
-    result <- list()
-    result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset,
-                                                    dat$variable.scales)
-    if (include.stanfit)
-    {
-        result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
-        result$beta.draws <- extract(stan.fit, pars=c("beta"))$beta
-    }
-    class(result) <- "FitChoice"
-    result
+    stan.dat
 }
 
 #' @title ReduceStanFitSize
