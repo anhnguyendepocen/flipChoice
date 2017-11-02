@@ -34,7 +34,8 @@ test_that("HB weights", {
 })
 
 test_that("HB 2 classes", {
-    result <- FitChoiceModel(eggs.data, hb.iterations = 10, hb.chains = 1, n.classes = 2)
+    result <- FitChoiceModel(eggs.data, hb.iterations = 10, hb.chains = 1,
+                             n.classes = 2, hb.warnings = FALSE)
     expect_error(print(result), NA)
     # expect_equal(result$in.sample.accuracy, 0.439144736842105)
 })
