@@ -44,7 +44,7 @@ runStanSampling <- function(stan.dat, n.classes, n.iterations, n.chains,
                             normal.covariance, max.tree.depth, adapt.delta,
                             seed)
 {
-    if (Sys.info()[["nodename"]] %in% c("reusdev", "reustest", "reusprod")) # R servers
+    if (IsRServer()) # R servers
     {
         # Loads a precompiled stan model called mod from sysdata.rda to avoid recompiling.
         # The R code used to generate mod on a linux machine is:
@@ -243,4 +243,16 @@ ExtractBetaDraws <- function(stan.fit, max.draws = 100)
     }
     else
         raw.betas
+}
+
+#' @title IsRServer
+#' @description This function indicates if it is being run on an R server.
+#' @return TRUE if running on an R server. False otherwise.
+#' @export
+IsRServer <- function()
+{
+    node.name <- Sys.info()[["nodename"]]
+    node.name == "reusdev" ||
+        grepl("^reustest.*", node.name) ||
+        grepl("^reusprod.*", node.name)
 }
