@@ -2,6 +2,7 @@
 
 S3method(print,FitChoice)
 export(ComputeRespPars)
+export(ExtractBetaDraws)
 export(FitChoiceModel)
 export(LeftOutQuestions)
 export(ReduceStanFitSize)

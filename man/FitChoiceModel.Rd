@@ -8,7 +8,8 @@ FitChoiceModel(experiment.data, n.classes = 1, subset = NULL,
   weights = NULL, seed = 123, tasks.left.out = 0,
   normal.covariance = "Full", hb.iterations = 500, hb.chains = 8,
   hb.max.tree.depth = 10, hb.adapt.delta = 0.8, hb.keep.samples = FALSE,
-  hb.stanfit = TRUE, hb.prior.sd = NULL, hb.warnings = TRUE)
+  hb.stanfit = TRUE, hb.prior.sd = NULL, hb.warnings = TRUE,
+  hb.max.draws = 100)
 }
 \arguments{
 \item{experiment.data}{A data.frame from an Experiment question}
@@ -41,6 +42,8 @@ Can be 'Full, 'Spherical', 'Diagonal'.}
 \item{hb.prior.sd}{The standard deviations for the priors of the mean parameters theta_raw.}
 
 \item{hb.warnings}{Whether to show warnings from Stan.}
+
+\item{hb.max.draws}{Maximum number of beta draws per respondent.}
 }
 \description{
 Fit a choice-based conjoint model using methods such as Hierarchical Bayes

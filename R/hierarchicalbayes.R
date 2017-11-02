@@ -6,7 +6,8 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                          include.stanfit = TRUE,
                                          normal.covariance = "Full",
                                          prior.sd = NULL,
-                                         stan.warnings = TRUE)
+                                         stan.warnings = TRUE,
+                                         max.draws = 100)
 {
     # We want to replace this call with a proper integration of rstan into this package
     require(rstan)
@@ -33,7 +34,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     if (include.stanfit)
     {
         result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
-        result$beta.draws <- extract(stan.fit, pars=c("beta"))$beta
+        result$beta.draws <- ExtractBetaDraws(stan.fit, max.draws)
     }
     class(result) <- "FitChoice"
     result
@@ -43,7 +44,7 @@ runStanSampling <- function(stan.dat, n.classes, n.iterations, n.chains,
                             normal.covariance, max.tree.depth, adapt.delta,
                             seed)
 {
-    if (.Platform$OS.type == "unix")
+    if (Sys.info()[["nodename"]] %in% c("reusdev", "reustest", "reusprod")) # R servers
     {
         # Loads a precompiled stan model called mod from sysdata.rda to avoid recompiling.
         # The R code used to generate mod on a linux machine is:
@@ -57,7 +58,7 @@ runStanSampling <- function(stan.dat, n.classes, n.iterations, n.chains,
                              control = list(max_treedepth = max.tree.depth,
                                             adapt_delta = adapt.delta))
     }
-    else # windows
+    else # Not R servers
     {
         stan.file <- stanFileName(n.classes, normal.covariance)
         result <- stan(file = stan.file, data = stan.dat, iter = n.iterations,
@@ -153,7 +154,8 @@ ReduceStanFitSize <- function(stan.fit)
 #' @param variable.scales Scale factors for numeric parameters.
 #' @return A matrix of respondent parameters
 #' @export
-ComputeRespPars <- function(stan.fit, var.names, subset, variable.scales = NULL)
+ComputeRespPars <- function(stan.fit, var.names, subset,
+                            variable.scales = NULL)
 {
     beta <- extract(stan.fit, pars=c("beta"))$beta
     if (length(dim(beta)) == 4) # n.classes > 1
@@ -221,4 +223,24 @@ stanModel <- function(n.classes, normal.covariance)
         else
             mod.mix.diag
     }
+}
+
+#' @title ExtractBetaDraws
+#' @description This function extracts beta draws from a stanfit object.
+#' @param stan.fit A stanfit object.
+#' @param max.draws Maximum draws per respondent per parameter.
+#' @return A 3D array of beta draws.
+#' @export
+ExtractBetaDraws <- function(stan.fit, max.draws = 100)
+{
+    raw.betas <- extract(stan.fit, pars=c("beta"))$beta
+    n.draws <- dim(raw.betas)[1]
+    if (n.draws > max.draws)
+    {
+        fact <- floor(n.draws / max.draws)
+        ind <- fact * (1:max.draws)
+        raw.betas[ind, , ]
+    }
+    else
+        raw.betas
 }

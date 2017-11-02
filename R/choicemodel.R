@@ -16,6 +16,7 @@
 #' @param hb.stanfit Whether to include the stanfit property.
 #' @param hb.prior.sd The standard deviations for the priors of the mean parameters theta_raw.
 #' @param hb.warnings Whether to show warnings from Stan.
+#' @param hb.max.draws Maximum number of beta draws per respondent.
 #' @export
 FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL,
                            weights = NULL, seed = 123, tasks.left.out = 0,
@@ -23,7 +24,7 @@ FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL,
                            hb.chains = 8, hb.max.tree.depth = 10,
                            hb.adapt.delta = 0.8, hb.keep.samples = FALSE,
                            hb.stanfit = TRUE, hb.prior.sd = NULL,
-                           hb.warnings = TRUE)
+                           hb.warnings = TRUE, hb.max.draws = 100)
 {
     if (!is.null(weights))
         stop("Weights are not able to be applied for Hierarchical Bayes.")
@@ -32,7 +33,7 @@ FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL,
     result <- hierarchicalBayesChoiceModel(dat, hb.iterations, hb.chains, hb.max.tree.depth,
                                            hb.adapt.delta, seed, hb.keep.samples, n.classes,
                                            hb.stanfit, normal.covariance, hb.prior.sd,
-                                           hb.warnings)
+                                           hb.warnings, hb.max.draws)
     result <- accuracyResults(dat, result)
     result$algorithm <- "HB-Stan"
     result$n.questions.left.out <- tasks.left.out
