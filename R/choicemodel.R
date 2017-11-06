@@ -1,38 +1,56 @@
 #' @title FitChoiceModel
-#' @description Fit a choice-based conjoint model using methods such as Hierarchical Bayes
+#' @description Fit a choice-based conjoint model using methods such as
+#' Hierarchical Bayes
 #' @param experiment.data A data.frame from an Experiment question
 #' @param n.classes The number of latent classes.
-#' @param subset An optional vector specifying a subset of observations to be used in the fitting process.
+#' @param subset An optional vector specifying a subset of observations to be
+#' used in the fitting process.
 #' @param weights An optional vector of sampling or frequency weights.
 #' @param seed Random seed.
 #' @param tasks.left.out Number of questions to leave out for cross-validation.
-#' @param normal.covariance The form of the covariance matrix for Hierarchical Bayes.
-#' Can be 'Full, 'Spherical', 'Diagonal'.
+#' @param normal.covariance The form of the covariance matrix for Hierarchical
+#' Bayes. Can be 'Full, 'Spherical', 'Diagonal'.
 #' @param hb.iterations The number of iterations in Hierarchical Bayes.
 #' @param hb.chains The number of chains in Hierarchical Bayes.
 #' @param hb.max.tree.depth http://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded
 #' @param hb.adapt.delta http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
-#' @param hb.keep.samples Whether to keep the samples of all the parameters in the output.
+#' @param hb.keep.samples Whether to keep the samples of all the parameters in
+#' the output.
 #' @param hb.stanfit Whether to include the stanfit property.
-#' @param hb.prior.sd The standard deviations for the priors of the mean parameters theta_raw.
+#' @param hb.prior.mean The mean for the priors of the mean parameters
+#' theta_raw. This is passed as a numeric vector with each element
+#' corresponding to an attribute, or a scalar. If hb.prior.mean is nonzero for
+#' a categorical attribute, the attribute is treated as ordered categorical and
+#' hb.prior.mean controls the offsets from the base attribute.
+#' @param hb.prior.sd The standard deviations for the priors of the mean
+#' parameters theta_raw. This is passed as a numeric vector with each element
+#' corresponding to an attribute, or a scalar. If hb.prior.mean is nonzero for
+#' a categorical attribute, the attribute is treated as ordered categorical and
+#' hb.prior.sd controls the standard deviations of the offsets from the base
+#' attribute.
 #' @param hb.warnings Whether to show warnings from Stan.
-#' @param hb.max.draws Maximum number of beta draws per respondent.
+#' @param hb.max.draws Maximum number of beta draws per respondent to return in
+#' beta.draws.
 #' @export
 FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL,
                            weights = NULL, seed = 123, tasks.left.out = 0,
                            normal.covariance = "Full", hb.iterations = 500,
                            hb.chains = 8, hb.max.tree.depth = 10,
                            hb.adapt.delta = 0.8, hb.keep.samples = FALSE,
-                           hb.stanfit = TRUE, hb.prior.sd = NULL,
-                           hb.warnings = TRUE, hb.max.draws = 100)
+                           hb.stanfit = TRUE, hb.prior.mean = 0,
+                           hb.prior.sd = 5, hb.warnings = TRUE,
+                           hb.max.draws = 100)
 {
     if (!is.null(weights))
         stop("Weights are not able to be applied for Hierarchical Bayes.")
 
-    dat <- processExperimentData(experiment.data, subset, weights, tasks.left.out, seed)
-    result <- hierarchicalBayesChoiceModel(dat, hb.iterations, hb.chains, hb.max.tree.depth,
-                                           hb.adapt.delta, seed, hb.keep.samples, n.classes,
-                                           hb.stanfit, normal.covariance, hb.prior.sd,
+    dat <- processExperimentData(experiment.data, subset, weights,
+                                 tasks.left.out, seed, hb.prior.mean,
+                                 hb.prior.sd)
+    result <- hierarchicalBayesChoiceModel(dat, hb.iterations, hb.chains,
+                                           hb.max.tree.depth, hb.adapt.delta,
+                                           seed, hb.keep.samples, n.classes,
+                                           hb.stanfit, normal.covariance,
                                            hb.warnings, hb.max.draws)
     result <- accuracyResults(dat, result)
     result$algorithm <- "HB-Stan"

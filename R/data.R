@@ -1,5 +1,8 @@
 #' @importFrom flipData CalibrateWeight CleanSubset CleanWeights
-processExperimentData <- function(experiment.data, subset, weights, n.questions.left.out, seed)
+processExperimentData <- function(experiment.data, subset, weights,
+                                  n.questions.left.out, seed,
+                                  input.prior.mean,
+                                  input.prior.sd)
 {
     # Tidying weights and subset
     subset <- CleanSubset(subset, nrow(experiment.data))
@@ -31,7 +34,23 @@ processExperimentData <- function(experiment.data, subset, weights, n.questions.
     n.variables <- sum(n.attribute.variables)
     n.raw.variables <- sum(sapply(n.attribute.variables - 1, function(x) max(x, 1)))
     var.names <- variableNames(attribute.data, n.attributes, n.questions, n.choices, n.variables)
-    X.list <- createDesignMatrix(attribute.data, n.attributes, n.questions, n.choices, n.variables)
+
+    if (!is.numeric(input.prior.mean) ||
+        (length(input.prior.mean) != n.attributes && length(input.prior.mean) != 1))
+        stop(paste0("The supplied parameter hb.prior.mean is inappropriate."))
+    if (!is.numeric(input.prior.sd) ||
+        (length(input.prior.sd) != n.attributes && length(input.prior.sd) != 1))
+        stop(paste0("The supplied parameter hb.prior.sd is inappropriate."))
+
+    X.list <- createDesignMatrix(attribute.data, n.attributes, n.questions,
+                                 n.choices, n.variables, input.prior.mean)
+    variable.scales <- X.list$variable.scales
+    prior.mean <- processInputPrior(input.prior.mean, n.raw.variables,
+                                    n.attributes, n.attribute.variables,
+                                    variable.scales)
+    prior.sd <- processInputPrior(input.prior.sd, n.raw.variables,
+                                  n.attributes, n.attribute.variables,
+                                  variable.scales)
     if (n.questions.left.out > 0)
     {
         left.out <- LeftOutQuestions(n.respondents, n.questions, n.questions.left.out, seed)
@@ -71,7 +90,9 @@ processExperimentData <- function(experiment.data, subset, weights, n.questions.
                    Y.out = Y.out,
                    subset = subset,
                    weights = weights,
-                   variable.scales = X.list$variable.scales)
+                   variable.scales = variable.scales,
+                   prior.mean = prior.mean,
+                   prior.sd = prior.sd)
     result
 }
 
@@ -101,7 +122,8 @@ completeLevels <- function(attribute.data)
     attribute.data
 }
 
-createDesignMatrix <- function(attribute.data, n.attributes, n.questions, n.choices, n.variables)
+createDesignMatrix <- function(attribute.data, n.attributes, n.questions,
+                               n.choices, n.variables, input.prior.mean)
 {
     n.qc <- n.questions * n.choices
     n.respondents <- nrow(attribute.data)
@@ -118,11 +140,26 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions, n.choi
                 v <- attribute.data[[n.qc * (i - 1) + n.choices * (q - 1) + j]]
                 if (is.factor(v))
                 {
-                    n.v <- length(levels(v))
-                    numeric.v <- as.numeric(v)
-                    X[, q, j, c:(c + n.v - 1)] <- 0
-                    for (r in 1:n.respondents)
-                        X[r, q, j, numeric.v[r] - 1 + c] <- 1
+                    is.ordered <- (length(input.prior.mean) == 1 &&
+                                   input.prior.mean != 0) ||
+                                  (length(input.prior.mean) > 1 &&
+                                   input.prior.mean[i] != 0)
+                    if (is.ordered)
+                    {
+                        n.v <- length(levels(v))
+                        numeric.v <- as.numeric(v)
+                        X[, q, j, c:(c + n.v - 1)] <- 0
+                        for (r in 1:n.respondents)
+                            X[r, q, j, c:(numeric.v[r] - 1 + c)] <- 1
+                    }
+                    else
+                    {
+                        n.v <- length(levels(v))
+                        numeric.v <- as.numeric(v)
+                        X[, q, j, c:(c + n.v - 1)] <- 0
+                        for (r in 1:n.respondents)
+                            X[r, q, j, numeric.v[r] - 1 + c] <- 1
+                    }
                 }
                 else
                 {
@@ -193,4 +230,36 @@ LeftOutQuestions <- function(n.respondents, n.questions, n.questions.left.out, s
 {
     set.seed(seed)
     sapply(rep(n.questions, n.respondents), function(x) (1:n.questions) %in% sample(x, n.questions.left.out))
+}
+
+processInputPrior <- function(prior.par, n.raw.variables, n.attributes,
+                              n.attribute.variables, variable.scales)
+{
+    result <- rep(NA, n.raw.variables)
+
+    if (length(prior.par) == 1)
+        result <- rep(prior.par, n.raw.variables)
+    else
+    {
+        n.attribute.raw.variables <- pmax(n.attribute.variables - 1, 1)
+
+        result <- rep(NA, n.raw.variables)
+        for (i in 1:n.attributes)
+        {
+            if (n.attribute.variables[i] == 1) # numeric
+            {
+                index.all <- sum(n.attribute.variables[1:i])
+                index.raw <- sum(n.attribute.raw.variables[1:i])
+                result[index.raw] <- prior.par[i] * variable.scales[index.all]
+            }
+            else # categorical
+            {
+                index.raw.end <- sum(n.attribute.raw.variables[1:i])
+                index.raw.start <- index.raw.end - n.attribute.raw.variables[i] + 1
+                for (j in index.raw.start:index.raw.end)
+                    result[j] <- prior.par[i]
+            }
+        }
+    }
+    result
 }

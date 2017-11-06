@@ -5,7 +5,6 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                          keep.samples = FALSE, n.classes = 1,
                                          include.stanfit = TRUE,
                                          normal.covariance = "Full",
-                                         prior.sd = NULL,
                                          stan.warnings = TRUE,
                                          max.draws = 100)
 {
@@ -15,7 +14,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     # allows Stan chains to run in parallel on multiprocessor machines
     options(mc.cores = parallel::detectCores())
 
-    stan.dat <- createStanData(dat, n.classes, normal.covariance, prior.sd)
+    stan.dat <- createStanData(dat, n.classes, normal.covariance)
 
     if (stan.warnings)
         stan.fit <- runStanSampling(stan.dat, n.classes, n.iterations,
@@ -54,21 +53,21 @@ runStanSampling <- function(stan.dat, n.classes, n.iterations, n.chains,
         # Ideally we would want to recompile when the package is built (similar to Rcpp)
         m <- stanModel(n.classes, normal.covariance)
         result <- sampling(m, data = stan.dat, chains = n.chains,
-                             iter = n.iterations, seed = seed,
-                             control = list(max_treedepth = max.tree.depth,
-                                            adapt_delta = adapt.delta))
+                           iter = n.iterations, seed = seed,
+                           control = list(max_treedepth = max.tree.depth,
+                                          adapt_delta = adapt.delta))
     }
     else # Not R servers
     {
         stan.file <- stanFileName(n.classes, normal.covariance)
         result <- stan(file = stan.file, data = stan.dat, iter = n.iterations,
-                         chains = n.chains, seed = seed,
-                         control = list(max_treedepth = max.tree.depth, adapt_delta = adapt.delta))
+                       chains = n.chains, seed = seed,
+                       control = list(max_treedepth = max.tree.depth, adapt_delta = adapt.delta))
     }
     result
 }
 
-createStanData <- function(dat, n.classes, normal.covariance, prior.sd)
+createStanData <- function(dat, n.classes, normal.covariance)
 {
     stan.dat <- list(C = dat$n.choices,
                      R = dat$n.respondents,
@@ -78,7 +77,9 @@ createStanData <- function(dat, n.classes, normal.covariance, prior.sd)
                      V_raw = dat$n.raw.variables,
                      V_attribute = dat$n.attribute.variables,
                      Y = dat$Y.in,
-                     X = dat$X.in)
+                     X = dat$X.in,
+                     prior_mean = dat$prior.mean,
+                     prior_sd = dat$prior.sd)
 
     if (n.classes > 1)
         stan.dat$P <- n.classes
@@ -87,30 +88,6 @@ createStanData <- function(dat, n.classes, normal.covariance, prior.sd)
         stan.dat$U <- dat$n.variables
     else if (normal.covariance == "Spherical")
         stan.dat$U <- 1
-
-    if (is.null(prior.sd))
-        stan.dat$prior_sd <- rep(2, dat$n.raw.variables) # default prior mean parameter SD
-    else if (!is.numeric(prior.sd) || length(prior.sd) != dat$n.raw.variables)
-        stop("The supplied parameter prior.sd is inappropriate.")
-    else
-    {
-        stan.dat$prior_sd <- prior.sd
-
-        # Need to scale the prior SD of numeric variables
-        n.attribute.variables <- dat$n.attribute.variables
-        n.attributes <- dat$n.attributes
-        n.attribute.raw.variables <- pmax(dat$n.attribute.variables - 1, 1)
-        for (i in 1:n.attributes)
-        {
-            if (n.attribute.variables[i] == 1)
-            {
-                index.all <- sum(n.attribute.variables[1:i])
-                index.raw <- sum(n.attribute.raw.variables[1:i])
-                stan.dat$prior_sd[index.raw] <- prior.sd[index.raw] *
-                                                dat$variable.scales[index.all]
-            }
-        }
-    }
 
     stan.dat
 }
@@ -170,7 +147,7 @@ ComputeRespPars <- function(stan.fit, var.names, subset,
         for (j in 1:n.variables)
             for (i in 1:n.respondents)
                 resp.pars.subset[i, j] <- mean(beta[, i, , j] * pp[, i, ])
-            resp.pars.subset
+        resp.pars.subset
     }
     else
         resp.pars.subset <- colMeans(beta, dims = 1)

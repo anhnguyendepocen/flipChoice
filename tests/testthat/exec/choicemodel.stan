@@ -1,5 +1,5 @@
 functions {
-    vector completeTheta(vector theta_raw, int A, int V, int[] V_attribute)
+    vector completeTheta(vector theta_raw, int A, int V, int[] V_attribute, vector prior_mean)
     {
         vector[V] theta;
         int variable_i = 1;
@@ -9,9 +9,15 @@ functions {
             if (V_attribute[i] > 1)
             {
                 int v = V_attribute[i];
+
                 for (j in 2:v)
                     theta[variable_i + j - 1] = theta_raw[raw_variable_i + j - 2];
-                theta[variable_i] = -sum(theta_raw[raw_variable_i:(raw_variable_i + v - 2)]);
+
+                if (prior_mean[raw_variable_i] == 0)
+                    theta[variable_i] = -sum(theta_raw[raw_variable_i:(raw_variable_i + v - 2)]);
+                else
+                    theta[variable_i] = 0;
+
                 variable_i = variable_i + v;
                 raw_variable_i = raw_variable_i + v - 1;
             }
@@ -36,6 +42,7 @@ data {
     int<lower=1> V_attribute[A]; // Number of variables in each attribute
     int<lower=1,upper=C> Y[R, S]; // choices
     matrix[C, V] X[R, S]; // matrix of attributes for each obs
+    vector[V_raw] prior_mean; // Prior mean for theta_raw
     vector[V_raw] prior_sd; // Prior sd for theta_raw
 }
 
@@ -53,7 +60,7 @@ transformed parameters {
     vector[C] XB[R, S];
     vector[V] beta[R];
 
-    theta = completeTheta(theta_raw, A, V, V_attribute);
+    theta = completeTheta(theta_raw, A, V, V_attribute, prior_mean);
 
     sigma = 2.5 * tan(sigma_unif);
     L_sigma = diag_pre_multiply(sigma, L_omega);
@@ -69,7 +76,7 @@ transformed parameters {
 model {
     //priors
     for (v in 1:V_raw)
-        theta_raw[v] ~ normal(0, prior_sd[v]);
+        theta_raw[v] ~ normal(prior_mean[v], prior_sd[v]);
     L_omega ~ lkj_corr_cholesky(4);
 
     for (r in 1:R)

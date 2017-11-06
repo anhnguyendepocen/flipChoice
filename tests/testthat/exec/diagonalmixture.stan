@@ -87,7 +87,7 @@ model {
     for (p in 1:P)
     {
         for (v in 1:V_raw)
-            theta_raw[p, v] ~ normal(0, prior_sd[v]);
+            theta_raw[p, v] ~ normal(prior_mean[v], prior_sd[v]);
         for (r in 1:R)
             standard_normal[r, p] ~ normal(0, 1);
     }

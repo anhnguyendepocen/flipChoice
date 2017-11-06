@@ -1,20 +1,21 @@
 context("Hierarchical Bayes")
 
 # load("sawtoothdata.RData")
+# load("tests/testthat/eggsdata.RData")
 load("eggsdata.RData")
 
 test_that("HB", {
     result <- FitChoiceModel(eggs.data, hb.iterations = 10, hb.chains = 1,
-                             hb.warnings = FALSE)
+                             hb.warnings = FALSE, hb.max.draws = 2)
     expect_error(print(result), NA)
-    # expect_equal(result$in.sample.accuracy, 0.439473684210526)
+    expect_equal(dim(result$beta.draws), c(2L, 380L, 20L))
+    expect_equal(result$in.sample.accuracy, 0.439473684210526)
 })
 
 test_that("HB cross validation", {
     result <- FitChoiceModel(eggs.data, hb.iterations = 10, hb.chains = 1,
                              tasks.left.out = 2, hb.warnings = FALSE)
     expect_error(print(result), NA)
-    # expect_equal(result$out.sample.accuracy, 0.396052631578947)
 })
 
 test_that("HB filter", {
@@ -23,7 +24,6 @@ test_that("HB filter", {
     result <- FitChoiceModel(eggs.data, hb.iterations = 10, hb.chains = 1,
                              subset = sub, hb.warnings = FALSE)
     expect_error(print(result), NA)
-    # expect_equal(result$in.sample.accuracy, 0.48375)
 })
 
 test_that("HB weights", {
@@ -37,7 +37,6 @@ test_that("HB 2 classes", {
     result <- FitChoiceModel(eggs.data, hb.iterations = 10, hb.chains = 1,
                              n.classes = 2, hb.warnings = FALSE)
     expect_error(print(result), NA)
-    # expect_equal(result$in.sample.accuracy, 0.439144736842105)
 })
 
 test_that("HB diagonal", {
@@ -45,7 +44,6 @@ test_that("HB diagonal", {
                              normal.covariance = "Diagonal",
                              hb.warnings = FALSE)
     expect_error(print(result), NA)
-    # expect_equal(result$in.sample.accuracy, 0.437828947368421)
 })
 
 test_that("HB diagonal 2 classes", {
@@ -53,7 +51,6 @@ test_that("HB diagonal 2 classes", {
                              normal.covariance = "Diagonal", n.classes = 2,
                              hb.warnings = FALSE)
     expect_error(print(result), NA)
-    # expect_equal(result$in.sample.accuracy, 0.459868421052632)
 })
 
 test_that("HB spherical", {
@@ -61,5 +58,11 @@ test_that("HB spherical", {
                             normal.covariance = "Spherical",
                             hb.warnings = FALSE)
     expect_error(print(result), NA)
-    # expect_equal(result$in.sample.accuracy, 0.429276315789474)
+})
+
+test_that("HB constraints", {
+    result <- FitChoiceModel(eggs.data, hb.iterations = 10, hb.chains = 1,
+                             hb.prior.mean = c(0, 1, 0, 0, 1, 0, 0, -2),
+                             hb.prior.sd = rep(3, 8), hb.warnings = FALSE)
+    expect_error(print(result), NA)
 })

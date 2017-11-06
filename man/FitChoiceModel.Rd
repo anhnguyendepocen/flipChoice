@@ -8,15 +8,16 @@ FitChoiceModel(experiment.data, n.classes = 1, subset = NULL,
   weights = NULL, seed = 123, tasks.left.out = 0,
   normal.covariance = "Full", hb.iterations = 500, hb.chains = 8,
   hb.max.tree.depth = 10, hb.adapt.delta = 0.8, hb.keep.samples = FALSE,
-  hb.stanfit = TRUE, hb.prior.sd = NULL, hb.warnings = TRUE,
-  hb.max.draws = 100)
+  hb.stanfit = TRUE, hb.prior.mean = 0, hb.prior.sd = 5,
+  hb.warnings = TRUE, hb.max.draws = 100)
 }
 \arguments{
 \item{experiment.data}{A data.frame from an Experiment question}
 
 \item{n.classes}{The number of latent classes.}
 
-\item{subset}{An optional vector specifying a subset of observations to be used in the fitting process.}
+\item{subset}{An optional vector specifying a subset of observations to be
+used in the fitting process.}
 
 \item{weights}{An optional vector of sampling or frequency weights.}
 
@@ -24,8 +25,8 @@ FitChoiceModel(experiment.data, n.classes = 1, subset = NULL,
 
 \item{tasks.left.out}{Number of questions to leave out for cross-validation.}
 
-\item{normal.covariance}{The form of the covariance matrix for Hierarchical Bayes.
-Can be 'Full, 'Spherical', 'Diagonal'.}
+\item{normal.covariance}{The form of the covariance matrix for Hierarchical
+Bayes. Can be 'Full, 'Spherical', 'Diagonal'.}
 
 \item{hb.iterations}{The number of iterations in Hierarchical Bayes.}
 
@@ -35,16 +36,30 @@ Can be 'Full, 'Spherical', 'Diagonal'.}
 
 \item{hb.adapt.delta}{http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup}
 
-\item{hb.keep.samples}{Whether to keep the samples of all the parameters in the output.}
+\item{hb.keep.samples}{Whether to keep the samples of all the parameters in
+the output.}
 
 \item{hb.stanfit}{Whether to include the stanfit property.}
 
-\item{hb.prior.sd}{The standard deviations for the priors of the mean parameters theta_raw.}
+\item{hb.prior.mean}{The mean for the priors of the mean parameters
+theta_raw. This is passed as a numeric vector with each element
+corresponding to an attribute, or a scalar. If hb.prior.mean is nonzero for
+a categorical attribute, the attribute is treated as ordered categorical and
+hb.prior.mean controls the offsets from the base attribute.}
+
+\item{hb.prior.sd}{The standard deviations for the priors of the mean
+parameters theta_raw. This is passed as a numeric vector with each element
+corresponding to an attribute, or a scalar. If hb.prior.mean is nonzero for
+a categorical attribute, the attribute is treated as ordered categorical and
+hb.prior.sd controls the standard deviations of the offsets from the base
+attribute.}
 
 \item{hb.warnings}{Whether to show warnings from Stan.}
 
-\item{hb.max.draws}{Maximum number of beta draws per respondent.}
+\item{hb.max.draws}{Maximum number of beta draws per respondent to return in
+beta.draws.}
 }
 \description{
-Fit a choice-based conjoint model using methods such as Hierarchical Bayes
+Fit a choice-based conjoint model using methods such as
+Hierarchical Bayes
 }
