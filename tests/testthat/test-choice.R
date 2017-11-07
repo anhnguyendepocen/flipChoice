@@ -9,7 +9,6 @@ test_that("HB", {
                              hb.warnings = FALSE, hb.max.draws = 2)
     expect_error(print(result), NA)
     expect_equal(dim(result$beta.draws), c(2L, 380L, 20L))
-    expect_equal(result$in.sample.accuracy, 0.439473684210526)
 })
 
 test_that("HB cross validation", {

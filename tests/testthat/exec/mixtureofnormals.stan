@@ -1,5 +1,5 @@
 functions {
-    vector completeTheta(vector theta_raw, int A, int V, int[] V_attribute)
+    vector completeTheta(vector theta_raw, int A, int V, int[] V_attribute, vector prior_mean)
     {
         vector[V] theta;
         int variable_i = 1;
@@ -11,7 +11,12 @@ functions {
                 int v = V_attribute[i];
                 for (j in 2:v)
                     theta[variable_i + j - 1] = theta_raw[raw_variable_i + j - 2];
-                theta[variable_i] = -sum(theta_raw[raw_variable_i:(raw_variable_i + v - 2)]);
+
+                if (prior_mean[raw_variable_i] == 0)
+                    theta[variable_i] = -sum(theta_raw[raw_variable_i:(raw_variable_i + v - 2)]);
+                else
+                    theta[variable_i] = 0;
+
                 variable_i = variable_i + v;
                 raw_variable_i = raw_variable_i + v - 1;
             }
@@ -37,6 +42,7 @@ data {
     int<lower=1> V_attribute[A]; // Number of variables in each attribute
     int<lower=1,upper=C> Y[R, S]; // choices
     matrix[C, V] X[R, S]; // matrix of attributes for each obs
+    vector[V_raw] prior_mean; // Prior mean for theta_raw
     vector[V_raw] prior_sd; // Prior sd for theta_raw
 }
 
@@ -60,7 +66,7 @@ transformed parameters {
         sigma[p] = 2.5 * tan(sigma_unif[p]);
         L_sigma[p] = diag_pre_multiply(sigma[p], L_omega[p]);
 
-        theta[p] = completeTheta(theta_raw[p], A, V, V_attribute);
+        theta[p] = completeTheta(theta_raw[p], A, V, V_attribute, prior_mean);
 
         for (r in 1:R)
             beta[r, p] = theta[p] + L_sigma[p] * standard_normal[r, p];
