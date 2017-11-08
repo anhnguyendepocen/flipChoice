@@ -107,14 +107,8 @@ ReduceStanFitSize <- function(stan.fit)
     stan.fit@stanmodel <- dummy.stanmodel
 
     # Set samples to zero to save space
-    nms <- names(stan.fit@sim$samples[[1]])
-    re <- paste(c("XB", "beta", "standard_normal", "theta_raw", "sigma_unif", "L_omega", "L_sigma",
-                  "posterior_prob", "class_weights"), collapse = "|")
-    nms <- nms[grepl(re, nms)]
     for (i in 1:stan.fit@sim$chains)
     {
-        for (nm in nms)
-            stan.fit@sim$samples[[i]][[nm]] <- 0
         attr(stan.fit@sim$samples[[i]], "inits") <- NULL
         attr(stan.fit@sim$samples[[i]], "mean_pars") <- NULL
     }
