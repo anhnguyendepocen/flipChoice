@@ -57,7 +57,7 @@ parameters {
 transformed parameters {
     vector<lower=0>[V] sigma[P];
     vector[V] theta[P]; // sums to zero
-    vector[V] beta[R, P];
+    vector[V] class_beta[R, P];
     vector[P] posterior_prob[R];
 
     for (p in 1:P)
@@ -74,7 +74,7 @@ transformed parameters {
             sigma[p] = 2.5 * tan(sigma_unif[p]);
 
         for (r in 1:R)
-            beta[r, p] = theta[p] + sigma[p] .* standard_normal[r, p];
+            class_beta[r, p] = theta[p] + sigma[p] .* standard_normal[r, p];
     }
 
     for (r in 1:R)
@@ -83,7 +83,7 @@ transformed parameters {
         {
             real prob = log(class_weights[p]);
             for (s in 1:S)
-                prob = prob + categorical_logit_lpmf(Y[r, s] | X[r, s] * beta[r, p]);
+                prob = prob + categorical_logit_lpmf(Y[r, s] | X[r, s] * class_beta[r, p]);
             posterior_prob[r, p] = prob;
         }
     }
@@ -101,4 +101,17 @@ model {
     //likelihood
     for (r in 1:R)
         target += log_sum_exp(posterior_prob[r]);
+}
+
+generated quantities {
+    vector[V] beta[R];
+    for (r in 1:R)
+        for (v in 1:V)
+        {
+            vector[P] pp = exp(posterior_prob[r]);
+            pp = pp / sum(pp);
+            beta[r, v] = 0;
+            for (p in 1:P)
+                beta[r, v] = beta[r, v] + class_beta[r, p, v] * pp[p];
+        }
 }

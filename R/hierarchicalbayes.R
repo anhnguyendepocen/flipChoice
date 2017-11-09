@@ -43,6 +43,8 @@ runStanSampling <- function(stan.dat, n.classes, n.iterations, n.chains,
                             normal.covariance, max.tree.depth, adapt.delta,
                             seed)
 {
+    pars <- c("theta", "sigma", "beta")
+
     if (IsRServer()) # R servers
     {
         # Loads a precompiled stan model called mod from sysdata.rda to avoid recompiling.
@@ -52,7 +54,7 @@ runStanSampling <- function(stan.dat, n.classes, n.iterations, n.chains,
         # where model.code is the stan code as a string.
         # Ideally we would want to recompile when the package is built (similar to Rcpp)
         m <- stanModel(n.classes, normal.covariance)
-        result <- sampling(m, data = stan.dat, chains = n.chains,
+        result <- sampling(m, data = stan.dat, chains = n.chains, pars = pars,
                            iter = n.iterations, seed = seed,
                            control = list(max_treedepth = max.tree.depth,
                                           adapt_delta = adapt.delta))
@@ -61,7 +63,7 @@ runStanSampling <- function(stan.dat, n.classes, n.iterations, n.chains,
     {
         stan.file <- stanFileName(n.classes, normal.covariance)
         result <- stan(file = stan.file, data = stan.dat, iter = n.iterations,
-                       chains = n.chains, seed = seed,
+                       chains = n.chains, seed = seed, pars = pars,
                        control = list(max_treedepth = max.tree.depth, adapt_delta = adapt.delta))
     }
     result
@@ -134,22 +136,7 @@ ComputeRespPars <- function(stan.fit, var.names, subset,
                             variable.scales = NULL)
 {
     beta <- extract(stan.fit, pars=c("beta"))$beta
-    if (length(dim(beta)) == 4) # n.classes > 1
-    {
-        n.respondents <- dim(beta)[2]
-        n.variables <- dim(beta)[4]
-        resp.pars.subset <- matrix(NA, n.respondents, n.variables)
-        pp <- exp(extract(stan.fit, pars=c("posterior_prob"))$posterior_prob)
-        for (i in 1:n.respondents)
-            pp[, i, ] <- pp[, i, ] / rowSums(pp[, i, ])
-
-        for (j in 1:n.variables)
-            for (i in 1:n.respondents)
-                resp.pars.subset[i, j] <- mean(beta[, i, , j] * pp[, i, ])
-        resp.pars.subset
-    }
-    else
-        resp.pars.subset <- colMeans(beta, dims = 1)
+    resp.pars.subset <- colMeans(beta, dims = 1)
 
     if (!is.null(variable.scales))
         resp.pars.subset <- t(t(resp.pars.subset) / variable.scales)
