@@ -106,6 +106,7 @@ ReduceStanFitSize <- function(stan.fit)
     # and is not required for diagnostic plots.
     dummy.stanmodel <- ""
     class(dummy.stanmodel) <- "stanmodel"
+    stan.fit <- removeBeta(stan.fit)
     stan.fit@stanmodel <- dummy.stanmodel
 
     for (i in 1:stan.fit@sim$chains)
@@ -115,7 +116,7 @@ ReduceStanFitSize <- function(stan.fit)
     }
     stan.fit@inits <- list()
     stan.fit@.MISC <- new.env()
-    removeBeta(stan.fit)
+    stan.fit
 }
 
 #' @title ComputeRespPars
