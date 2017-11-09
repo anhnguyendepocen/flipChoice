@@ -108,20 +108,14 @@ ReduceStanFitSize <- function(stan.fit)
     class(dummy.stanmodel) <- "stanmodel"
     stan.fit@stanmodel <- dummy.stanmodel
 
-    # Set samples to zero to save space
-    nms <- names(stan.fit@sim$samples[[1]])
-    re <- paste(c("beta", "posterior_prob"), collapse = "|")
-    nms <- nms[grepl(re, nms)]
     for (i in 1:stan.fit@sim$chains)
     {
-        for (nm in nms)
-            stan.fit@sim$samples[[i]][[nm]] <- 0
         attr(stan.fit@sim$samples[[i]], "inits") <- NULL
         attr(stan.fit@sim$samples[[i]], "mean_pars") <- NULL
     }
     stan.fit@inits <- list()
     stan.fit@.MISC <- new.env()
-    stan.fit
+    removeBeta(stan.fit)
 }
 
 #' @title ComputeRespPars
@@ -218,4 +212,18 @@ IsRServer <- function()
     node.name == "reusdev" ||
         grepl("^reustest.*", node.name) ||
         grepl("^reusprod.*", node.name)
+}
+
+removeBeta <- function(stan.fit)
+{
+    nms <- stan.fit@sim$fnames_oi
+    beta.nms <- nms[grepl("beta", nms)]
+    non.beta.nms <- nms[!grepl("beta", nms)]
+    stan.fit@sim$fnames_oi <- non.beta.nms
+    stan.fit@sim$n_flatnames <- length(non.beta.nms)
+    stan.fit@sim$pars_oi <- stan.fit@sim$pars_oi[stan.fit@sim$pars_oi != "beta"]
+    stan.fit@sim$dims_oi$beta <- NULL
+    for (i in 1:stan.fit@sim$chains)
+        stan.fit@sim$samples[[i]][beta.nms] <- NULL
+    stan.fit
 }
