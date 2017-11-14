@@ -6,14 +6,7 @@ processExperimentData <- function(experiment.data, subset, weights,
 {
     # Tidying weights and subset
     subset <- CleanSubset(subset, nrow(experiment.data))
-    if (!is.null(weights))
-    {
-        weights <- CleanWeights(weights)
-        weights <- weights[subset]
-        weights <- CalibrateWeight(weights)
-    }
-    else
-        weights <- rep(1, sum(subset))
+    weights <- prepareWeights(weights, subset)
 
     nms <- names(experiment.data)
     choice.name <- nms[1]
@@ -35,12 +28,7 @@ processExperimentData <- function(experiment.data, subset, weights,
     n.raw.variables <- sum(sapply(n.attribute.variables - 1, function(x) max(x, 1)))
     var.names <- variableNames(attribute.data, n.attributes, n.questions, n.choices, n.variables)
 
-    if (!is.numeric(input.prior.mean) ||
-        (length(input.prior.mean) != n.attributes && length(input.prior.mean) != 1))
-        stop(paste0("The supplied parameter hb.prior.mean is inappropriate."))
-    if (!is.numeric(input.prior.sd) ||
-        (length(input.prior.sd) != n.attributes && length(input.prior.sd) != 1))
-        stop(paste0("The supplied parameter hb.prior.sd is inappropriate."))
+    checkPriorParameters(input.prior.mean, input.prior.sd, n.attributes)
 
     X.list <- createDesignMatrix(attribute.data, n.attributes, n.questions,
                                  n.choices, n.variables, input.prior.mean)
@@ -51,28 +39,7 @@ processExperimentData <- function(experiment.data, subset, weights,
     prior.sd <- processInputPrior(input.prior.sd, n.raw.variables,
                                   n.attributes, n.attribute.variables,
                                   variable.scales)
-    if (n.questions.left.out > 0)
-    {
-        left.out <- LeftOutQuestions(n.respondents, n.questions, n.questions.left.out, seed)
-        X.in <- array(dim = c(n.respondents, n.questions.left.in, n.choices, n.variables))
-        Y.in <- matrix(NA, nrow = n.respondents, ncol = n.questions.left.in)
-        X.out <- array(dim = c(n.respondents, n.questions.left.out, n.choices, n.variables))
-        Y.out <- matrix(NA, nrow = n.respondents, ncol = n.questions.left.out)
-        for (r in 1:n.respondents)
-        {
-            X.in[r, , , ] <- X.list$X[r, !left.out[, r], , ]
-            Y.in[r, ] <- Y[r, !left.out[, r]]
-            X.out[r, , , ] <- X.list$X[r, left.out[, r], , ]
-            Y.out[r, ] <- Y[r, left.out[, r]]
-        }
-    }
-    else
-    {
-        X.in <- X.list$X
-        Y.in <- Y
-        X.out <- NULL
-        Y.out <- NULL
-    }
+    split.data <- crossValidationSplit(X.list$X, Y, n.questions.left.out, seed)
 
     result <- list(n.questions = n.questions,
                    n.questions.left.in = n.questions.left.in,
@@ -84,10 +51,10 @@ processExperimentData <- function(experiment.data, subset, weights,
                    n.raw.variables = n.raw.variables,
                    n.attribute.variables = n.attribute.variables,
                    var.names = var.names,
-                   X.in = X.in,
-                   Y.in = Y.in,
-                   X.out = X.out,
-                   Y.out = Y.out,
+                   X.in = split.data$X.in,
+                   Y.in = split.data$Y.in,
+                   X.out = split.data$X.out,
+                   Y.out = split.data$Y.out,
                    subset = subset,
                    weights = weights,
                    variable.scales = variable.scales,
@@ -262,4 +229,57 @@ processInputPrior <- function(prior.par, n.raw.variables, n.attributes,
         }
     }
     result
+}
+
+crossValidationSplit <- function(X, Y, n.questions.left.out, seed)
+{
+    if (n.questions.left.out > 0)
+    {
+        n.respondents <- dim(X)[1]
+        n.questions <- dim(X)[2]
+        n.questions.left.in <- n.questions - n.questions.left.out
+        left.out <- LeftOutQuestions(n.respondents, n.questions, n.questions.left.out, seed)
+        X.in <- array(dim = c(n.respondents, n.questions.left.in, n.choices, n.variables))
+        Y.in <- matrix(NA, nrow = n.respondents, ncol = n.questions.left.in)
+        X.out <- array(dim = c(n.respondents, n.questions.left.out, n.choices, n.variables))
+        Y.out <- matrix(NA, nrow = n.respondents, ncol = n.questions.left.out)
+        for (r in 1:n.respondents)
+        {
+            X.in[r, , , ] <- X[r, !left.out[, r], , ]
+            Y.in[r, ] <- Y[r, !left.out[, r]]
+            X.out[r, , , ] <- X[r, left.out[, r], , ]
+            Y.out[r, ] <- Y[r, left.out[, r]]
+        }
+    }
+    else
+    {
+        X.in <- X
+        Y.in <- Y
+        X.out <- NULL
+        Y.out <- NULL
+    }
+    list(X.in = X.in, X.out = X.out, Y.in = Y.in, Y.out = Y.out)
+}
+
+checkPriorParameters <- function(input.prior.mean, input.prior.sd,
+                                 n.attributes)
+{
+    if (!is.numeric(input.prior.mean) ||
+        (length(input.prior.mean) != n.attributes && length(input.prior.mean) != 1))
+        stop(paste0("The supplied parameter hb.prior.mean is inappropriate."))
+    if (!is.numeric(input.prior.sd) ||
+        (length(input.prior.sd) != n.attributes && length(input.prior.sd) != 1))
+        stop(paste0("The supplied parameter hb.prior.sd is inappropriate."))
+}
+
+prepareWeights <- function(weights, subset)
+{
+    if (!is.null(weights))
+    {
+        weights <- CleanWeights(weights)
+        weights <- weights[subset]
+        CalibrateWeight(weights)
+    }
+    else
+        rep(1, sum(subset))
 }

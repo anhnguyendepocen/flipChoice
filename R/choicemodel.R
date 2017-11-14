@@ -2,6 +2,9 @@
 #' @description Fit a choice-based conjoint model using methods such as
 #' Hierarchical Bayes
 #' @param experiment.data A data.frame from an Experiment question
+#' @param cho.file The file path to a cho file.
+#' @param attribute.levels A dataframe or matrix where each column contains
+#' the level names of an attribute.
 #' @param n.classes The number of latent classes.
 #' @param subset An optional vector specifying a subset of observations to be
 #' used in the fitting process.
@@ -31,22 +34,32 @@
 #' @param hb.warnings Whether to show warnings from Stan.
 #' @param hb.max.draws Maximum number of beta draws per respondent to return in
 #' beta.draws.
+#' @param include.choice.parameters Whether to include alternative-specific parameters.
 #' @export
-FitChoiceModel <- function(experiment.data, n.classes = 1, subset = NULL,
-                           weights = NULL, seed = 123, tasks.left.out = 0,
-                           normal.covariance = "Full", hb.iterations = 500,
-                           hb.chains = 8, hb.max.tree.depth = 10,
-                           hb.adapt.delta = 0.8, hb.keep.samples = FALSE,
-                           hb.stanfit = TRUE, hb.prior.mean = 0,
-                           hb.prior.sd = 5, hb.warnings = TRUE,
-                           hb.max.draws = 100)
+FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
+                           attribute.levels = NULL, n.classes = 1,
+                           subset = NULL, weights = NULL, seed = 123,
+                           tasks.left.out = 0, normal.covariance = "Full",
+                           hb.iterations = 500, hb.chains = 8,
+                           hb.max.tree.depth = 10, hb.adapt.delta = 0.8,
+                           hb.keep.samples = FALSE, hb.stanfit = TRUE,
+                           hb.prior.mean = 0, hb.prior.sd = 5,
+                           hb.warnings = TRUE, hb.max.draws = 100,
+                           include.choice.parameters = TRUE)
 {
     if (!is.null(weights))
         stop("Weights are not able to be applied for Hierarchical Bayes.")
 
-    dat <- processExperimentData(experiment.data, subset, weights,
-                                 tasks.left.out, seed, hb.prior.mean,
-                                 hb.prior.sd)
+    dat <- if (!is.null(experiment.data))
+        processExperimentData(experiment.data, subset, weights,
+                              tasks.left.out, seed, hb.prior.mean, hb.prior.sd)
+    else if (!is.null(cho.file) && !is.null(attribute.levels))
+        processChoFile(cho.file, attribute.levels,
+                       subset, weights, tasks.left.out, seed,
+                       hb.prior.mean, hb.prior.sd, include.choice.parameters)
+    else
+        stop("Insufficient data was supplied.")
+
     result <- hierarchicalBayesChoiceModel(dat, hb.iterations, hb.chains,
                                            hb.max.tree.depth, hb.adapt.delta,
                                            seed, hb.keep.samples, n.classes,
