@@ -1,4 +1,4 @@
-processChoFile <- function(cho.file, attribute.levels,
+processChoFile <- function(cho.file, raw.attribute.levels,
                            subset, weights, n.questions.left.out, seed,
                            input.prior.mean, input.prior.sd,
                            include.choice.parameters)
@@ -20,8 +20,8 @@ processChoFile <- function(cho.file, attribute.levels,
     n.attribute.variables <- unlist(lapply(attribute.levels, length))
     n.variables <-  sum(n.attribute.variables)
     n.raw.variables <- n.variables - n.attributes
-
     var.names <- variableNamesCho(attribute.levels)
+    variable.scales <- rep(1, n.variables)
 
     checkPriorParameters(input.prior.mean, input.prior.sd, n.attributes)
 

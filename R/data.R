@@ -237,6 +237,8 @@ crossValidationSplit <- function(X, Y, n.questions.left.out, seed)
     {
         n.respondents <- dim(X)[1]
         n.questions <- dim(X)[2]
+        n.choices <- dim(X)[3]
+        n.variables <- dim(X)[4]
         n.questions.left.in <- n.questions - n.questions.left.out
         left.out <- LeftOutQuestions(n.respondents, n.questions, n.questions.left.out, seed)
         X.in <- array(dim = c(n.respondents, n.questions.left.in, n.choices, n.variables))
