@@ -5,7 +5,8 @@
 \title{FitChoiceModel}
 \usage{
 FitChoiceModel(experiment.data = NULL, cho.file = NULL,
-  attribute.levels = NULL, n.classes = 1, subset = NULL, weights = NULL,
+  design.file = NULL, attribute.levels.file = NULL, choices = NULL,
+  questions = NULL, n.classes = 1, subset = NULL, weights = NULL,
   seed = 123, tasks.left.out = 0, normal.covariance = "Full",
   hb.iterations = 500, hb.chains = 8, hb.max.tree.depth = 10,
   hb.adapt.delta = 0.8, hb.keep.samples = FALSE, hb.stanfit = TRUE,
@@ -17,8 +18,16 @@ FitChoiceModel(experiment.data = NULL, cho.file = NULL,
 
 \item{cho.file}{The file path to a cho file.}
 
-\item{attribute.levels}{A dataframe or matrix where each column contains
-the level names of an attribute.}
+\item{design.file}{The file path to a Sawtooth design file.}
+
+\item{attribute.levels.file}{A dataframe or matrix where each column
+contains the level names of an attribute.}
+
+\item{choices}{A data.frame of choices made by respondents for each
+question.}
+
+\item{questions}{A data.frame of IDs of questions presented to the
+respondents.}
 
 \item{n.classes}{The number of latent classes.}
 
