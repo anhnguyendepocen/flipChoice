@@ -3,8 +3,13 @@
 #' Hierarchical Bayes
 #' @param experiment.data A data.frame from an Experiment question
 #' @param cho.file The file path to a cho file.
-#' @param attribute.levels A dataframe or matrix where each column contains
-#' the level names of an attribute.
+#' @param design.file The file path to a Sawtooth design file.
+#' @param attribute.levels.file A dataframe or matrix where each column
+#' contains the level names of an attribute.
+#' @param choices A data.frame of choices made by respondents for each
+#' question.
+#' @param questions A data.frame of IDs of questions presented to the
+#' respondents.
 #' @param n.classes The number of latent classes.
 #' @param subset An optional vector specifying a subset of observations to be
 #' used in the fitting process.
@@ -37,7 +42,9 @@
 #' @param include.choice.parameters Whether to include alternative-specific parameters.
 #' @export
 FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
-                           attribute.levels = NULL, n.classes = 1,
+                           design.file = NULL,
+                           attribute.levels.file = NULL,
+                           choices = NULL, questions = NULL, n.classes = 1,
                            subset = NULL, weights = NULL, seed = 123,
                            tasks.left.out = 0, normal.covariance = "Full",
                            hb.iterations = 500, hb.chains = 8,
@@ -53,10 +60,16 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
     dat <- if (!is.null(experiment.data))
         processExperimentData(experiment.data, subset, weights,
                               tasks.left.out, seed, hb.prior.mean, hb.prior.sd)
-    else if (!is.null(cho.file) && !is.null(attribute.levels))
-        processChoFile(cho.file, attribute.levels,
+    else if (!is.null(cho.file) && !is.null(attribute.levels.file))
+        processChoFile(cho.file, attribute.levels.file,
                        subset, weights, tasks.left.out, seed,
                        hb.prior.mean, hb.prior.sd, include.choice.parameters)
+    else if (!is.null(design.file) && !is.null(choices) &&
+             !is.null(questions))
+        processDesignFile(design.file, attribute.levels.file, choices,
+                              questions, subset, weights, tasks.left.out,
+                              seed, hb.prior.mean, hb.prior.sd,
+                              include.choice.parameters)
     else
         stop("Insufficient data was supplied.")
 
