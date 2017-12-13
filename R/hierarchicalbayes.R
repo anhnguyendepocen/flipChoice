@@ -147,20 +147,20 @@ stanFileName <- function(n.classes, normal.covariance)
     if (n.classes == 1)
     {
         if (normal.covariance == "Full")
-            result <- "exec/choicemodel.stan"
+            result <- "choicemodel.stan"
         else
-            result <- "exec/diagonal.stan"
+            result <- "diagonal.stan"
     }
     else
     {
         if (normal.covariance == "Full")
-            result <- "exec/mixtureofnormals.stan"
+            result <- "mixtureofnormals.stan"
         else
-            result <- "exec/diagonalmixture.stan"
+            result <- "diagonalmixture.stan"
     }
 
-    if (!dir.exists("exec")) # not unit testing
-        result <- paste0("tests/testthat/", result)
+    result <- file.path(system.file("stan", package = "flipChoice",
+                                    mustWork = TRUE), result)
 
     result
 }
