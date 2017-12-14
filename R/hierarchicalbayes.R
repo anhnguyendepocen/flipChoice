@@ -6,7 +6,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                          include.stanfit = TRUE,
                                          normal.covariance = "Full",
                                          stan.warnings = TRUE,
-                                         max.draws = 100)
+                                         max.draws = 100, ...)
 {
     # We want to replace this call with a proper integration of rstan into this package
     require(rstan)
@@ -16,16 +16,29 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
 
     stan.dat <- createStanData(dat, n.classes, normal.covariance)
 
-    if (stan.warnings)
-        stan.fit <- runStanSampling(stan.dat, n.classes, n.iterations,
-                                    n.chains, normal.covariance,
-                                    max.tree.depth, adapt.delta, seed)
+    if (IsRServer()) # R servers
+    {
+        stan.model <- stanModel(n.classes, normal.covariance)
+        stan.file <- NULL
+    }
     else
-        suppressWarnings(stan.fit <- runStanSampling(stan.dat, n.classes,
+    {
+        stan.model <- NULL
+        stan.file <- stanFileName(n.classes, normal.covariance)
+    }
+
+    if (stan.warnings)
+        stan.fit <- RunStanSampling(stan.dat, n.iterations,
+                                    n.chains,
+                                    max.tree.depth, adapt.delta, seed,
+                                    stan.model, stan.file, ...)
+    else
+        suppressWarnings(stan.fit <- RunStanSampling(stan.dat,
                                                      n.iterations, n.chains,
-                                                     normal.covariance,
                                                      max.tree.depth,
-                                                     adapt.delta, seed))
+                                                     adapt.delta, seed,
+                                                     stan.model, stan.file,
+                                                     ...))
 
     result <- list()
     result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset,
@@ -39,9 +52,24 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     result
 }
 
-runStanSampling <- function(stan.dat, n.classes, n.iterations, n.chains,
-                            normal.covariance, max.tree.depth, adapt.delta,
-                            seed)
+#' @title RunStanSampling
+#' @description Wrapper function for \code{rstan:stan} and
+#' \code{rstan:sampling} to run Stan HB analysis.
+#' @param stan.dat The data to be passed to Stan.
+#' @param n.iterations The number of iterations in the analysis.
+#' @param n.chains The number of chains in the analysis.
+#' @param max.tree.depth Maximum tree depth setting. See Stan documentation.
+#' @param adapt.delta Adapt delta setting. See Stan documentation.
+#' @param seed Random seed.
+#' @param stan.model Complied Stan model (if running on the R server).
+#' @param stan.file Path to Stan file (if not running on the R server).
+#' @param ... Additional parameters to pass on to \code{rstan::stan} and
+#' \code{rstan::sampling}.
+#' @return A stanfit object.
+#' @export
+RunStanSampling <- function(stan.dat, n.iterations, n.chains,
+                            max.tree.depth, adapt.delta,
+                            seed, stan.model, stan.file, ...)
 {
     pars <- c("theta", "sigma", "beta")
 
@@ -53,18 +81,17 @@ runStanSampling <- function(stan.dat, n.classes, n.iterations, n.chains,
         # devtools::use_data(mod, internal = TRUE, overwrite = TRUE)
         # where model.code is the stan code as a string.
         # Ideally we would want to recompile when the package is built (similar to Rcpp)
-        m <- stanModel(n.classes, normal.covariance)
-        result <- sampling(m, data = stan.dat, chains = n.chains, pars = pars,
-                           iter = n.iterations, seed = seed,
+        result <- sampling(stan.model, data = stan.dat, chains = n.chains,
+                           pars = pars, iter = n.iterations, seed = seed,
                            control = list(max_treedepth = max.tree.depth,
-                                          adapt_delta = adapt.delta))
+                                          adapt_delta = adapt.delta), ...)
     }
     else # Not R servers
     {
-        stan.file <- stanFileName(n.classes, normal.covariance)
         result <- stan(file = stan.file, data = stan.dat, iter = n.iterations,
                        chains = n.chains, seed = seed, pars = pars,
-                       control = list(max_treedepth = max.tree.depth, adapt_delta = adapt.delta))
+                       control = list(max_treedepth = max.tree.depth,
+                                      adapt_delta = adapt.delta), ...)
     }
     result
 }

@@ -39,7 +39,10 @@
 #' @param hb.warnings Whether to show warnings from Stan.
 #' @param hb.max.draws Maximum number of beta draws per respondent to return in
 #' beta.draws.
-#' @param include.choice.parameters Whether to include alternative-specific parameters.
+#' @param include.choice.parameters Whether to include alternative-specific
+#' parameters.
+#' @param ... Additional parameters to pass on to \code{rstan::stan} and
+#' \code{rstan::sampling}.
 #' @export
 FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                            design.file = NULL,
@@ -52,7 +55,7 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                            hb.keep.samples = FALSE, hb.stanfit = TRUE,
                            hb.prior.mean = 0, hb.prior.sd = 5,
                            hb.warnings = TRUE, hb.max.draws = 100,
-                           include.choice.parameters = TRUE)
+                           include.choice.parameters = TRUE, ...)
 {
     if (!is.null(weights))
         stop("Weights are not able to be applied for Hierarchical Bayes.")
@@ -77,7 +80,7 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                                            hb.max.tree.depth, hb.adapt.delta,
                                            seed, hb.keep.samples, n.classes,
                                            hb.stanfit, normal.covariance,
-                                           hb.warnings, hb.max.draws)
+                                           hb.warnings, hb.max.draws, ...)
     result <- accuracyResults(dat, result)
     result$algorithm <- "HB-Stan"
     result$n.questions.left.out <- tasks.left.out
