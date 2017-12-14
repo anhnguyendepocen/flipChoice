@@ -1,6 +1,6 @@
 context("Hierarchical Bayes")
 
-data(eggsdata, package = "flipChoice")
+data(eggs, package = "flipChoice")
 
 test_that("HB", {
     result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
