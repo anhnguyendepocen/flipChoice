@@ -1,11 +1,12 @@
 #' @importFrom rstan rstan_options stan extract sampling
+#' @importFrom flipU InterceptWarnings
 hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                          max.tree.depth = 10,
                                          adapt.delta = 0.8, seed = 123,
                                          keep.samples = FALSE, n.classes = 1,
                                          include.stanfit = TRUE,
                                          normal.covariance = "Full",
-                                         stan.warnings = TRUE,
+                                         show.stan.warnings = TRUE,
                                          max.draws = 100, ...)
 {
     # We want to replace this call with a proper integration of rstan into this package
@@ -27,18 +28,16 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
         stan.file <- stanFileName(n.classes, normal.covariance)
     }
 
-    if (stan.warnings)
-        stan.fit <- RunStanSampling(stan.dat, n.iterations,
-                                    n.chains,
-                                    max.tree.depth, adapt.delta, seed,
-                                    stan.model, stan.file, ...)
+    on.warnings <- if (show.stan.warnings)
+        onStanWarning
     else
-        suppressWarnings(stan.fit <- RunStanSampling(stan.dat,
-                                                     n.iterations, n.chains,
-                                                     max.tree.depth,
-                                                     adapt.delta, seed,
-                                                     stan.model, stan.file,
-                                                     ...))
+        function(x) {}
+
+    InterceptWarnings({
+        stan.fit <- RunStanSampling(stan.dat, n.iterations, n.chains,
+                                    max.tree.depth, adapt.delta, seed,
+                                    stan.model, stan.file, ...)},
+                                    on.warnings)
 
     result <- list()
     result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset,
@@ -254,4 +253,22 @@ removeBeta <- function(stan.fit)
     for (i in 1:stan.fit@sim$chains)
         stan.fit@sim$samples[[i]][beta.nms] <- NULL
     stan.fit
+}
+
+onStanWarning <- function(warn)
+{
+    msg <- warn$message
+    if (grepl("Increasing adapt_delta above", msg))
+        warning("Results may be due inaccurate due to insufficient",
+                " iteratations. Rerun the analysis with more",
+                " iterations.", call. = FALSE)
+    else if (grepl("Examine the pairs\\(\\) plot", msg))
+        warning("Examine the Diagnostic plots to diagnose sampling problems",
+                call. = FALSE)
+    else if (grepl("exceeded the maximum treedepth", msg))
+        warning("Results may be due inaccurate as the maximum tree depth",
+                " is too low. Rerun the analysis with a higher",
+                " maximum tree depth.")
+    else
+        warning(warn)
 }
