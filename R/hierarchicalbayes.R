@@ -28,10 +28,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
         stan.file <- stanFileName(n.classes, normal.covariance)
     }
 
-    on.warnings <- if (show.stan.warnings)
-        onStanWarning
-    else
-        function(x) {}
+    on.warnings <- GetStanWarningHandler(show.stan.warnings)
 
     InterceptWarnings({
         stan.fit <- RunStanSampling(stan.dat, n.iterations, n.chains,
@@ -253,6 +250,20 @@ removeBeta <- function(stan.fit)
     for (i in 1:stan.fit@sim$chains)
         stan.fit@sim$samples[[i]][beta.nms] <- NULL
     stan.fit
+}
+
+#' @title GetStanWarningHandler
+#' @description This function returns functions that handle Stan warnings.
+#' @param show.stan.warnings Whether to return a function that shows
+#' user-friendly Stan warnings.
+#' @return A function that takes a warning object.
+#' @export
+GetStanWarningHandler <- function(show.stan.warnings)
+{
+    if (show.stan.warnings)
+        onStanWarning
+    else
+        function(x) {}
 }
 
 onStanWarning <- function(warn)

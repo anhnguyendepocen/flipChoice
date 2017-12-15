@@ -45,7 +45,7 @@ test_that("jmp format", {
 })
 
 test_that("jmp labels format", {
-    ExpectWarning(result <- FitChoiceModel(design.file = jmp.levels.design.file,
+    flipU::ExpectWarning(result <- FitChoiceModel(design.file = jmp.levels.design.file,
                              choices = choices.jmp.levels,
                              questions = tasks.jmp.levels,
                              hb.iterations = 10, hb.chains = 1,
