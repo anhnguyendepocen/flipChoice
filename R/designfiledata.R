@@ -9,9 +9,9 @@ processDesignFile <- function(design.file, attribute.levels.file,
     design <- output$design
     attribute.levels <- output$attribute.levels
 
-    output <- processRespondentData(choices, questions)
-    choices <- output$choices
-    questions <- output$questions
+    respondent.data <- processRespondentData(choices, questions)
+    choices <- respondent.data$choices
+    questions <- respondent.data$questions
 
     n.attributes <- dim(design)[2] - 3
     n.questions <- dim(questions)[2]
