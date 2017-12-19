@@ -210,13 +210,15 @@ ParameterStatisticsInfo <- function(parameter.statistics, parameter.names)
 
     result <- ""
     result <- paste0(result, "Lowest effective sample size (theta): ",
-                     parameter.names[theta.n.eff.ind], " ", theta.n.eff, "; ")
-    result <- paste0(result, "Highest Rhat (theta): ",
-                     parameter.names[theta.n.eff.ind], " ", theta.rhat, "; ")
+                     theta.n.eff, " at ", parameter.names[theta.n.eff.ind],
+                     "; ")
+    result <- paste0(result, "Highest Rhat (theta): ", theta.rhat, " at ",
+                     parameter.names[theta.n.eff.ind], "; ")
     result <- paste0(result, "Lowest effective sample size (sigma): ",
-                     parameter.names[sigma.n.eff.ind], " ", sigma.n.eff, "; ")
-    result <- paste0(result, "Highest Rhat (sigma): ",
-                     parameter.names[sigma.n.eff.ind], " ", sigma.rhat, "; ")
+                     sigma.n.eff, " at ", parameter.names[sigma.n.eff.ind],
+                     "; ")
+    result <- paste0(result, "Highest Rhat (sigma): ", sigma.rhat, " at ",
+                     parameter.names[sigma.n.eff.ind], "; ")
     result
 }
 
