@@ -37,7 +37,8 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                     on.warnings)
 
     result <- list()
-    result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset,
+    result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names,
+                                                    dat$subset,
                                                     dat$variable.scales)
     result$parameter.statistics <- GetParameterStatistics(stan.fit)
     if (include.stanfit)
