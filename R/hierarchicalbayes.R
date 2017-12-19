@@ -39,6 +39,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     result <- list()
     result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names, dat$subset,
                                                     dat$variable.scales)
+    result$parameter.statistics <- GetParameterStatistics(stan.fit)
     if (include.stanfit)
     {
         result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
@@ -282,4 +283,16 @@ onStanWarning <- function(warn)
                 " maximum tree depth.")
     else
         warning(warn)
+}
+
+#' @title GetParameterStatistics
+#' @description This function returns functions that handle Stan warnings.
+#' @param stan.fit Whether to return a function that shows
+#' user-friendly Stan warnings.
+#' @return A matrix containing parameter summary statistics.
+#' @importFrom rstan summary
+#' @export
+GetParameterStatistics <- function(stan.fit)
+{
+    rstan::summary(stan.fit, pars = c("theta", "sigma"))$summary
 }

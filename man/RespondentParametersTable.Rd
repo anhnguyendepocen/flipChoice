@@ -2,7 +2,7 @@
 % Please edit documentation in R/choicemodel.R
 \name{RespondentParametersTable}
 \alias{RespondentParametersTable}
-\title{\code{RespondentParametersTable}}
+\title{RespondentParametersTable}
 \usage{
 RespondentParametersTable(resp.pars, title, subtitle, footer)
 }

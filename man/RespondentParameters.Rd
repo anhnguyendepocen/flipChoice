@@ -2,7 +2,7 @@
 % Please edit documentation in R/choicemodel.R
 \name{RespondentParameters}
 \alias{RespondentParameters}
-\title{\code{RespondentParameters}}
+\title{RespondentParameters}
 \usage{
 RespondentParameters(object)
 }
