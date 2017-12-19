@@ -45,11 +45,11 @@ test_that("jmp format", {
 })
 
 test_that("jmp labels format", {
-    flipU::ExpectWarning(result <- FitChoiceModel(design.file = jmp.levels.design.file,
+    expect_warning(result <- FitChoiceModel(design.file = jmp.levels.design.file,
                              choices = choices.jmp.levels,
                              questions = tasks.jmp.levels,
                              hb.iterations = 10, hb.chains = 1,
                              hb.warnings = FALSE),
-        "9 respondents with missing data were omitted from the analysis.")
+        "9 respondents with missing data were omitted from the analysis")
     expect_error(print(result), NA)
 })

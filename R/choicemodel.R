@@ -139,7 +139,7 @@ predictionAccuracies <- function(resp.pars, X, Y, subset)
     result
 }
 
-#' \code{RespondentParameters}
+#' @title RespondentParameters
 #' @description The parameters for each respondent.
 #' @param object A \code{FitChoice} or \code{FitMaxDiff} object.
 #' @export
@@ -148,7 +148,7 @@ RespondentParameters <- function(object)
     as.data.frame(object$respondent.parameters)
 }
 
-#' \code{RespondentParametersTable}
+#' @title RespondentParametersTable
 #' @description Produces a formattable table with histograms of respondent parameters.
 #' @param resp.pars A matrix of respondent parameters
 #' @param title Table title.
@@ -182,10 +182,49 @@ RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
 }
 
 #' @title print.FitChoice
+#' @description Produces a string mentioning the parameters with the lowest
+#' effective sample size and highest Rhat.
+#' @param parameter.statistics Matrix containing parameter statistics from
+#' a summary of a stan.fit object.
+#' @param parameter.names Names of the parameters.
+#' @return A string containing information about parameter statistics.
+#' @export
+ParameterStatisticsInfo <- function(parameter.statistics, parameter.names)
+{
+    n.rows <- nrow(parameter.statistics)
+    theta.statistics <- parameter.statistics[1:(n.rows / 2), ]
+    theta.n.eff.ind <- which.min(theta.statistics[, 9])
+    theta.n.eff <- FormatAsReal(theta.statistics[theta.n.eff.ind, 9],
+                                decimals = 1)
+    theta.rhat.ind <- which.max(theta.statistics[, 10])
+    theta.rhat <- FormatAsReal(theta.statistics[theta.rhat.ind, 10],
+                               decimals = 2)
+
+    sigma.statistics <- parameter.statistics[(n.rows / 2 + 1):n.rows, ]
+    sigma.n.eff.ind <- which.min(sigma.statistics[, 9])
+    sigma.n.eff <- FormatAsReal(sigma.statistics[sigma.n.eff.ind, 9],
+                                decimals = 1)
+    sigma.rhat.ind <- which.min(sigma.statistics[, 10])
+    sigma.rhat <- FormatAsReal(sigma.statistics[sigma.n.eff.ind, 10],
+                               decimals = 2)
+
+    result <- ""
+    result <- paste0(result, "Lowest effective sample size (theta): ",
+                     parameter.names[theta.n.eff.ind], " ", theta.n.eff, "; ")
+    result <- paste0(result, "Highest Rhat (theta): ",
+                     parameter.names[theta.n.eff.ind], " ", theta.rhat, "; ")
+    result <- paste0(result, "Lowest effective sample size (sigma): ",
+                     parameter.names[sigma.n.eff.ind], " ", sigma.n.eff, "; ")
+    result <- paste0(result, "Highest Rhat (sigma): ",
+                     parameter.names[sigma.n.eff.ind], " ", sigma.rhat, "; ")
+    result
+}
+
+#' @title print.FitChoice
 #' @description Print a FitChoice object
 #' @param x FitMaxDiff object.
 #' @param ... further arguments passed to or from other methods.
-#' @importFrom flipFormat HistTable FormatAsPercent FormatAsReal
+#' @importFrom flipFormat HistTable FormatAsPercent
 #' @export
 print.FitChoice <- function(x, ...)
 {
@@ -202,7 +241,11 @@ print.FitChoice <- function(x, ...)
     footer <- paste0(footer, "Choices per question: ", x$n.choices, "; ")
     footer <- paste0(footer, "Number of attributes: ", x$n.attributes, "; ")
     footer <- paste0(footer, "Number of variables: ", x$n.variables, "; ")
-    footer <- paste0(footer, "Blue and red bars indicate positive and negative parameters respectively; ")
+    footer <- paste0(footer, "Blue and red bars indicate positive and ",
+                     "negative parameters respectively; ")
+    footer <- paste0(footer,
+                     ParameterStatisticsInfo(x$parameter.statistics,
+                         colnames(x$respondent.parameters)))
 
     subtitle <- if (!is.na(x$out.sample.accuracy))
         paste0("Prediction accuracy (leave-", x$n.questions.left.out , "-out cross-validation): ",
