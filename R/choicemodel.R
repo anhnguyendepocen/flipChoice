@@ -209,33 +209,35 @@ ParameterStatisticsInfo <- function(parameter.statistics, parameter.names)
                                decimals = 2)
 
     result <- ""
-    if (theta.n.eff.ind == theta.rhat.ind)
+    if (length(theta.rhat.ind) == 0)
+        result <- paste0(result, "Lowest effective sample size (theta): ",
+                         theta.n.eff, " at ", parameter.names[theta.n.eff.ind],
+                         "; Rhat (theta) not available; ")
+    else if (theta.n.eff.ind == theta.rhat.ind)
         result <- paste0(result, "Lowest effective sample size (theta): ",
                          theta.n.eff, " and Highest Rhat (theta): ",
                          theta.rhat, " at ", parameter.names[theta.n.eff.ind],
                          "; ")
     else
-    {
         result <- paste0(result, "Lowest effective sample size (theta): ",
                          theta.n.eff, " at ", parameter.names[theta.n.eff.ind],
-                         "; ")
-        result <- paste0(result, "Highest Rhat (theta): ", theta.rhat, " at ",
+                         "; ", "Highest Rhat (theta): ", theta.rhat, " at ",
                          parameter.names[theta.rhat.ind], "; ")
-    }
 
-    if (sigma.n.eff.ind == sigma.rhat.ind)
+    if (length(sigma.rhat.ind) == 0)
+        result <- paste0(result, "Lowest effective sample size (sigma): ",
+                         sigma.n.eff, " at ", parameter.names[sigma.n.eff.ind],
+                         "; Rhat (sigma) not available; ")
+    else if (sigma.n.eff.ind == sigma.rhat.ind)
         result <- paste0(result, "Lowest effective sample size (sigma): ",
                          sigma.n.eff, " and Highest Rhat (sigma): ",
                          sigma.rhat, " at ", parameter.names[sigma.n.eff.ind],
                          "; ")
     else
-    {
         result <- paste0(result, "Lowest effective sample size (sigma): ",
                          sigma.n.eff, " at ", parameter.names[sigma.n.eff.ind],
-                         "; ")
-        result <- paste0(result, "Highest Rhat (sigma): ", sigma.rhat, " at ",
+                         "; ", "Highest Rhat (sigma): ", sigma.rhat, " at ",
                          parameter.names[sigma.rhat.ind], "; ")
-    }
     result
 }
 
