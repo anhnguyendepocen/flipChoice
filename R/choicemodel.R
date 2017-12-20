@@ -204,7 +204,7 @@ ParameterStatisticsInfo <- function(parameter.statistics, parameter.names)
     sigma.n.eff.ind <- which.min(sigma.statistics[, 9])
     sigma.n.eff <- FormatAsReal(sigma.statistics[sigma.n.eff.ind, 9],
                                 decimals = 1)
-    sigma.rhat.ind <- which.min(sigma.statistics[, 10])
+    sigma.rhat.ind <- which.max(sigma.statistics[, 10])
     sigma.rhat <- FormatAsReal(sigma.statistics[sigma.rhat.ind, 10],
                                decimals = 2)
 
