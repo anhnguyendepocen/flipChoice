@@ -208,36 +208,38 @@ ParameterStatisticsInfo <- function(parameter.statistics, parameter.names)
     sigma.rhat <- FormatAsReal(sigma.statistics[sigma.rhat.ind, 10],
                                decimals = 2)
 
+    nms <- rep(parameter.names, n.rows / (2 * length(parameter.names)))
+
     result <- ""
     if (length(theta.rhat.ind) == 0)
         result <- paste0(result, "Lowest effective sample size (theta): ",
-                         theta.n.eff, " at ", parameter.names[theta.n.eff.ind],
+                         theta.n.eff, " at ", nms[theta.n.eff.ind],
                          "; Rhat (theta) not available; ")
     else if (theta.n.eff.ind == theta.rhat.ind)
         result <- paste0(result, "Lowest effective sample size (theta): ",
                          theta.n.eff, " and Highest Rhat (theta): ",
-                         theta.rhat, " at ", parameter.names[theta.n.eff.ind],
+                         theta.rhat, " at ", nms[theta.n.eff.ind],
                          "; ")
     else
         result <- paste0(result, "Lowest effective sample size (theta): ",
-                         theta.n.eff, " at ", parameter.names[theta.n.eff.ind],
+                         theta.n.eff, " at ", nms[theta.n.eff.ind],
                          "; ", "Highest Rhat (theta): ", theta.rhat, " at ",
-                         parameter.names[theta.rhat.ind], "; ")
+                         nms[theta.rhat.ind], "; ")
 
     if (length(sigma.rhat.ind) == 0)
         result <- paste0(result, "Lowest effective sample size (sigma): ",
-                         sigma.n.eff, " at ", parameter.names[sigma.n.eff.ind],
+                         sigma.n.eff, " at ", nms[sigma.n.eff.ind],
                          "; Rhat (sigma) not available; ")
     else if (sigma.n.eff.ind == sigma.rhat.ind)
         result <- paste0(result, "Lowest effective sample size (sigma): ",
                          sigma.n.eff, " and Highest Rhat (sigma): ",
-                         sigma.rhat, " at ", parameter.names[sigma.n.eff.ind],
+                         sigma.rhat, " at ", nms[sigma.n.eff.ind],
                          "; ")
     else
         result <- paste0(result, "Lowest effective sample size (sigma): ",
-                         sigma.n.eff, " at ", parameter.names[sigma.n.eff.ind],
+                         sigma.n.eff, " at ", nms[sigma.n.eff.ind],
                          "; ", "Highest Rhat (sigma): ", sigma.rhat, " at ",
-                         parameter.names[sigma.rhat.ind], "; ")
+                         nms[sigma.rhat.ind], "; ")
     result
 }
 
