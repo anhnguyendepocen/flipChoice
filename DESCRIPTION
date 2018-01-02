@@ -12,7 +12,8 @@ Imports: flipData,
          flipFormat (>= 1.0.0),
          flipU,
          rstan,
-         readxl
+         readxl,
+         httr
 Suggests: testthat
 Remotes: Displayr/flipData,
          Displayr/flipFormat,
