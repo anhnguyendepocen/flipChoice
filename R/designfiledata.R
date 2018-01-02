@@ -18,16 +18,16 @@ processDesignFile <- function(design.file, attribute.levels.file,
     n.choices <- getNumberOfChoices(choices)
     n.respondents <- dim(questions)[1]
 
+    if (n.attributes != length(attribute.levels))
+        stop("The number of attributes in the design file is inconsistent ",
+             "with the number of attributes in the attribute levels file.")
+
     # A "None of these" option is left out from the design
     add.none.of.these <- n.choices == length(unique(design[[3]])) + 1
     # A "None of these" option is included in the design
     none.of.these.included <- any(rowSums(design[-1:-3]) == 0)
     has.none.of.these <- add.none.of.these || none.of.these.included
 
-    # if (has.none.of.these)
-    #     attribute.levels <- lapply(attribute.levels, function(x) c(x, "None"))
-
-    n.attributes <- length(attribute.levels)
     n.attribute.variables <- unlist(lapply(attribute.levels, length))
     n.variables <-  sum(n.attribute.variables)
     n.raw.variables <- n.variables - n.attributes
@@ -182,14 +182,7 @@ processRespondentData <- function(choices, questions)
 # Variable values for the "None of these" choice
 fillXNoneOfThese <- function(n.variables, n.attributes, n.attribute.variables)
 {
-    result <- rep(0, n.variables)
-    # variable.index <- 0
-    # for (l in 1:n.attributes)
-    # {
-    #     variable.index <- variable.index + n.attribute.variables[l]
-    #     result[variable.index] <- 1
-    # }
-    result
+    rep(0, n.variables)
 }
 
 getNumberOfChoices <- function(choices)
