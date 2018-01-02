@@ -1,4 +1,3 @@
-#' @importFrom readxl read_excel
 processDesignFile <- function(design.file, attribute.levels.file,
                               choices, questions, subset, weights,
                               n.questions.left.out, seed,
@@ -135,7 +134,7 @@ processDesignFile <- function(design.file, attribute.levels.file,
 
 readDesignFile <- function(design.file, attribute.levels.file)
 {
-    design <- read_excel(design.file)
+    design <- readExcelFile(design.file)
     n.attributes <- length(design) - 3
     design.is.numeric <- all(sapply(design[4:length(design)], function(x) {
             is.numeric(x) || !any(is.na(suppressWarnings(as.numeric(x))))
@@ -192,4 +191,25 @@ getNumberOfChoices <- function(choices)
         length(unique(first.choices.column))
     else
         length(levels(first.choices.column))
+}
+
+# Reads Excel file given local path or URL
+#' @importFrom readxl read_excel
+#' @importFrom httr GET write_disk
+readExcelFile <- function(file.path)
+{
+    ext <- if (grepl("\\.xls$", file.path))
+        ".xls"
+    else if (grepl("\\.xlsx$", file.path))
+        ".xlsx"
+    else
+        stop("File name does not end in .xls or .xlsx")
+
+    if (file.exists(file.path)) # local
+        read_excel(file.path)
+    else # URL
+    {
+        GET(file.path, write_disk(temp.file <- tempfile(fileext = ext)))
+        read_excel(temp.file)
+    }
 }

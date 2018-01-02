@@ -112,7 +112,7 @@ processChoFile <- function(cho.file, attribute.levels.file,
 
 processAttributeLevelsFile <- function(attribute.levels.file)
 {
-    raw.attribute.levels <- read_excel(attribute.levels.file)
+    raw.attribute.levels <- readExcelFile(attribute.levels.file)
     n.attributes <- length(raw.attribute.levels)
     nms <- names(raw.attribute.levels)
     attribute.levels <- list()
