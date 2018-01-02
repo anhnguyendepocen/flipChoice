@@ -30,11 +30,15 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
 
     on.warnings <- GetStanWarningHandler(show.stan.warnings)
 
-    InterceptWarnings({
-        stan.fit <- RunStanSampling(stan.dat, n.iterations, n.chains,
-                                    max.tree.depth, adapt.delta, seed,
-                                    stan.model, stan.file, ...)},
-                                    on.warnings)
+    # InterceptWarnings({
+    #     stan.fit <- RunStanSampling(stan.dat, n.iterations, n.chains,
+    #                                 max.tree.depth, adapt.delta, seed,
+    #                                 stan.model, stan.file, ...)},
+    #                                 on.warnings)
+
+    stan.fit <- RunStanSampling(stan.dat, n.iterations, n.chains,
+                                max.tree.depth, adapt.delta, seed,
+                                stan.model, stan.file, ...)
 
     result <- list()
     result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names,
