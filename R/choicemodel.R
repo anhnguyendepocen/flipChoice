@@ -60,6 +60,8 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
     if (!is.null(weights))
         stop("Weights are not able to be applied for Hierarchical Bayes.")
 
+    start.time <- proc.time()
+
     dat <- if (!is.null(experiment.data))
         processExperimentData(experiment.data, subset, weights,
                               tasks.left.out, seed, hb.prior.mean, hb.prior.sd)
@@ -81,6 +83,9 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                                            seed, hb.keep.samples, n.classes,
                                            hb.stanfit, normal.covariance,
                                            hb.warnings, hb.max.draws, ...)
+
+    end.time <- proc.time()
+
     result <- accuracyResults(dat, result)
     result$algorithm <- "HB-Stan"
     result$n.questions.left.out <- tasks.left.out
@@ -93,6 +98,7 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
     result$n.choices <- dat$n.choices
     result$n.attributes <- dat$n.attributes
     result$n.variables <- dat$n.variables
+    result$time.taken <- (end.time - start.time)[3]
     result
 }
 
@@ -248,6 +254,7 @@ ParameterStatisticsInfo <- function(parameter.statistics, parameter.names)
 #' @param x FitMaxDiff object.
 #' @param ... further arguments passed to or from other methods.
 #' @importFrom flipFormat HistTable FormatAsPercent
+#' @importFrom flipTime FormatPeriod
 #' @export
 print.FitChoice <- function(x, ...)
 {
@@ -269,6 +276,7 @@ print.FitChoice <- function(x, ...)
     footer <- paste0(footer,
                      ParameterStatisticsInfo(x$parameter.statistics,
                          colnames(x$respondent.parameters)))
+    footer <- paste0(footer, "Time taken: ", FormatPeriod(x$time.taken), "; ")
 
     subtitle <- if (!is.na(x$out.sample.accuracy))
         paste0("Prediction accuracy (leave-", x$n.questions.left.out , "-out cross-validation): ",
