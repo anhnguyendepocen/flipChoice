@@ -60,6 +60,8 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
     if (!is.null(weights))
         stop("Weights are not able to be applied for Hierarchical Bayes.")
 
+    start.time <- proc.time()
+
     dat <- if (!is.null(experiment.data))
         processExperimentData(experiment.data, subset, weights,
                               tasks.left.out, seed, hb.prior.mean, hb.prior.sd)
@@ -75,8 +77,6 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                               include.choice.parameters)
     else
         stop("Insufficient data was supplied.")
-
-    start.time <- proc.time()
 
     result <- hierarchicalBayesChoiceModel(dat, hb.iterations, hb.chains,
                                            hb.max.tree.depth, hb.adapt.delta,
@@ -276,7 +276,7 @@ print.FitChoice <- function(x, ...)
     footer <- paste0(footer,
                      ParameterStatisticsInfo(x$parameter.statistics,
                          colnames(x$respondent.parameters)))
-    footer <- paste0(footer, "Time taken for sampling: ", FormatPeriod(x$time.taken), "; ")
+    footer <- paste0(footer, "Time taken to run analysis: ", FormatPeriod(x$time.taken), "; ")
 
     subtitle <- if (!is.na(x$out.sample.accuracy))
         paste0("Prediction accuracy (leave-", x$n.questions.left.out , "-out cross-validation): ",
