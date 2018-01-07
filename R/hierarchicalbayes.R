@@ -240,6 +240,17 @@ IsRServer <- function()
         grepl("^reusprod.*", node.name)
 }
 
+#' @title IsTestRServer
+#' @description This function indicates if it is being run on the test R
+#' server.
+#' @return TRUE if running on the test R server. False otherwise.
+#' @export
+IsTestRServer <- function()
+{
+    node.name <- Sys.info()[["nodename"]]
+    node.name == grepl("^reustest.*", node.name)
+}
+
 removeBeta <- function(stan.fit)
 {
     nms <- stan.fit@sim$fnames_oi

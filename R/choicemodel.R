@@ -276,7 +276,11 @@ print.FitChoice <- function(x, ...)
     footer <- paste0(footer,
                      ParameterStatisticsInfo(x$parameter.statistics,
                          colnames(x$respondent.parameters)))
-    footer <- paste0(footer, "Time taken to run analysis: ", FormatPeriod(x$time.taken), "; ")
+    if (IsTestRServer())
+        footer <- paste0(footer, "Time taken to run analysis: [hidden for tests]; ")
+    else
+        footer <- paste0(footer, "Time taken to run analysis: ",
+                         FormatPeriod(x$time.taken), "; ")
 
     subtitle <- if (!is.na(x$out.sample.accuracy))
         paste0("Prediction accuracy (leave-", x$n.questions.left.out , "-out cross-validation): ",
