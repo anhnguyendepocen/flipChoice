@@ -248,7 +248,7 @@ IsRServer <- function()
 IsTestRServer <- function()
 {
     node.name <- Sys.info()[["nodename"]]
-    node.name == grepl("^reustest.*", node.name)
+    grepl("^reustest.*", node.name)
 }
 
 removeBeta <- function(stan.fit)
