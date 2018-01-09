@@ -40,7 +40,9 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names,
                                                     dat$subset,
                                                     dat$variable.scales)
-    result$parameter.statistics <- GetParameterStatistics(stan.fit)
+    result$parameter.statistics <- GetParameterStatistics(stan.fit,
+                                                          dat$var.names,
+                                                          n.classes)
     if (include.stanfit)
     {
         result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
@@ -301,10 +303,22 @@ onStanWarning <- function(warn)
 #' @description This function returns functions that handle Stan warnings.
 #' @param stan.fit Whether to return a function that shows
 #' user-friendly Stan warnings.
+#' @param parameter.names Names of the parameters.
+#' @param n.classes The number of classes.
 #' @return A matrix containing parameter summary statistics.
 #' @importFrom rstan summary
 #' @export
-GetParameterStatistics <- function(stan.fit)
+GetParameterStatistics <- function(stan.fit, parameter.names, n.classes)
 {
-    rstan::summary(stan.fit, pars = c("theta", "sigma"))$summary
+    ex <- rstan::extract(stan.fit, pars = c('theta', 'sigma'),
+                         permuted = FALSE, inc_warmup = TRUE)
+    result <- suppressWarnings(rstan::monitor(ex, probs = c(), print = FALSE))
+    lbls <- c(rep(paste0('Mean (', parameter.names, ')'), each = n.classes),
+              rep(paste0('St. Dev. (', parameter.names, ')'),
+                  each = n.classes))
+    if (n.classes > 1)
+        lbls <- paste0(lbls, rep(paste0(', Class ', 1:n.classes),
+                                 2 * length(parameter.names)))
+    row.names(result) <- lbls
+    result
 }

@@ -4,13 +4,15 @@
 \alias{ParameterStatisticsInfo}
 \title{print.FitChoice}
 \usage{
-ParameterStatisticsInfo(parameter.statistics, parameter.names)
+ParameterStatisticsInfo(parameter.statistics, parameter.names, n.classes)
 }
 \arguments{
 \item{parameter.statistics}{Matrix containing parameter statistics from
 a summary of a stan.fit object.}
 
 \item{parameter.names}{Names of the parameters.}
+
+\item{n.classes}{The number of classes.}
 }
 \value{
 A string containing information about parameter statistics.
