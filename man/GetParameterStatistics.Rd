@@ -4,11 +4,15 @@
 \alias{GetParameterStatistics}
 \title{GetParameterStatistics}
 \usage{
-GetParameterStatistics(stan.fit)
+GetParameterStatistics(stan.fit, parameter.names, n.classes)
 }
 \arguments{
 \item{stan.fit}{Whether to return a function that shows
 user-friendly Stan warnings.}
+
+\item{parameter.names}{Names of the parameters.}
+
+\item{n.classes}{The number of classes.}
 }
 \value{
 A matrix containing parameter summary statistics.

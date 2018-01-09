@@ -43,6 +43,30 @@
 #' parameters.
 #' @param ... Additional parameters to pass on to \code{rstan::stan} and
 #' \code{rstan::sampling}.
+#' @return A list with the following components:
+#' \itemize{
+#' \item \code{respondent.parameters} A matrix containing the parameters of
+#' each respondent.
+#' \item \code{parameter.statistics} A matrix containing parameter statistics
+#' such as effective sample size and Rhat.
+#' \item \code{stan.fit} The stanfit object from the analysis.
+#' \item \code{beta.draws} A 3D array containing sampling draws of beta for each
+#' respondent.
+#' \item \code{in.sample.accuracy} The in-sample prediction accuracy.
+#' \item \code{out.sample.accuracy} The out-of-sample prediction accuracy.
+#' \item \code{prediction.accuracies} A vector of prediction accuracies for
+#' each respondent.
+#' \item \code{algorithm} The type of algorithm used.
+#' \item \code{n.questions.left.out} The number of questions left out for
+#' out-of-sample testing.
+#' \item \code{n.classes} The number of classes.
+#' \item \code{n.respondents} The number of respondents.
+#' \item \code{n.questions} The number of questions per respondent.
+#' \item \code{n.choices} The number of choices per question.
+#' \item \code{n.attributes} The number of attributes.
+#' \item \code{n.variables} The number of variables in the analysis.
+#' \item \code{time.taken} The time taken to run the analysis.
+#' }
 #' @export
 FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                            design.file = NULL,
@@ -89,7 +113,6 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
     result <- accuracyResults(dat, result)
     result$algorithm <- "HB-Stan"
     result$n.questions.left.out <- tasks.left.out
-    result$is.hb <- TRUE
     result$n.classes <- n.classes
     result$subset <- subset
     result$weights <- weights
@@ -193,28 +216,34 @@ RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
 #' @param parameter.statistics Matrix containing parameter statistics from
 #' a summary of a stan.fit object.
 #' @param parameter.names Names of the parameters.
+#' @param n.classes The number of classes.
 #' @return A string containing information about parameter statistics.
 #' @export
-ParameterStatisticsInfo <- function(parameter.statistics, parameter.names)
+ParameterStatisticsInfo <- function(parameter.statistics, parameter.names,
+                                    n.classes)
 {
     n.rows <- nrow(parameter.statistics)
     theta.statistics <- parameter.statistics[1:(n.rows / 2), ]
-    theta.n.eff.ind <- which.min(theta.statistics[, 9])
-    theta.n.eff <- FormatAsReal(theta.statistics[theta.n.eff.ind, 9],
+    theta.n.eff.ind <- which.min(theta.statistics[, 4])
+    theta.n.eff <- FormatAsReal(theta.statistics[theta.n.eff.ind, 4],
                                 decimals = 1)
-    theta.rhat.ind <- which.max(theta.statistics[, 10])
-    theta.rhat <- FormatAsReal(theta.statistics[theta.rhat.ind, 10],
+    theta.rhat.ind <- which.max(theta.statistics[, 5])
+    theta.rhat <- FormatAsReal(theta.statistics[theta.rhat.ind, 5],
                                decimals = 2)
 
     sigma.statistics <- parameter.statistics[(n.rows / 2 + 1):n.rows, ]
-    sigma.n.eff.ind <- which.min(sigma.statistics[, 9])
-    sigma.n.eff <- FormatAsReal(sigma.statistics[sigma.n.eff.ind, 9],
+    sigma.n.eff.ind <- which.min(sigma.statistics[, 4])
+    sigma.n.eff <- FormatAsReal(sigma.statistics[sigma.n.eff.ind, 4],
                                 decimals = 1)
-    sigma.rhat.ind <- which.max(sigma.statistics[, 10])
-    sigma.rhat <- FormatAsReal(sigma.statistics[sigma.rhat.ind, 10],
+    sigma.rhat.ind <- which.max(sigma.statistics[, 5])
+    sigma.rhat <- FormatAsReal(sigma.statistics[sigma.rhat.ind, 5],
                                decimals = 2)
 
-    nms <- rep(parameter.names, n.rows / (2 * length(parameter.names)))
+    if (n.classes > 1)
+        nms <- rep(paste0(rep(parameter.names, each = n.classes), ", Class ",
+                          1:n.classes), 2)
+    else
+        nms <- rep(parameter.names, 2)
 
     result <- ""
     if (length(theta.rhat.ind) == 0)
@@ -275,7 +304,8 @@ print.FitChoice <- function(x, ...)
                      "negative parameters respectively; ")
     footer <- paste0(footer,
                      ParameterStatisticsInfo(x$parameter.statistics,
-                         colnames(x$respondent.parameters)))
+                         colnames(x$respondent.parameters),
+                         x$n.classes))
     if (IsTestRServer())
         footer <- paste0(footer, "Time taken to run analysis: [hidden for tests]; ")
     else
