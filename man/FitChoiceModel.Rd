@@ -80,6 +80,32 @@ parameters.}
 \item{...}{Additional parameters to pass on to \code{rstan::stan} and
 \code{rstan::sampling}.}
 }
+\value{
+A list with the following components:
+\itemize{
+\item \code{respondent.parameters} A matrix containing the parameters of
+each respondent.
+\item \code{parameter.statistics} A matrix containing parameter statistics
+such as effective sample size and Rhat.
+\item \code{stan.fit} The stanfit object from the analysis.
+\item \code{beta.draws} A 3D array containing sampling draws of beta for each
+respondent.
+\item \code{in.sample.accuracy} The in-sample prediction accuracy.
+\item \code{out.sample.accuracy} The out-of-sample prediction accuracy.
+\item \code{prediction.accuracies} A vector of prediction accuracies for
+each respondent.
+\item \code{algorithm} The type of algorithm used.
+\item \code{n.questions.left.out} The number of questions left out for
+out-of-sample testing.
+\item \code{n.classes} The number of classes.
+\item \code{n.respondents} The number of respondents.
+\item \code{n.questions} The number of questions per respondent.
+\item \code{n.choices} The number of choices per question.
+\item \code{n.attributes} The number of attributes.
+\item \code{n.variables} The number of variables in the analysis.
+\item \code{time.taken} The time taken to run the analysis.
+}
+}
 \description{
 Fit a choice-based conjoint model using methods such as
 Hierarchical Bayes
