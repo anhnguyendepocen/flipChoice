@@ -59,7 +59,6 @@
 #' \item \code{algorithm} The type of algorithm used.
 #' \item \code{n.questions.left.out} The number of questions left out for
 #' out-of-sample testing.
-#' \item \code{is.hb} Whether HB was used for the analysis.
 #' \item \code{n.classes} The number of classes.
 #' \item \code{n.respondents} The number of respondents.
 #' \item \code{n.questions} The number of questions per respondent.
@@ -114,7 +113,6 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
     result <- accuracyResults(dat, result)
     result$algorithm <- "HB-Stan"
     result$n.questions.left.out <- tasks.left.out
-    result$is.hb <- TRUE
     result$n.classes <- n.classes
     result$subset <- subset
     result$weights <- weights
