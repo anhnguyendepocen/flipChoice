@@ -97,7 +97,6 @@ each respondent.
 \item \code{algorithm} The type of algorithm used.
 \item \code{n.questions.left.out} The number of questions left out for
 out-of-sample testing.
-\item \code{is.hb} Whether HB was used for the analysis.
 \item \code{n.classes} The number of classes.
 \item \code{n.respondents} The number of respondents.
 \item \code{n.questions} The number of questions per respondent.
