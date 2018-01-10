@@ -2,16 +2,17 @@
 #'
 #' Creates choice model experimental designs according to a given algorithm.
 #'
-#' @param design.algorithm The algorithm used to create the design. One of \code{"random"},
-#' \code{"shortcut"} and \code{"enumerated"}.
+#' @param design.algorithm The algorithm used to create the design. One of \code{"Random"},
+#' \code{"Shortcut"}, \code{"Balanced overlap"} and \code{"Complete Enumeration"}.
 #' @param attribute.levels \code{\link{list}} of \code{\link{vector}}s of the labels of
 #' levels for each attribute.
 #' @param n.questions Integer; the number of questions asked to each respondent.
 #' @param alternatives.per.question Integer; the number of alternative products
 #' shown in each question.
-#' @param prohibitions \code{\link{list}} of \code{\link{vector}}s where each
-#' \code{\link{vector}} is a prohibited alternative consisting of the indices of each
-#' prohibited level.
+#' @param prohibitions Character \code{\link{matrix}} where each row is a prohibited
+#' alternative consisting of the levels of each attribute. If a level is missing or
+#' is \code{"All} then all levels of that attribute in combination with the other
+#' attribute levels are prohibited.
 #' @param output TODO
 #'
 #' @return A list with components
@@ -27,6 +28,12 @@ ChoiceModelDesign <- function(design.algorithm,
                               alternatives.per.question,
                               prohibitions = NULL,
                               output = "Unlabelled design") {
+
+    algorithms <- c("Random", "Shortcut", "Balanced overlap", "Complete enumeration")
+    function.names <- c("random", "shortcut", "balanced", "enumerated")
+    design.function <- function.names[match(design.algorithm, algorithms)]
+    if (is.na(design.function))
+        stop("Unrecognized design.algorithm: ", design.algorithm)
 
     if (output == "Attributes and levels")
     {
@@ -44,42 +51,50 @@ ChoiceModelDesign <- function(design.algorithm,
 
     args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions,
                  alternatives.per.question = alternatives.per.question, prohibitions = prohibitions)
-    result <- do.call(paste0(design.algorithm, "Design"), args)
+    result <- do.call(paste0(design.function, "Design"), args)
 
     if (output == "Unlabelled design")
         return(result$design)
 
     # TODO LABEL THE DESIGN
+
+    # TODO OUTPUT LEVEL BALANCES
+
+    # TODO OUTPUT OVERLAPS
+
+    # TODO OUTPUT STANDARD ERORS
+    # https://www.sawtoothsoftware.com/help/lighthouse-studio/manual/hid_web_cbc_designs_6.html
+    # https://www.sawtoothsoftware.com/help/lighthouse-studio/manual/estimating_utilities_with_logi.html
+
 }
 
 
 
 ################## HELPER FUNCTIONS ###################
 
-# Convert prohibitions from labels to indices (numeric levels).
-#
-# TODO If level is missing (empty string or NA) then all levels of that attribute are prohibted.
-# TODO vectorise code
-encodeProhibitions <- function(char.prohibitions, attribute.levels) {
+# Convert prohibitions from labels to indices (numeric levels)
+# and expand "" or "All" to all levels.
+encodeProhibitions <- function(prohibitions, attribute.levels) {
 
-    # TODO convert char.prohibitions to a data.frame
-    i.prohibitions <- replicate(length(char.prohibitions), rep(NULL, length(attribute.levels)))
+    prohibitions[prohibitions == ""] <- "All"
+    prohibitions <- data.frame(prohibitions)
 
-    for (i in 1:length(char.prohibitions)) {
+    for (i in 1:length(attribute.levels))
+    {
+        # set levels, standardize rownames and find rows with "All"
+        prohibitions[, i] <- factor(prohibitions[, i], levels = c(attribute.levels[[i]], "All"))
+        rownames(prohibitions) <- seq(nrow(prohibitions))
+        rows.with.all <- prohibitions[, i] == "All"
 
-        if (length(char.prohibitions[[i]]) != length(attribute.levels))
-            stop("Prohibition has wrong number of levels.")
-
-        for (j in 1:length(attribute.levels)) {
-
-            level <- match(char.prohibitions[[i]][j], attribute.levels[[j]])
-            if (is.na(level))
-                stop(paste("Level of prohibition", char.prohibitions[[i]][j], "not recognized."))
-            i.prohibitions[[i]][j] <- level
+        if (any(rows.with.all))
+        {
+            # duplicate rows with "All" then fill with levels
+            expanded.rows <- rep(rownames(prohibitions), (length(attribute.levels[[i]]) - 1) * rows.with.all + 1)
+            prohibitions <- prohibitions[expanded.rows, ]
+            prohibitions[prohibitions[, i] == "All", i] <- attribute.levels[[i]]
         }
     }
-
-    return(i.prohibitions)
+    return(prohibitions)
 }
 
 #. Create an experimental design
@@ -92,9 +107,8 @@ encodeProhibitions <- function(char.prohibitions, attribute.levels) {
 #' \itemize{
 #' \item \code{attribute.levels} - a \code{\link{list}} of \code{\link{vector}}s of the
 #' labels of levels for each attribute. The names of the vectors are the attribute labels.
-#' \item \code{prohibitions} - a \code{\link{list}} of \code{\link{vector}}s where each
-#' \code{\link{vector}} is a prohibited alternative consisting of the labels of each
-#' prohibited level.
+#' \item \code{prohibitions} - Character \code{\link{matrix}} where each row is a prohibited
+#' alternative consisting of the levels of each attribute.
 #' }
 #' @export
 CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0) {
@@ -106,8 +120,8 @@ CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0) {
     names(attribute.levels) <- attributes
 
     # may produce duplicate prohibitions
-    prohibitions <- replicate(n.prohibitions, sapply(attribute.levels, sample, 1))
-    prohibitions <- split(prohibitions, rep(1:ncol(prohibitions), each = nrow(prohibitions)))
+    prohibitions <- t(replicate(n.prohibitions, sapply(attribute.levels, sample, 1)))
+    #prohibitions <- split(prohibitions, rep(1:NCOL(prohibitions), each = NROW(prohibitions)))
 
     experiment <- list(attribute.levels = attribute.levels, prohibitions = prohibitions)
 }
