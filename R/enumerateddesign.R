@@ -68,9 +68,8 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
     enumeration <- expand.grid(level.sequences)
 
     # remove prohibited alternatives
-    prohib.df <- t(data.frame(prohibitions))
-    colnames(prohib.df) <- colnames(enumeration)
-    dups <- duplicated(rbind(enumeration, prohib.df), fromLast = TRUE)[1:length(enumeration)]
+    colnames(prohibitions) <- colnames(enumeration)
+    dups <- duplicated(rbind(enumeration, prohibitions), fromLast = TRUE)[1:length(enumeration)]
     enumeration <- as.matrix(enumeration[!dups, ])
 
     # choose a random alternative to start
