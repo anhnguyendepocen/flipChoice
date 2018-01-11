@@ -49,7 +49,7 @@ data {
 parameters {
     vector[V_raw] theta_raw;
     cholesky_factor_corr[V] L_omega;
-    vector<lower=0, upper=pi()/2>[U] sigma_unif;
+    vector<lower=0>[U] sigma_unique;
     vector[V] standard_normal[R];
 }
 
@@ -61,12 +61,11 @@ transformed parameters {
 
     if (U == 1)
     {
-        real sigma_value = 2.5 * tan(sigma_unif[1]);
         for (v in 1:V)
-            sigma[v] = sigma_value;
+            sigma[v] = sigma_unique[1];
     }
     else
-        sigma = 2.5 * tan(sigma_unif);
+        sigma = sigma_unique;
 
     theta = completeTheta(theta_raw, A, V, V_attribute, prior_mean);
 
@@ -80,6 +79,10 @@ transformed parameters {
 
 model {
     //priors
+
+    // gamma distribution with mode = 1 and p(x < 20) = 0.999
+    sigma_unique ~ gamma(1.39435729464721, 0.39435729464721);
+
     for (v in 1:V_raw)
         theta_raw[v] ~ normal(prior_mean[v], prior_sd[v]);
 
