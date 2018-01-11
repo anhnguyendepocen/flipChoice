@@ -3,7 +3,7 @@
 #' Creates choice model experimental designs according to a given algorithm.
 #'
 #' @param design.algorithm The algorithm used to create the design. One of \code{"Random"},
-#' \code{"Shortcut"}, \code{"Balanced overlap"} and \code{"Complete Enumeration"}.
+#' \code{"Shortcut"}, \code{"Balanced overlap"} and \code{"Complete enumeration"}.
 #' @param attribute.levels \code{\link{list}} of \code{\link{vector}}s of the labels of
 #' levels for each attribute.
 #' @param n.questions Integer; the number of questions asked to each respondent.
@@ -11,7 +11,7 @@
 #' shown in each question.
 #' @param prohibitions Character \code{\link{matrix}} where each row is a prohibited
 #' alternative consisting of the levels of each attribute. If a level is missing or
-#' is \code{"All} then all levels of that attribute in combination with the other
+#' is \code{"All"} then all levels of that attribute in combination with the other
 #' attribute levels are prohibited.
 #' @param output TODO
 #'
@@ -43,11 +43,11 @@ ChoiceModelDesign <- function(design.algorithm,
         return(levels.table)
     }
 
-    if (output == "Prohibitions")
-        return(prohibitions)
-
     prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
     levels.per.attribute <- sapply(attribute.levels, length)
+
+    if (output == "Prohibitions")
+        return(prohibitions)
 
     args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions,
                  alternatives.per.question = alternatives.per.question, prohibitions = prohibitions)
@@ -56,16 +56,23 @@ ChoiceModelDesign <- function(design.algorithm,
     if (output == "Unlabelled design")
         return(result$design)
 
-    # TODO LABEL THE DESIGN
+    if (output == "Labelled design")
+        return(labelledDesign(result$design, attribute.levels))
 
-    # TODO OUTPUT LEVEL BALANCES
+    if (output == "Level balances")
+        return(levelBalances(result, attribute.levels))
 
     # TODO OUTPUT OVERLAPS
+    if (output == "Overlaps")
+        return(NULL)
 
     # TODO OUTPUT STANDARD ERORS
     # https://www.sawtoothsoftware.com/help/lighthouse-studio/manual/hid_web_cbc_designs_6.html
     # https://www.sawtoothsoftware.com/help/lighthouse-studio/manual/estimating_utilities_with_logi.html
+    if (output == "Standard errors")
+        return(NULL)
 
+    stop("Unrecognized output.")
 }
 
 
@@ -79,10 +86,17 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
     prohibitions[prohibitions == ""] <- "All"
     prohibitions <- data.frame(prohibitions)
 
+    if (ncol(prohibitions) != length(attribute.levels))
+        stop("Each prohibition must include a level for each attribute (possibly including 'All').")
+
     for (i in 1:length(attribute.levels))
     {
         # set levels, standardize rownames and find rows with "All"
         prohibitions[, i] <- factor(prohibitions[, i], levels = c(attribute.levels[[i]], "All"))
+        if (any(is.na(prohibitions[, i])))
+            stop("Prohibition number(s) ", paste(which(is.na(prohibitions[, i])), collapse = ", "),
+                 " contains level(s) that are invalid for attribute ", names(attribute.levels)[i])
+
         rownames(prohibitions) <- seq(nrow(prohibitions))
         rows.with.all <- prohibitions[, i] == "All"
 
@@ -124,6 +138,68 @@ CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0) {
     #prohibitions <- split(prohibitions, rep(1:NCOL(prohibitions), each = NROW(prohibitions)))
 
     experiment <- list(attribute.levels = attribute.levels, prohibitions = prohibitions)
+}
+
+# Convert an unlabelled design into a labelled design
+labelledDesign <- function(unlabelled.design, attribute.levels) {
+
+    labelled.design <- array(character(0), dim = dim(unlabelled.design))
+    for (i in 1:length(attribute.levels))
+        labelled.design[, , i] <- attribute.levels[[i]][unlabelled.design[, , i]]
+    return(labelled.design)
+}
+
+# Compute one and two-way level balances or extract from exiting list.
+levelBalances <- function(design.list, attribute.levels) {
+
+    singles <- if (!is.null(design.list$singles)) design.list$singles else singleLevelBalances(design.list$design,
+                                                                                               names(attribute.levels))
+
+    pairs <- if (!is.null(design.list$pairs)) design.list$pairs else pairLevelBalances(design.list$design,
+                                                                                       names(attribute.levels))
+
+    # label the levels
+    singles <- labelSingleBalanceLevels(singles, attribute.levels)
+    pairs <- labelPairBalanceLevels(pairs, attribute.levels)
+
+    # flatten pairwise list of list and remove unused
+    pairs <- unlist(pairs, recursive = FALSE)
+    pairs <- pairs[!is.na(pairs)]
+
+    return(list(singles = singles, pairs = pairs))
+}
+
+
+singleLevelBalances <- function(design, attribute.names) {
+    singles <- apply(design, 3, table)
+    names(singles) <- attribute.names
+    return(singles)
+}
+
+pairLevelBalances <- function(design, attribute.names) {
+    n.attributes <- dim(design)[3]
+    pairs <- replicate(n.attributes, rep(list(NA), n.attributes), simplify = FALSE)
+    for (i in 1:(n.attributes - 1))
+        for (j in (i + 1):n.attributes) {
+            pairs[[i]][[j]] <- table(design[, , i], design[, , j])
+            names(pairs[[i]])[[j]] <- paste0(attribute.names[i], "/", attribute.names[j])
+        }
+    return(pairs)
+}
+
+labelSingleBalanceLevels <- function(singles, attribute.levels) {
+    # maybe there is a better way
+    return(mapply(function(x, y) {names(x) <- y; x}, singles, attribute.levels))
+}
+
+labelPairBalanceLevels <- function(pairs, attribute.levels) {
+    n.attributes <- length(attribute.levels)
+    for (i in 1:(n.attributes - 1))
+        for (j in (i + 1):n.attributes) {
+            rownames(pairs[[i]][[j]]) <- attribute.levels[[i]]
+            colnames(pairs[[i]][[j]]) <- attribute.levels[[j]]
+        }
+    return(pairs)
 }
 
 

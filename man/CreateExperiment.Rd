@@ -17,9 +17,8 @@ A list with components
 \itemize{
 \item \code{attribute.levels} - a \code{\link{list}} of \code{\link{vector}}s of the
 labels of levels for each attribute. The names of the vectors are the attribute labels.
-\item \code{prohibitions} - a \code{\link{list}} of \code{\link{vector}}s where each
-\code{\link{vector}} is a prohibited alternative consisting of the labels of each
-prohibited level.
+\item \code{prohibitions} - Character \code{\link{matrix}} where each row is a prohibited
+alternative consisting of the levels of each attribute.
 }
 }
 \description{

@@ -72,20 +72,20 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
     dups <- duplicated(rbind(enumeration, prohibitions), fromLast = TRUE)[1:length(enumeration)]
     enumeration <- as.matrix(enumeration[!dups, ])
 
-    # choose a random alternative to start
-    #initial <- enumeration[sample(nrow(enumeration), 1), ]
-
     # create a list of vectors to count single level occurences
     levels.per.attribute <- sapply(level.sequences, length)
     singles <- sapply(levels.per.attribute, function(x) rep(0, x))
+    names(singles) <- names(levels.per.attribute)
 
     # create a list of lists of matrices to count pairwise level occurences
     # pairs[[i]][[j]]] contains the counts of attribute i and attribute j
     # if i <= j then pairs[[i]][[j]] == NA and not used
     pairs <- replicate(n.attributes, rep(list(NA), n.attributes), simplify = FALSE)
     for (i in 1:(n.attributes - 1))
-        for (j in (i + 1):n.attributes)
+        for (j in (i + 1):n.attributes) {
             pairs[[i]][[j]] <- matrix(0, nrow = levels.per.attribute[i], ncol = levels.per.attribute[j])
+            names(pairs[[i]])[[j]] <- paste0(names(levels.per.attribute)[i], "/", names(levels.per.attribute)[j])
+        }
 
     for (question in seq(n.questions)) {
 
@@ -107,6 +107,6 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
         }
     }
 
-    return(list(design = design))
+    return(list(design = design, singles = singles, pairs = pairs))
 }
 
