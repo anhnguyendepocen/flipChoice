@@ -9,8 +9,8 @@ ChoiceModelDesign(design.algorithm, attribute.levels, n.questions,
   output = "Unlabelled design")
 }
 \arguments{
-\item{design.algorithm}{The algorithm used to create the design. One of \code{"random"},
-\code{"shortcut"} and \code{"enumerated"}.}
+\item{design.algorithm}{The algorithm used to create the design. One of \code{"Random"},
+\code{"Shortcut"}, \code{"Balanced overlap"} and \code{"Complete enumeration"}.}
 
 \item{attribute.levels}{\code{\link{list}} of \code{\link{vector}}s of the labels of
 levels for each attribute.}
@@ -20,9 +20,10 @@ levels for each attribute.}
 \item{alternatives.per.question}{Integer; the number of alternative products
 shown in each question.}
 
-\item{prohibitions}{\code{\link{list}} of \code{\link{vector}}s where each
-\code{\link{vector}} is a prohibited alternative consisting of the indices of each
-prohibited level.}
+\item{prohibitions}{Character \code{\link{matrix}} where each row is a prohibited
+alternative consisting of the levels of each attribute. If a level is missing or
+is \code{"All"} then all levels of that attribute in combination with the other
+attribute levels are prohibited.}
 
 \item{output}{TODO}
 }
