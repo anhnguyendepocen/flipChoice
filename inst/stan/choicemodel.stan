@@ -47,22 +47,20 @@ data {
 }
 
 parameters {
+    vector<lower=0>[V] sigma;
     vector[V_raw] theta_raw;
     cholesky_factor_corr[V] L_omega;
-    vector<lower=0, upper=pi()/2>[V] sigma_unif;
     vector[V] standard_normal[R];
 }
 
 transformed parameters {
     vector[V] theta;
-    vector<lower=0>[V] sigma;
     matrix[V, V] L_sigma;
     vector[C] XB[R, S];
     vector[V] beta[R];
 
     theta = completeTheta(theta_raw, A, V, V_attribute, prior_mean);
 
-    sigma = 2.5 * tan(sigma_unif);
     L_sigma = diag_pre_multiply(sigma, L_omega);
 
     for (r in 1:R)
@@ -75,6 +73,10 @@ transformed parameters {
 
 model {
     //priors
+
+    // gamma distribution with mode = 1 and p(x < 20) = 0.999
+    sigma ~ gamma(1.39435729464721, 0.39435729464721);
+
     for (v in 1:V_raw)
         theta_raw[v] ~ normal(prior_mean[v], prior_sd[v]);
     L_omega ~ lkj_corr_cholesky(4);
