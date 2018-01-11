@@ -108,6 +108,8 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
             prohibitions[prohibitions[, i] == "All", i] <- attribute.levels[[i]]
         }
     }
+    rownames(prohibitions) <- seq(nrow(prohibitions))
+    colnames(prohibitions) <- names(attribute.levels)
     return(prohibitions)
 }
 
@@ -135,7 +137,6 @@ CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0) {
 
     # may produce duplicate prohibitions
     prohibitions <- t(replicate(n.prohibitions, sapply(attribute.levels, sample, 1)))
-    #prohibitions <- split(prohibitions, rep(1:NCOL(prohibitions), each = NROW(prohibitions)))
 
     experiment <- list(attribute.levels = attribute.levels, prohibitions = prohibitions)
 }
