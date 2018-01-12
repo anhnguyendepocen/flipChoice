@@ -63,6 +63,7 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
     n.attributes <- length(levels.per.attribute)
     level.sequences <- sapply(levels.per.attribute, seq) # list of vectors of numeric levels per attribute
     design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
+    dimnames(design)[[3]] <- names(levels.per.attribute)
 
     # enumerate all alternatives
     enumeration <- expand.grid(level.sequences)
