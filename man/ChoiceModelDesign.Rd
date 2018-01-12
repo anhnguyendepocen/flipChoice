@@ -5,8 +5,8 @@
 \title{Choice modelling experimental design}
 \usage{
 ChoiceModelDesign(design.algorithm, attribute.levels, n.questions,
-  alternatives.per.question, prohibitions = NULL,
-  output = "Unlabelled design")
+  alternatives.per.question, prohibitions = NULL, none.alternative = FALSE,
+  labelled.alternatives = FALSE, output = "Unlabelled design")
 }
 \arguments{
 \item{design.algorithm}{The algorithm used to create the design. One of \code{"Random"},
@@ -18,12 +18,16 @@ levels for each attribute.}
 \item{n.questions}{Integer; the number of questions asked to each respondent.}
 
 \item{alternatives.per.question}{Integer; the number of alternative products
-shown in each question.}
+shown in each question. Ignored if \code{"labelled.alternatives"} is TRUE.}
 
 \item{prohibitions}{Character \code{\link{matrix}} where each row is a prohibited
 alternative consisting of the levels of each attribute. If a level is missing or
 is \code{"All"} then all levels of that attribute in combination with the other
 attribute levels are prohibited.}
+
+\item{none.alternative}{Logical; whether to show an alternative of 'None' in all questions.}
+
+\item{labelled.alternatives}{Logical; whether the first attribute labels the alternatives.}
 
 \item{output}{TODO}
 }

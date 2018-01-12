@@ -8,11 +8,13 @@
 #' levels for each attribute.
 #' @param n.questions Integer; the number of questions asked to each respondent.
 #' @param alternatives.per.question Integer; the number of alternative products
-#' shown in each question.
+#' shown in each question. Ignored if \code{"labelled.alternatives"} is TRUE.
 #' @param prohibitions Character \code{\link{matrix}} where each row is a prohibited
 #' alternative consisting of the levels of each attribute. If a level is missing or
 #' is \code{"All"} then all levels of that attribute in combination with the other
 #' attribute levels are prohibited.
+#' @param none.alternative Logical; whether to show an alternative of 'None' in all questions.
+#' @param labelled.alternatives Logical; whether the first attribute labels the alternatives.
 #' @param output TODO
 #'
 #' @return A list with components
@@ -27,6 +29,8 @@ ChoiceModelDesign <- function(design.algorithm,
                               n.questions,
                               alternatives.per.question,
                               prohibitions = NULL,
+                              none.alternative = FALSE,
+                              labelled.alternatives = FALSE,
                               output = "Unlabelled design") {
 
     algorithms <- c("Random", "Shortcut", "Balanced overlap", "Complete enumeration")
@@ -34,6 +38,10 @@ ChoiceModelDesign <- function(design.algorithm,
     design.function <- function.names[match(design.algorithm, algorithms)]
     if (is.na(design.function))
         stop("Unrecognized design.algorithm: ", design.algorithm)
+
+    if (labelled.alternatives)
+        alternatives.per.question = length(attribute.levels[[1]])
+    # TODO ensure levels of first attribute are cycled through in order of each qn
 
     if (output == "Attributes and levels")
     {
@@ -45,6 +53,7 @@ ChoiceModelDesign <- function(design.algorithm,
 
     prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
     levels.per.attribute <- sapply(attribute.levels, length)
+    names(levels.per.attribute) <- names(attribute.levels)
 
     if (output == "Prohibitions")
         return(prohibitions)
@@ -54,10 +63,10 @@ ChoiceModelDesign <- function(design.algorithm,
     result <- do.call(paste0(design.function, "Design"), args)
 
     if (output == "Unlabelled design")
-        return(result$design)
+        return(flattenDesign(result$design))
 
     if (output == "Labelled design")
-        return(labelledDesign(result$design, attribute.levels))
+        return(flattenDesign(labelDesign(result$design, attribute.levels)))
 
     if (output == "Level balances")
         return(levelBalances(result, attribute.levels))
@@ -66,11 +75,14 @@ ChoiceModelDesign <- function(design.algorithm,
     if (output == "Overlaps")
         return(NULL)
 
-    # TODO OUTPUT STANDARD ERORS
+    # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
     # https://www.sawtoothsoftware.com/help/lighthouse-studio/manual/hid_web_cbc_designs_6.html
     # https://www.sawtoothsoftware.com/help/lighthouse-studio/manual/estimating_utilities_with_logi.html
     if (output == "Standard errors")
-        return(NULL)
+    {
+        return(list(d.score = dScore(result$design),
+               d.error = DerrorHZ(flattenDesign(result$design), levels.per.attribute, effects = FALSE)))
+    }
 
     stop("Unrecognized output.")
 }
@@ -142,9 +154,10 @@ CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0) {
 }
 
 # Convert an unlabelled design into a labelled design
-labelledDesign <- function(unlabelled.design, attribute.levels) {
+labelDesign <- function(unlabelled.design, attribute.levels) {
 
     labelled.design <- array(character(0), dim = dim(unlabelled.design))
+    dimnames(labelled.design)[[3]] = dimnames(unlabelled.design)[[3]]
     for (i in 1:length(attribute.levels))
         labelled.design[, , i] <- attribute.levels[[i]][unlabelled.design[, , i]]
     return(labelled.design)
@@ -203,6 +216,16 @@ labelPairBalanceLevels <- function(pairs, attribute.levels) {
     return(pairs)
 }
 
+flattenDesign <- function(design) {
+    n.qns <- dim(design)[1]
+    n.alts <- dim(design)[2]
+    flattened <- matrix(design, nrow = n.qns * n.alts)
+    flattened <- cbind(rep(seq(n.qns), each = n.alts), rep(seq(n.alts), n.qns), flattened)
+    colnames(flattened) <- c("Question", "Alternative", dimnames(design)[[3]])
+    return(flattened)
+}
+
+
 
 ################## Shortcut method ################
 #
@@ -214,6 +237,7 @@ shortcutDesign <- function(levels.per.attribute, n.questions, alternatives.per.q
     level.sequences <- sapply(levels.per.attribute, seq) # list of vectors of numeric levels per attribute
 
     design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
+    dimnames(design)[[3]] <- names(levels.per.attribute)
     design.counts <- sapply(levels.per.attribute, function(x) rep(0, x)) # number of times each level shown in design
 
     for (question in seq(n.questions)) {
@@ -248,6 +272,7 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
     n.attributes <- length(levels.per.attribute)
     level.sequences <- sapply(levels.per.attribute, seq) # list of vectors of numeric levels per attribute
     design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
+    dimnames(design)[[3]] <- names(levels.per.attribute)
 
     for (question in seq(n.questions)) {
 
