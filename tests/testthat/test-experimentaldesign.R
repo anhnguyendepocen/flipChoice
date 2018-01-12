@@ -14,7 +14,7 @@ alternatives.per.question <- 3
 # Automated test case
 experiment <- CreateExperiment(c(3, 5, 7, 10), 20)
 
-# TODO convert below to loop and test the different outputs
+# TODO test none.alternative
 
 
 for (model in c("Random", "Shortcut", "Complete enumeration")) {
@@ -22,10 +22,12 @@ for (model in c("Random", "Shortcut", "Complete enumeration")) {
                      "Level balances")) {
 
         test_that(paste(model, output), {
-            expect_error(ChoiceModelDesign(model, attribute.levels, n.questions,
-                                           alternatives.per.question, prohibitions, output), NA)
             expect_error(ChoiceModelDesign(model, experiment$attribute.levels, n.questions,
-                                           alternatives.per.question, experiment$prohibitions, output), NA)
+                                           alternatives.per.question, experiment$prohibitions,
+                                           FALSE, FALSE, output), NA)
+            #expect_error(ChoiceModelDesign(model, attribute.levels, n.questions,
+            #                               alternatives.per.question, prohibitions,
+            #                               FALSE, FALSE, output), NA)
         })
     }
 }
