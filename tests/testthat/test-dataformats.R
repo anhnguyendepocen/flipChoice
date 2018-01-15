@@ -18,13 +18,13 @@ data(sawtooth, package = "flipChoice")
 data(jmp, package = "flipChoice")
 data(jmplevels, package = "flipChoice")
 
-test_that("cho file", {
-    result <- FitChoiceModel(cho.file = cho.file,
-                             attribute.levels.file = attribute.levels.file.cho,
-                             hb.iterations = 10, hb.chains = 1,
-                             hb.warnings = FALSE)
-    expect_error(print(result), NA)
-})
+# test_that("cho file", {
+#     result <- FitChoiceModel(cho.file = cho.file,
+#                              attribute.levels.file = attribute.levels.file.cho,
+#                              hb.iterations = 10, hb.chains = 1,
+#                              hb.warnings = FALSE)
+#     expect_error(print(result), NA)
+# })
 
 # test_that("dual file format", {
 #     result <- FitChoiceModel(design.file = sawtooth.design.file,
