@@ -7,8 +7,7 @@
 GetParameterStatistics(stan.fit, parameter.names, n.classes)
 }
 \arguments{
-\item{stan.fit}{Whether to return a function that shows
-user-friendly Stan warnings.}
+\item{stan.fit}{A stanfit object.}
 
 \item{parameter.names}{Names of the parameters.}
 
