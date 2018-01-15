@@ -33,12 +33,12 @@ test_that("HB weights", {
                  "Weights are not able to be applied for Hierarchical Bayes.")
 })
 
-# test_that("HB 2 classes", {
-#     result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
-#                              hb.chains = 1, n.classes = 2, hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
-#
+test_that("HB 2 classes", {
+    result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
+                             hb.chains = 1, n.classes = 2, hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
+
 # test_that("HB diagonal", {
 #     result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
 #                              hb.chains = 1, normal.covariance = "Diagonal",
