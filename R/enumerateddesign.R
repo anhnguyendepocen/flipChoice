@@ -23,7 +23,7 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
 
     # remove prohibited alternatives
     colnames(prohibitions) <- colnames(enumeration)
-    dups <- duplicated(rbind(enumeration, prohibitions), fromLast = TRUE)[1:length(enumeration)]
+    dups <- duplicated(rbind(enumeration, prohibitions), fromLast = TRUE)[1:nrow(enumeration)]
     enumeration <- as.matrix(enumeration[!dups, ])
 
     # create a list of vectors to count single level occurences
