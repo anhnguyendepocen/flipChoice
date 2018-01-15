@@ -302,10 +302,13 @@ print.FitChoice <- function(x, ...)
     footer <- paste0(footer, "Number of variables: ", x$n.variables, "; ")
     footer <- paste0(footer, "Blue and red bars indicate positive and ",
                      "negative parameters respectively; ")
-    footer <- paste0(footer,
-                     ParameterStatisticsInfo(x$parameter.statistics,
-                         colnames(x$respondent.parameters),
-                         x$n.classes))
+    if (x$class.match.fail)
+        footer <- paste0(footer, "Parameter statistics not available; ")
+    else
+        footer <- paste0(footer,
+                         ParameterStatisticsInfo(x$parameter.statistics,
+                            colnames(x$respondent.parameters),
+                            x$n.classes))
     if (IsTestRServer())
         footer <- paste0(footer, "Time taken to run analysis: [hidden for tests]; ")
     else
