@@ -5,15 +5,15 @@
 \title{Choice modelling experimental design}
 \usage{
 ChoiceModelDesign(design.algorithm, attribute.levels, n.questions,
-  alternatives.per.question, prohibitions = NULL, none.alternative = FALSE,
+  alternatives.per.question, prohibitions = NULL, none.alternatives = 0,
   labelled.alternatives = FALSE, output = "Unlabelled design")
 }
 \arguments{
 \item{design.algorithm}{The algorithm used to create the design. One of \code{"Random"},
 \code{"Shortcut"}, \code{"Balanced overlap"} and \code{"Complete enumeration"}.}
 
-\item{attribute.levels}{\code{\link{list}} of \code{\link{vector}}s of the labels of
-levels for each attribute.}
+\item{attribute.levels}{\code{\link{list}} of \code{\link{vector}}s containing the labels of
+levels for each attribute. Named with the attribute labels.}
 
 \item{n.questions}{Integer; the number of questions asked to each respondent.}
 
@@ -21,24 +21,33 @@ levels for each attribute.}
 shown in each question. Ignored if \code{"labelled.alternatives"} is TRUE.}
 
 \item{prohibitions}{Character \code{\link{matrix}} where each row is a prohibited
-alternative consisting of the levels of each attribute. If a level is missing or
+alternative consisting of the levels of each attribute. If a level is \code{""} or
 is \code{"All"} then all levels of that attribute in combination with the other
-attribute levels are prohibited.}
+specified attribute levels are prohibited.}
 
-\item{none.alternative}{Logical; whether to show an alternative of 'None' in all questions.}
+\item{none.alternatives}{Integer; the number of 'None' in all questions.}
 
 \item{labelled.alternatives}{Logical; whether the first attribute labels the alternatives.}
 
-\item{output}{TODO}
+\item{output}{One of \code{"Attributes and levels"}, \code{"Prohibitions"},
+\code{"Unlabelled design"}, \code{"Labelled design"}, \code{"Level balances"},
+\code{"Overlaps"} or \code{"Standard errors"}.}
 }
 \value{
 A list with components
 \itemize{
-\item \code{design} - an array of dimensions (number of questions by alternatives per
+\item \code{design} - a numeric array of dimensions (number of questions by alternatives per
 question by number of attributes) where each value is the index of a level.
-\item \code{...} - other diagnostics according to \code{design.algorithm}.
+\item \code{design.algorithm} - as per input.
+\item \code{attribute.levels} - as per input.
+\item \code{prohibitions} - as per input.
+\item \code{output} - as per input.
 }
 }
 \description{
 Creates choice model experimental designs according to a given algorithm.
+}
+\examples{
+x <- CreateExperiment(c(3, 5, 7, 10), 20)
+ChoiceModelDesign("Random", x$attribute.levels, 30, 4, x$prohibitions, FALSE, FALSE, "Unlabelled design")
 }

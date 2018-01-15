@@ -1,61 +1,14 @@
+
 ################## Complete enumeration method #######################
 #
 #https://sawtoothsoftware.com/forum/5416/there-mathematical-framework-balanced-overlap-short-design
-
-# Return the difference between the largest and smallest values in a vector or array
-numRange <- function(x) {
-    r <- range(x)
-    return(r[2] - r[1])
-}
-
-# Increment the counts of levels per attribute after adding a new alternative to the design
-addSingles <- function(alternative, singles) {
-    return(mapply(function(x, y) {x[y] <- x[y] + 1
-    x}, singles, alternative))
-}
-
-# Return the sum of the ranges of level counts per attribute when new alternative is added to the design
-singleCost <- function(alternative, singles) {
-    return(sum(sapply(addSingles(alternative, singles), numRange)))
-}
-
-# Increment the pairwise counts of levels after adding a new alternative to the design
-addPairs <- function(alternative, pairs) {
-    for (i in 1:(length(alternative) - 1))
-        for (j in (i + 1):length(alternative))
-            pairs[[i]][[j]][alternative[i], alternative[j]] <- pairs[[i]][[j]][alternative[i], alternative[j]] + 1
-        return(pairs)
-}
-
-# Return the sum of the ranges of pairwise level counts when a new alternative is added to the design
-pairCost <- function(alternative, pairs) {
-    cost <- 0
-    for (i in 1:(length(alternative) - 1)) {
-        for (j in (i + 1):length(alternative)) {
-            pairs[[i]][[j]][alternative[i], alternative[j]] <- pairs[[i]][[j]][alternative[i], alternative[j]] + 1
-            cost <- cost + numRange(pairs[[i]][[j]])
-        }
-    }
-    return(cost)
-}
+#
+enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
+                             none.alternatives = 0, labelled.alternatives = FALSE) {
 
 
-# Calculate the total cost as a weighted sum
-totalCost <- function(alternative, singles, pairs, qn.counts) {
-
-    single.cost <- singleCost(alternative, singles)
-    pair.cost <- pairCost(alternative, pairs)
-    question.overlap.cost <- singleCost(alternative, qn.counts)
-
-    # TODO relative weightings of these costs
-    cost <- 1 * pair.cost + 1 * single.cost + 1 * question.overlap.cost
-    return(cost)
-}
-
-######################################################################################
-
-
-enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions) {
+    # TODO use labelled,alternatives
+    # TODO use none.alternatives
 
     set.seed(12345)
 
@@ -108,6 +61,60 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
         }
     }
 
-    return(list(design = design, singles = singles, pairs = pairs))
+    # TODO add singles and pairs into this or calculate again later if required ???
+    return(design)
+}
+
+
+####### Helper functions for enumeratedDesign ################################################
+
+# Return the difference between the largest and smallest values in a vector or array
+numRange <- function(x) {
+    r <- range(x)
+    return(r[2] - r[1])
+}
+
+# Increment the counts of levels per attribute after adding a new alternative to the design
+addSingles <- function(alternative, singles) {
+    return(mapply(function(x, y) {x[y] <- x[y] + 1
+    x}, singles, alternative))
+}
+
+# Return the sum of the ranges of level counts per attribute when new alternative is added to the design
+singleCost <- function(alternative, singles) {
+    return(sum(sapply(addSingles(alternative, singles), numRange)))
+}
+
+# Increment the pairwise counts of levels after adding a new alternative to the design
+addPairs <- function(alternative, pairs) {
+    for (i in 1:(length(alternative) - 1))
+        for (j in (i + 1):length(alternative))
+            pairs[[i]][[j]][alternative[i], alternative[j]] <- pairs[[i]][[j]][alternative[i], alternative[j]] + 1
+        return(pairs)
+}
+
+# Return the sum of the ranges of pairwise level counts when a new alternative is added to the design
+pairCost <- function(alternative, pairs) {
+    cost <- 0
+    for (i in 1:(length(alternative) - 1)) {
+        for (j in (i + 1):length(alternative)) {
+            pairs[[i]][[j]][alternative[i], alternative[j]] <- pairs[[i]][[j]][alternative[i], alternative[j]] + 1
+            cost <- cost + numRange(pairs[[i]][[j]])
+        }
+    }
+    return(cost)
+}
+
+
+# Calculate the total cost as a weighted sum
+totalCost <- function(alternative, singles, pairs, qn.counts) {
+
+    single.cost <- singleCost(alternative, singles)
+    pair.cost <- pairCost(alternative, pairs)
+    question.overlap.cost <- singleCost(alternative, qn.counts)
+
+    # TODO relative weightings of these costs
+    cost <- 1 * pair.cost + 1 * single.cost + 1 * question.overlap.cost
+    return(cost)
 }
 
