@@ -22,9 +22,13 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
 
             new.alternative <- sapply(level.sequences, sample, 1)
 
-            # ignore new.alternative if prohibited
-            if (any(sapply(prohibitions, identical, new.alternative)))
-                next
+            if (nrow(prohibitions) > 0)
+            {
+                # ignore new.alternative if prohibited
+                prohibition.matches <- t(apply(prohibitions, 1, function(x) x == new.alternative))
+                if (any(apply(prohibition.matches, 1, all)))
+                    next
+            }
 
             # ignore new.alternative if not unique within this question
             if (i.alternative > 1 && anyDuplicated(design[question, 1:i.alternative, ]))

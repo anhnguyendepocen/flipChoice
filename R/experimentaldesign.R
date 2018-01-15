@@ -31,7 +31,7 @@
 #'
 #' @examples
 #' x <- CreateExperiment(c(3, 5, 7, 10), 20)
-#' ChoiceModelDesign("Random", x$attribute.levels, 30, 4, x$prohibitions, FALSE, FALSE, "Unlabelled design")
+#' ChoiceModelDesign("Random", x$attribute.levels, 30, 4, x$prohibitions, 0, FALSE, "Unlabelled design")
 #' @export
 ChoiceModelDesign <- function(design.algorithm,
                               attribute.levels,
@@ -59,6 +59,12 @@ ChoiceModelDesign <- function(design.algorithm,
         names(attribute.levels) <- paste("Attribute", seq(length(attribute.levels)))
 
 
+    # Convert from labels to numeric and factors
+    prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
+    integer.prohibitions <- data.frame(lapply(prohibitions, as.integer))
+    levels.per.attribute <- sapply(attribute.levels, length)
+    names(levels.per.attribute) <- names(attribute.levels)
+
     # WHILE TESTING THIS FUNCTION I AM RETURNING THE FOLLOWING TWO OUTPUTS WITHOUT
     # CALCULATING THE ChoiceModelDesign OBJECT (WHICH MAY TAKE A LONG TIME)
     if (output == "Attributes and levels")
@@ -72,15 +78,9 @@ ChoiceModelDesign <- function(design.algorithm,
         return(prohibitions)
 
 
-    # Convert data to numeric
-    # TODO separate expansion from conversion to numeric and add former to result
-    unlabelled.prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
-    levels.per.attribute <- sapply(attribute.levels, length)
-    names(levels.per.attribute) <- names(attribute.levels)
-
     # Call the algorithm to create the design
     args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions,
-                 alternatives.per.question = alternatives.per.question, prohibitions = unlabelled.prohibitions,
+                 alternatives.per.question = alternatives.per.question, prohibitions = integer.prohibitions,
                  none.alternatives = none.alternatives, labelled.alternatives = labelled.alternatives)
 
     result <- list(design = do.call(paste0(design.function, "Design"), args),
@@ -142,6 +142,8 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
 
     prohibitions[prohibitions == ""] <- "All"
     prohibitions <- data.frame(prohibitions)
+    if (nrow(prohibitions) == 0)
+        return(prohibitions)
 
     if (ncol(prohibitions) != length(attribute.levels))
         stop("Each prohibition must include a level for each attribute (possibly including 'All').")
