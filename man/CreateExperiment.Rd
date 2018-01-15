@@ -2,7 +2,8 @@
 % Please edit documentation in R/experimentaldesign.R
 \name{CreateExperiment}
 \alias{CreateExperiment}
-\title{Creates attributes and levels of an experiment with random prohibitions.}
+\title{Creates attributes and levels of an experiment, possibly with random prohibitions.
+This is useful for quickly creating a design without typing in lists of levels.}
 \usage{
 CreateExperiment(levels.per.attribute, n.prohibitions = 0)
 }
@@ -22,5 +23,6 @@ alternative consisting of the levels of each attribute.
 }
 }
 \description{
-Creates attributes and levels of an experiment with random prohibitions.
+Creates attributes and levels of an experiment, possibly with random prohibitions.
+This is useful for quickly creating a design without typing in lists of levels.
 }
