@@ -49,5 +49,5 @@ Creates choice model experimental designs according to a given algorithm.
 }
 \examples{
 x <- CreateExperiment(c(3, 5, 7, 10), 20)
-ChoiceModelDesign("Random", x$attribute.levels, 30, 4, x$prohibitions, FALSE, FALSE, "Unlabelled design")
+ChoiceModelDesign("Random", x$attribute.levels, 30, 4, x$prohibitions, 0, FALSE, "Unlabelled design")
 }
