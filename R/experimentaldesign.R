@@ -7,6 +7,7 @@
 #' @param attribute.levels \code{\link{list}} of \code{\link{vector}}s containing the labels of
 #' levels for each attribute. Named with the attribute labels.
 #' @param n.questions Integer; the number of questions asked to each respondent.
+#' @param n.versions Integer; the number of versions of the survey to create.
 #' @param alternatives.per.question Integer; the number of alternative products
 #' shown in each question. Ignored if \code{"labelled.alternatives"} is TRUE.
 #' @param prohibitions Character \code{\link{matrix}} where each row is a prohibited
@@ -31,11 +32,12 @@
 #'
 #' @examples
 #' x <- CreateExperiment(c(3, 5, 7, 10), 20)
-#' ChoiceModelDesign("Random", x$attribute.levels, 30, 4, x$prohibitions, 0, FALSE, "Unlabelled design")
+#' ChoiceModelDesign("Random", x$attribute.levels, 30, 1, 4, x$prohibitions, 0, FALSE, "Unlabelled design")
 #' @export
 ChoiceModelDesign <- function(design.algorithm,
                               attribute.levels,
                               n.questions,
+                              n.versions = 1,
                               alternatives.per.question,
                               prohibitions = NULL,
                               none.alternatives = 0,
@@ -79,7 +81,8 @@ ChoiceModelDesign <- function(design.algorithm,
 
 
     # Call the algorithm to create the design
-    args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions,
+    # Design algorithms use only unlabelled levels and do not distinguish between versions
+    args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions * n.versions,
                  alternatives.per.question = alternatives.per.question, prohibitions = integer.prohibitions,
                  none.alternatives = none.alternatives, labelled.alternatives = labelled.alternatives)
 
@@ -87,6 +90,7 @@ ChoiceModelDesign <- function(design.algorithm,
                    design.algorithm = design.algorithm,
                    attribute.levels = attribute.levels,
                    prohibitions = prohibitions,
+                   n.versions = n.versions,
                    output = output)
 
     class(result) <- "ChoiceModelDesign"
@@ -103,31 +107,31 @@ print.ChoiceModelDesign <- function(x, ...) {
         max.levels <- max(sapply(x$attribute.levels, length))
         levels.table <- sapply(x$attribute.levels, function (z) c(z, rep("", max.levels - length(z))))
         rownames(levels.table) <- paste("Level", seq(max.levels))
-        print(levels.table)
+        return(levels.table)
     }
 
     else if (x$output == "Prohibitions")
-        print(x$prohibitions)
+        return(x$prohibitions)
 
     # Output the design with indices or labels
     else if (x$output == "Unlabelled design")
-        print(flattenDesign(x$design))
+        return(flattenDesign(x$design))
     else if (x$output == "Labelled design")
-        print(flattenDesign(labelDesign(x$design, x$attribute.levels)))
+        return(flattenDesign(labelDesign(x$design, x$attribute.levels)))
 
     # Single and pairwise level balances
     else if (x$output == "Level balances")
-        print(levelBalances(x))
+        return(levelBalances(x))
 
     # Vector of the proportion of questions that have >= 1 repeated level by attribute
     else if (x$output == "Overlaps")
-        print(overlaps(x$design, names(x$attribute.levels)))
+        return(overlaps(x$design, names(x$attribute.levels)))
 
     # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
     else if (x$output == "Standard errors")
     {
-        print(list(d.score = dScore(x$design),
-                    d.error = DerrorHZ(flattenDesign(x$design), levels.per.attribute, effects = FALSE)))
+        return(list(d.score = dScore(x$design),
+                    d.error = DerrorHZ(flattenDesign(x$design), x$levels.per.attribute, effects = FALSE)))
     }
     else
         stop("Unrecognized output.")

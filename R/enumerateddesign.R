@@ -19,12 +19,15 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
     dimnames(design)[[3]] <- names(levels.per.attribute)
 
     # enumerate all alternatives
-    enumeration <- expand.grid(level.sequences)
+    enumeration <- as.matrix(expand.grid(level.sequences))
 
     # remove prohibited alternatives
-    colnames(prohibitions) <- colnames(enumeration)
-    dups <- duplicated(rbind(enumeration, prohibitions), fromLast = TRUE)[1:nrow(enumeration)]
-    enumeration <- as.matrix(enumeration[!dups, ])
+    if (!is.null(prohibitions) && length(prohibitions) != 0)
+    {
+        colnames(prohibitions) <- colnames(enumeration)
+        dups <- duplicated(rbind(enumeration, prohibitions), fromLast = TRUE)[1:nrow(enumeration)]
+        enumeration <- as.matrix(enumeration[!dups, ])
+    }
 
     # create a list of vectors to count single level occurences
     levels.per.attribute <- sapply(level.sequences, length)

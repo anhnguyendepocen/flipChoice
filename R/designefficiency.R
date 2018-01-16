@@ -11,7 +11,7 @@ dScore <- function(design) {
 # design.matrix is a matrix for an unlabeled choice design in the long format, meaning that
 #   each row describes one of the alternatives in one of the choice tasks. Complete data for
 #   each task is spread across several rows. The columns are:
-#   - Column 1 indicates the Task number for each profile
+#   - Column 1 indicates the task number for each profile
 #   - Column 2 indicates the alternative number
 #   - Columns 3 and up each correspond to an attribute, with the entries in the columns indicating
 #     the level of the attribute (beginning at level 1).
@@ -21,13 +21,11 @@ dScore <- function(design) {
 #   effects coding (TRUE) or dummy coding (FALSE).
 # prior is a vector of prior parameters for the attribute levels. Keeping prior = NULL uses a flat prior
 DerrorHZ = function(design.matrix, attribute.levels, effects = TRUE, prior = NULL) {
+
     K = sum(attribute.levels - 1) # Total number of parameters
     N = max(design.matrix[,1]) # Number of tasks
     J = max(design.matrix[,2]) # Number of alts per task
     M = N*J
-
-
-    # This needs to be redone as a function that takes a flat format design
 
     # Generate a coded version of the design using dummy coding or effects coding
     des.att = design.matrix[, 3:ncol(design.matrix)] # Part of the design matrix containing the attributes
