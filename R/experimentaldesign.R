@@ -95,39 +95,39 @@ ChoiceModelDesign <- function(design.algorithm,
 
 
 #' @export
-print.ChoiceModelDesign <- function(cmd, ...) {
+print.ChoiceModelDesign <- function(x, ...) {
 
-    # Return a table with attributes along the columns and levels along the rows
-    if (cmd$output == "Attributes and levels")
+    # Output a table with attributes along the columns and levels along the rows
+    if (x$output == "Attributes and levels")
     {
-        max.levels <- max(sapply(cmd$attribute.levels, length))
-        levels.table <- sapply(cmd$attribute.levels, function (x) c(x, rep("", max.levels - length(x))))
+        max.levels <- max(sapply(x$attribute.levels, length))
+        levels.table <- sapply(x$attribute.levels, function (z) c(z, rep("", max.levels - length(z))))
         rownames(levels.table) <- paste("Level", seq(max.levels))
         print(levels.table)
     }
 
-    else if (cmd$output == "Prohibitions")
-        print(cmd$prohibitions)
+    else if (x$output == "Prohibitions")
+        print(x$prohibitions)
 
-    # Return the design
-    else if (cmd$output == "Unlabelled design")
-        print(flattenDesign(cmd$design))
-    else if (cmd$output == "Labelled design")
-        print(flattenDesign(labelDesign(cmd$design, cmd$attribute.levels)))
+    # Output the design with indices or labels
+    else if (x$output == "Unlabelled design")
+        print(flattenDesign(x$design))
+    else if (x$output == "Labelled design")
+        print(flattenDesign(labelDesign(x$design, x$attribute.levels)))
 
-    # Return some diagnostic
-    else if (cmd$output == "Level balances")
-        print(levelBalances(cmd))
+    # Single and pairwise level balances
+    else if (x$output == "Level balances")
+        print(levelBalances(x))
 
-    # TODO OUTPUT A MEASURE OF HOW MANY QUESTIONS CONTAIN TASKS WITH THE SAME LEVEL
-    else if (cmd$output == "Overlaps")
-        print(NULL)
+    # Vector of the proportion of questions that have >= 1 repeated level by attribute
+    else if (x$output == "Overlaps")
+        print(overlaps(x$design, names(x$attribute.levels)))
 
     # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
-    else if (cmd$output == "Standard errors")
+    else if (x$output == "Standard errors")
     {
-        print(list(d.score = dScore(cmd$design),
-                    d.error = DerrorHZ(flattenDesign(cmd$design), levels.per.attribute, effects = FALSE)))
+        print(list(d.score = dScore(x$design),
+                    d.error = DerrorHZ(flattenDesign(x$design), levels.per.attribute, effects = FALSE)))
     }
     else
         stop("Unrecognized output.")
@@ -250,7 +250,6 @@ pairLevelBalances <- function(design, attribute.names) {
 }
 
 labelSingleBalanceLevels <- function(singles, attribute.levels) {
-    # maybe there is a better way
     return(mapply(function(x, y) {names(x) <- y; x}, singles, attribute.levels))
 }
 
@@ -262,6 +261,12 @@ labelPairBalanceLevels <- function(pairs, attribute.levels) {
             colnames(pairs[[i]][[j]]) <- attribute.levels[[j]]
         }
     return(pairs)
+}
+
+overlaps <- function(design, attribute.names) {
+    # matrix of qn by attribute indicting whether any level of that attribute is repeated in that qn
+    overlaps <- apply(design, c(1, 3), anyDuplicated) != 0
+    return(colSums(overlaps) / nrow(overlaps))
 }
 
 flattenDesign <- function(design) {
