@@ -8,7 +8,8 @@ attribute.levels <- list(c("yamaha", "honda", "ducati", "triumph", "bmw", "kawas
 names(attribute.levels) <- c("brand", "engine", "transmission", "colour")
 prohibitions <- matrix(c("ducati", "125cc", "manual", "red", "ducati", "", "manual", "red", "honda", "All", "", "yellow"),
                        ncol = 4, byrow = TRUE)
-n.questions <- 30
+n.questions <- 10
+n.version <- 2
 alternatives.per.question <- 3
 
 # Automated test case
@@ -22,10 +23,10 @@ for (model in c("Random", "Shortcut", "Complete enumeration")) {
                      "Level balances", "Overlaps")) {
 
         test_that(paste(model, output), {
-            expect_error(print(ChoiceModelDesign(model, experiment$attribute.levels, n.questions,
+            expect_error(print(ChoiceModelDesign(model, experiment$attribute.levels, n.questions, n.versions,
                                            alternatives.per.question, experiment$prohibitions,
                                            0, FALSE, output)), NA)
-            expect_error(print(ChoiceModelDesign(model, attribute.levels, n.questions,
+            expect_error(print(ChoiceModelDesign(model, attribute.levels, n.questions, n.versions,
                                            alternatives.per.question, prohibitions,
                                            0, FALSE, output)), NA)
         })
