@@ -7,8 +7,11 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
                              none.alternatives = 0, labelled.alternatives = FALSE) {
 
 
-    # TODO use labelled,alternatives
-    # TODO use none.alternatives
+    # TODO for labelled,alternatives do evrything without the first attribute then bolt on afterwards
+    #if (labelled.alternatives)
+    #{
+    #
+    #}
 
     set.seed(12345)
 
@@ -51,8 +54,13 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
 
         for (i.alternative in seq(alternatives.per.question)) {
 
-            costs <- apply(enumeration, 1, totalCost, singles, pairs, qn.counts)
-            best.alternative <- enumeration[which.min(costs), ]
+            if (labelled.alternatives)
+                valid.enumerations <- enumeration[enumeration[, 1] == i.alternative, ]
+            else
+                valid.enumerations <- enumeration
+
+            costs <- apply(valid.enumerations, 1, totalCost, singles, pairs, qn.counts)
+            best.alternative <- valid.enumerations[which.min(costs), ]
 
             # add best.alternative to design
             design[question, i.alternative, ] <- best.alternative
@@ -64,7 +72,6 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
         }
     }
 
-    # TODO add singles and pairs into this or calculate again later if required ???
     return(design)
 }
 

@@ -2,11 +2,12 @@
 % Please edit documentation in R/experimentaldesign.R
 \name{ChoiceModelDesign}
 \alias{ChoiceModelDesign}
-\title{Choice modelling experimental design}
+\title{Choice modeling experimental design}
 \usage{
 ChoiceModelDesign(design.algorithm, attribute.levels, n.questions,
-  alternatives.per.question, prohibitions = NULL, none.alternatives = 0,
-  labelled.alternatives = FALSE, output = "Unlabelled design")
+  n.versions = 1, alternatives.per.question, prohibitions = NULL,
+  none.alternatives = 0, labelled.alternatives = FALSE,
+  output = "Unlabelled design")
 }
 \arguments{
 \item{design.algorithm}{The algorithm used to create the design. One of \code{"Random"},
@@ -16,6 +17,8 @@ ChoiceModelDesign(design.algorithm, attribute.levels, n.questions,
 levels for each attribute. Named with the attribute labels.}
 
 \item{n.questions}{Integer; the number of questions asked to each respondent.}
+
+\item{n.versions}{Integer; the number of versions of the survey to create.}
 
 \item{alternatives.per.question}{Integer; the number of alternative products
 shown in each question. Ignored if \code{"labelled.alternatives"} is TRUE.}
@@ -49,5 +52,6 @@ Creates choice model experimental designs according to a given algorithm.
 }
 \examples{
 x <- CreateExperiment(c(3, 5, 7, 10), 20)
-ChoiceModelDesign("Random", x$attribute.levels, 30, 4, x$prohibitions, 0, FALSE, "Unlabelled design")
+ChoiceModelDesign("Random", x$attribute.levels, 30, 1, 4, x$prohibitions,
+                  0, FALSE, "Unlabelled design")
 }
