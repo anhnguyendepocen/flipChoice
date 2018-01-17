@@ -1,4 +1,4 @@
-#' Choice modelling experimental design
+#' Choice modeling experimental design
 #'
 #' Creates choice model experimental designs according to a given algorithm.
 #'
@@ -32,7 +32,8 @@
 #'
 #' @examples
 #' x <- CreateExperiment(c(3, 5, 7, 10), 20)
-#' ChoiceModelDesign("Random", x$attribute.levels, 30, 1, 4, x$prohibitions, 0, FALSE, "Unlabelled design")
+#' ChoiceModelDesign("Random", x$attribute.levels, 30, 1, 4, x$prohibitions,
+#'                   0, FALSE, "Unlabelled design")
 #' @export
 ChoiceModelDesign <- function(design.algorithm,
                               attribute.levels,
@@ -55,7 +56,7 @@ ChoiceModelDesign <- function(design.algorithm,
 
     # If labelled.alternatives then alternatives.per.question is calculated and not supplied
     if (labelled.alternatives)
-        alternatives.per.question <- length(attribute.levels[[1]]) + none.alternatives
+        alternatives.per.question <- length(attribute.levels[[1]])
 
     if (is.null(names(attribute.levels)))
         names(attribute.levels) <- paste("Attribute", seq(length(attribute.levels)))
@@ -81,16 +82,21 @@ ChoiceModelDesign <- function(design.algorithm,
 
 
     # Call the algorithm to create the design
-    # Design algorithms use only unlabelled levels and do not distinguish between versions
+    # Design algorithms     - use only unlabelled levels (i.e. integer level indices)
+    #                       - simply multiply question per respondent by n.versions
+    #                       - ignore None alternatives, these are added later
     args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions * n.versions,
                  alternatives.per.question = alternatives.per.question, prohibitions = integer.prohibitions,
                  none.alternatives = none.alternatives, labelled.alternatives = labelled.alternatives)
+
+    # TODO add the None alternative to the design either now or when printing
 
     result <- list(design = do.call(paste0(design.function, "Design"), args),
                    design.algorithm = design.algorithm,
                    attribute.levels = attribute.levels,
                    prohibitions = prohibitions,
                    n.versions = n.versions,
+                   none.alternatives = none.alternatives,
                    output = output)
 
     class(result) <- "ChoiceModelDesign"
@@ -107,30 +113,30 @@ print.ChoiceModelDesign <- function(x, ...) {
         max.levels <- max(sapply(x$attribute.levels, length))
         levels.table <- sapply(x$attribute.levels, function (z) c(z, rep("", max.levels - length(z))))
         rownames(levels.table) <- paste("Level", seq(max.levels))
-        return(levels.table)
+        print(levels.table)
     }
 
     else if (x$output == "Prohibitions")
-        return(x$prohibitions)
+        print(x$prohibitions)
 
     # Output the design with indices or labels
     else if (x$output == "Unlabelled design")
-        return(flattenDesign(x$design))
+        print(flattenDesign(x$design))
     else if (x$output == "Labelled design")
-        return(flattenDesign(labelDesign(x$design, x$attribute.levels)))
+        print(flattenDesign(labelDesign(x$design, x$attribute.levels)))
 
     # Single and pairwise level balances
     else if (x$output == "Level balances")
-        return(levelBalances(x))
+        print(levelBalances(x))
 
     # Vector of the proportion of questions that have >= 1 repeated level by attribute
     else if (x$output == "Overlaps")
-        return(overlaps(x$design, names(x$attribute.levels)))
+        print(overlaps(x$design, names(x$attribute.levels)))
 
     # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
     else if (x$output == "Standard errors")
     {
-        return(list(d.score = dScore(x$design),
+        print(list(d.score = dScore(x$design),
                     d.error = DerrorHZ(flattenDesign(x$design), x$levels.per.attribute, effects = FALSE)))
     }
     else
@@ -277,7 +283,8 @@ flattenDesign <- function(design) {
     n.qns <- dim(design)[1]
     n.alts <- dim(design)[2]
     flattened <- matrix(design, nrow = n.qns * n.alts)
-    flattened <- cbind(rep(seq(n.qns), each = n.alts), rep(seq(n.alts), n.qns), flattened)
+    flattened <- cbind(rep(seq(n.qns), n.alts), rep(seq(n.alts), each = n.qns), flattened)
+    flattened <- flattened[order(as.numeric(flattened[, 1])), ]
     colnames(flattened) <- c("Question", "Alternative", dimnames(design)[[3]])
     return(flattened)
 }
