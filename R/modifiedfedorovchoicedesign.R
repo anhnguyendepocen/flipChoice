@@ -51,6 +51,7 @@
 #'
 #' ## 3^3/3/9 design
 #' ModifiedFedorovChoiceDesign(rbind(attribute.names, attribute.levels), prior, 3, 9)
+#' @export
 ModifiedFedorovChoiceDesign <- function(
                                pasted.attributes,
                                pasted.prior = NULL,
