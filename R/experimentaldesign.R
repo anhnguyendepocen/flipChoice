@@ -105,6 +105,8 @@ ChoiceModelDesign <- function(design.algorithm,
 
 
 #' @export
+#' @method print ChoiceModelDesign
+#' @noRd
 print.ChoiceModelDesign <- function(x, ...) {
 
     # Output a table with attributes along the columns and levels along the rows
