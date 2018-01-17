@@ -7,7 +7,6 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
                          none.alternatives = 0, labelled.alternatives = FALSE) {
 
     # TODO use labelled,alternatives
-    # TODO use none.alternatives
 
     set.seed(12345)
     n.attributes <- length(levels.per.attribute)
@@ -21,6 +20,9 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
         while (i.alternative <= alternatives.per.question) {
 
             new.alternative <- sapply(level.sequences, sample, 1)
+            # First attribute is set by alternative number
+            if (labelled.alternatives)
+                new.alternative[1] <- i.alternative
 
             if (nrow(prohibitions) > 0)
             {
@@ -53,7 +55,6 @@ shortcutDesign <- function(levels.per.attribute, n.questions, alternatives.per.q
                            none.alternatives = 0, labelled.alternatives = FALSE) {
 
     # TODO use labelled,alternatives
-    # TODO use none.alternatives
 
     n.attributes <- length(levels.per.attribute)
     level.sequences <- sapply(levels.per.attribute, seq) # list of vectors of numeric levels per attribute

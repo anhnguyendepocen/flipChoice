@@ -1,4 +1,4 @@
-
+#' @importFrom stats model.matrix
 dScore <- function(design) {
     attribute.columns <- data.frame(flattenDesign(design)[, 3:(dim(design)[3] + 2)])
     attribute.columns <- data.frame(lapply(attribute.columns, as.factor))

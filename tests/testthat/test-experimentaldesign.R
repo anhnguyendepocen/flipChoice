@@ -9,13 +9,11 @@ names(attribute.levels) <- c("brand", "engine", "transmission", "colour")
 prohibitions <- matrix(c("ducati", "125cc", "manual", "red", "ducati", "", "manual", "red", "honda", "All", "", "yellow"),
                        ncol = 4, byrow = TRUE)
 n.questions <- 10
-n.version <- 2
+n.versions <- 2
 alternatives.per.question <- 3
 
 # Automated test case
 experiment <- CreateExperiment(c(3, 5, 7, 10), 20)
-
-# TODO vary none.alternatives and labelled.alternatives
 
 
 for (model in c("Random", "Shortcut", "Complete enumeration")) {
@@ -28,7 +26,7 @@ for (model in c("Random", "Shortcut", "Complete enumeration")) {
                                            0, FALSE, output)), NA)
             expect_error(print(ChoiceModelDesign(model, attribute.levels, n.questions, n.versions,
                                            alternatives.per.question, prohibitions,
-                                           0, FALSE, output)), NA)
+                                           2, TRUE, output)), NA)
         })
     }
 }
