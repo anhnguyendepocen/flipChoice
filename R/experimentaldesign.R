@@ -200,8 +200,8 @@ CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0) {
 
     set.seed(12345)
     attributes <- LETTERS[1:length(levels.per.attribute)]
-    attribute.levels <- sapply(levels.per.attribute, seq)
-    attribute.levels <- mapply(paste0, attributes, attribute.levels)
+    attribute.levels <- sapply(levels.per.attribute, seq, simplify = FALSE)
+    attribute.levels <- mapply(paste0, attributes, attribute.levels, SIMPLIFY = FALSE)
     names(attribute.levels) <- attributes
 
     # may produce duplicate prohibitions
@@ -222,12 +222,12 @@ labelDesign <- function(unlabelled.design, attribute.levels) {
 }
 
 
-# Compute one and two-way level balances or extract from existing object.
+# Compute one and two-way level balances and overlaps.
 balancesAndOverlaps <- function(cmd) {
 
-    singles <- if (!is.null(cmd$singles)) cmd$singles else singleLevelBalances(cmd$design, names(cmd$attribute.levels))
+    singles <- singleLevelBalances(cmd$design, names(cmd$attribute.levels))
 
-    pairs <- if (!is.null(cmd$pairs)) cmd$pairs else pairLevelBalances(cmd$design, names(cmd$attribute.levels))
+    pairs <- pairLevelBalances(cmd$design, names(cmd$attribute.levels))
 
     # label the levels
     singles <- labelSingleBalanceLevels(singles, cmd$attribute.levels)
@@ -245,6 +245,8 @@ balancesAndOverlaps <- function(cmd) {
 
 singleLevelBalances <- function(design, attribute.names) {
     singles <- apply(design, 3, table)
+    if (!is.list(singles))
+        singles <- split(singles, rep(1:ncol(singles), each = nrow(singles)))
     names(singles) <- attribute.names
     return(singles)
 }
@@ -261,7 +263,7 @@ pairLevelBalances <- function(design, attribute.names) {
 }
 
 labelSingleBalanceLevels <- function(singles, attribute.levels) {
-    return(mapply(function(x, y) {names(x) <- y; x}, singles, attribute.levels))
+    return(mapply(function(x, y) {names(x) <- y; x}, singles, attribute.levels, SIMPLIFY = FALSE))
 }
 
 labelPairBalanceLevels <- function(pairs, attribute.levels) {

@@ -11,7 +11,7 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
 
     # initialize empty design
     n.attributes <- length(levels.per.attribute)
-    level.sequences <- sapply(levels.per.attribute, seq) # list of vectors of numeric levels per attribute
+    level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
     design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
     dimnames(design)[[3]] <- names(levels.per.attribute)
 
@@ -28,7 +28,7 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
 
     # create a list of vectors to count single level occurences
     levels.per.attribute <- sapply(level.sequences, length)
-    singles <- sapply(levels.per.attribute, function(x) rep(0, x))
+    singles <- sapply(levels.per.attribute, function(x) rep(0, x), simplify = FALSE)
     names(singles) <- names(levels.per.attribute)
 
     # create a list of lists of matrices to count pairwise level occurences
@@ -44,7 +44,7 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
     for (question in seq(n.questions)) {
 
         # count number of times each level is shown in current question
-        qn.counts <- sapply(levels.per.attribute, function(x) rep(0, x))
+        qn.counts <- sapply(levels.per.attribute, function(x) rep(0, x), simplify = FALSE)
 
         for (i.alternative in seq(alternatives.per.question)) {
 
@@ -81,7 +81,7 @@ numRange <- function(x) {
 # Increment the counts of levels per attribute after adding a new alternative to the design
 addSingles <- function(alternative, singles) {
     return(mapply(function(x, y) {x[y] <- x[y] + 1
-    x}, singles, alternative))
+    x}, singles, alternative, SIMPLIFY = FALSE))
 }
 
 # Return the sum of the ranges of level counts per attribute when new alternative is added to the design
@@ -146,7 +146,7 @@ shortcut2Design <- function(levels.per.attribute, n.questions, alternatives.per.
 
     # initialize empty design
     n.attributes <- length(levels.per.attribute)
-    level.sequences <- sapply(levels.per.attribute, seq) # list of vectors of numeric levels per attribute
+    level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
     design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
     dimnames(design)[[3]] <- names(levels.per.attribute)
 
@@ -163,13 +163,13 @@ shortcut2Design <- function(levels.per.attribute, n.questions, alternatives.per.
 
     # create a list of vectors to count single level occurences
     levels.per.attribute <- sapply(level.sequences, length)
-    singles <- sapply(levels.per.attribute, function(x) rep(0, x))
+    singles <- sapply(levels.per.attribute, function(x) rep(0, x), simplify = FALSE)
     names(singles) <- names(levels.per.attribute)
 
     for (question in seq(n.questions)) {
 
         # count number of times each level is shown in current question
-        qn.counts <- sapply(levels.per.attribute, function(x) rep(0, x))
+        qn.counts <- sapply(levels.per.attribute, function(x) rep(0, x), simplify = FALSE)
 
         for (i.alternative in seq(alternatives.per.question)) {
 
