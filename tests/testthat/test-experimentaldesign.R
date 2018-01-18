@@ -18,7 +18,7 @@ experiment <- CreateExperiment(c(3, 5, 7, 10), 20)
 
 for (model in c("Random", "Shortcut", "Complete enumeration")) {
     for (output in c("Attributes and levels", "Prohibitions", "Unlabelled design", "Labelled design",
-                     "Level balances", "Overlaps")) {
+                     "Balances and overlaps")) {
 
         test_that(paste(model, output), {
             expect_error(print(ChoiceModelDesign(model, experiment$attribute.levels, n.questions, n.versions,
