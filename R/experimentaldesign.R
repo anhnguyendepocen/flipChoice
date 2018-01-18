@@ -17,8 +17,8 @@
 #' @param none.alternatives Integer; the number of 'None' in all questions.
 #' @param labelled.alternatives Logical; whether the first attribute labels the alternatives.
 #' @param output One of \code{"Attributes and levels"}, \code{"Prohibitions"},
-#' \code{"Unlabelled design"}, \code{"Labelled design"}, \code{"Level balances"},
-#' \code{"Overlaps"} or \code{"Standard errors"}.
+#' \code{"Unlabelled design"}, \code{"Labelled design"}, \code{"Balances and overlaps"},
+#' or \code{"Standard errors"}.
 #'
 #' @return A list with components
 #' \itemize{
@@ -47,8 +47,8 @@ ChoiceModelDesign <- function(design.algorithm,
 
 
     # Map the design.algorithm to the function
-    algorithms <- c("Random", "Shortcut", "Balanced overlap", "Complete enumeration")
-    function.names <- c("random", "shortcut", "balanced", "enumerated")
+    algorithms <- c("Random", "Shortcut", "Balanced overlap", "Complete enumeration", "Shortcut2")
+    function.names <- c("random", "shortcut", "balanced", "enumerated", "shortcut2")
     design.function <- function.names[match(design.algorithm, algorithms)]
     if (is.na(design.function))
         stop("Unrecognized design.algorithm: ", design.algorithm)
@@ -89,9 +89,10 @@ ChoiceModelDesign <- function(design.algorithm,
                  alternatives.per.question = alternatives.per.question, prohibitions = integer.prohibitions,
                  none.alternatives = none.alternatives, labelled.alternatives = labelled.alternatives)
 
-    # TODO add the None alternative to the design either now or when printing
+    design <- do.call(paste0(design.function, "Design"), args)
 
-    result <- list(design = do.call(paste0(design.function, "Design"), args),
+    result <- list(design = design,
+                   design.with.none = addNoneAlternatives(design, none.alternatives),
                    design.algorithm = design.algorithm,
                    attribute.levels = attribute.levels,
                    prohibitions = prohibitions,
@@ -123,24 +124,20 @@ print.ChoiceModelDesign <- function(x, ...) {
 
     # Output the design with indices or labels
     else if (x$output == "Unlabelled design")
-        print(flattenDesign(x$design))
+        print(flattenDesign(x$design.with.none))
     else if (x$output == "Labelled design")
-        print(flattenDesign(labelDesign(x$design, x$attribute.levels)))
+        print(flattenDesign(labelDesign(x$design.with.none, x$attribute.levels)))
 
-    # Single and pairwise level balances
-    else if (x$output == "Level balances")
-        print(levelBalances(x))
-
-    # Vector of the proportion of questions that have >= 1 repeated level by attribute
-    else if (x$output == "Overlaps")
-        print(overlaps(x$design, names(x$attribute.levels)))
+    # Single and pairwise level balances and overlaps
+    # (where overlaps is the proportion of questions that have >= 1 repeated level, by attribute)
+    else if (x$output == "Balances and overlaps")
+        print(balancesAndOverlaps(x))
 
     # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
     else if (x$output == "Standard errors")
-    {
         print(list(d.score = dScore(x$design),
                     d.error = DerrorHZ(flattenDesign(x$design), x$levels.per.attribute, effects = FALSE)))
-    }
+
     else
         stop("Unrecognized output.")
 }
@@ -226,7 +223,7 @@ labelDesign <- function(unlabelled.design, attribute.levels) {
 
 
 # Compute one and two-way level balances or extract from existing object.
-levelBalances <- function(cmd) {
+balancesAndOverlaps <- function(cmd) {
 
     singles <- if (!is.null(cmd$singles)) cmd$singles else singleLevelBalances(cmd$design, names(cmd$attribute.levels))
 
@@ -240,7 +237,9 @@ levelBalances <- function(cmd) {
     pairs <- unlist(pairs, recursive = FALSE)
     pairs <- pairs[!is.na(pairs)]
 
-    return(list(singles = singles, pairs = pairs))
+    overlaps = overlaps(cmd$design, names(cmd$attribute.levels))
+
+    return(list(singles = singles, pairs = pairs, overlaps = overlaps))
 }
 
 
@@ -291,5 +290,15 @@ flattenDesign <- function(design) {
     return(flattened)
 }
 
+addNoneAlternatives <- function(design, none.alternatives) {
+    if (none.alternatives == 0)
+        return(design)
+
+    none.dim <- dim(design)
+    none.dim[2] <- none.dim[2] + none.alternatives
+    design.with.none <- array(NA, dim = none.dim, dimnames = dimnames(design))
+    design.with.none[, 1:dim(design)[2], ] <- design
+    return(design.with.none)
+}
 
 

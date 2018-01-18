@@ -33,8 +33,8 @@ specified attribute levels are prohibited.}
 \item{labelled.alternatives}{Logical; whether the first attribute labels the alternatives.}
 
 \item{output}{One of \code{"Attributes and levels"}, \code{"Prohibitions"},
-\code{"Unlabelled design"}, \code{"Labelled design"}, \code{"Level balances"},
-\code{"Overlaps"} or \code{"Standard errors"}.}
+\code{"Unlabelled design"}, \code{"Labelled design"}, \code{"Balances and overlaps"},
+or \code{"Standard errors"}.}
 }
 \value{
 A list with components

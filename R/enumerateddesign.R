@@ -7,12 +7,6 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
                              none.alternatives = 0, labelled.alternatives = FALSE) {
 
 
-    # TODO for labelled,alternatives do evrything without the first attribute then bolt on afterwards
-    #if (labelled.alternatives)
-    #{
-    #
-    #}
-
     set.seed(12345)
 
     # initialize empty design
@@ -127,4 +121,77 @@ totalCost <- function(alternative, singles, pairs, qn.counts) {
     cost <- 1 * pair.cost + 1 * single.cost + 1 * question.overlap.cost
     return(cost)
 }
+
+
+# Calculate the total cost as a weighted sum for shortcut (ignoring pairs)
+totalShortcutCost <- function(alternative, singles, qn.counts) {
+
+    single.cost <- singleCost(alternative, singles)
+    question.overlap.cost <- singleCost(alternative, qn.counts)
+
+    # TODO relative weightings of these costs
+    cost <- 1 * single.cost + 1 * question.overlap.cost
+    return(cost)
+}
+
+
+
+################## Shortcut method as simplification of enumeration #######################
+#
+#
+shortcut2Design <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
+                            none.alternatives = 0, labelled.alternatives = FALSE) {
+
+    set.seed(12345)
+
+    # initialize empty design
+    n.attributes <- length(levels.per.attribute)
+    level.sequences <- sapply(levels.per.attribute, seq) # list of vectors of numeric levels per attribute
+    design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
+    dimnames(design)[[3]] <- names(levels.per.attribute)
+
+    # enumerate all alternatives
+    enumeration <- as.matrix(expand.grid(level.sequences))
+
+    # remove prohibited alternatives
+    if (!is.null(prohibitions) && length(prohibitions) != 0)
+    {
+        colnames(prohibitions) <- colnames(enumeration)
+        dups <- duplicated(rbind(enumeration, prohibitions), fromLast = TRUE)[1:nrow(enumeration)]
+        enumeration <- as.matrix(enumeration[!dups, ])
+    }
+
+    # create a list of vectors to count single level occurences
+    levels.per.attribute <- sapply(level.sequences, length)
+    singles <- sapply(levels.per.attribute, function(x) rep(0, x))
+    names(singles) <- names(levels.per.attribute)
+
+    for (question in seq(n.questions)) {
+
+        # count number of times each level is shown in current question
+        qn.counts <- sapply(levels.per.attribute, function(x) rep(0, x))
+
+        for (i.alternative in seq(alternatives.per.question)) {
+
+            if (labelled.alternatives)
+                valid.enumerations <- enumeration[enumeration[, 1] == i.alternative, ]
+            else
+                valid.enumerations <- enumeration
+
+            costs <- apply(valid.enumerations, 1, totalShortcutCost, singles, qn.counts)
+            best.alternative <- valid.enumerations[which.min(costs), ]
+
+            # add best.alternative to design
+            design[question, i.alternative, ] <- best.alternative
+
+            # increment singles, qn.overlap
+            singles <- addSingles(best.alternative, singles)
+            qn.counts <- addSingles(best.alternative, qn.counts)
+        }
+    }
+
+    return(design)
+}
+
+
 
