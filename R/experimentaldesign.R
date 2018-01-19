@@ -136,7 +136,7 @@ print.ChoiceModelDesign <- function(x, ...) {
     # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
     else if (x$output == "Standard errors")
         print(list(d.score = dScore(x$design),
-                    d.error = DerrorHZ(flattenDesign(x$design), x$levels.per.attribute, effects = FALSE)))
+                    d.error = DerrorHZ(flattenDesign(x$design), sapply(des$attribute.levels, length), effects = FALSE)))
 
     else
         stop("Unrecognized output.")
