@@ -50,9 +50,10 @@
 #' prior <- matrix(as.character(1), ncol(attribute.levels)*(nrow(attribute.levels) - 1), 2)
 #'
 #' ## 3^3/3/9 design
-#' ModifiedFedorovChoiceDesign(rbind(attribute.names, attribute.levels), prior, 3, 9)
-#' @export
-ModifiedFedorovChoiceDesign <- function(
+#' \dontrun{
+#' modifiedFedorov(rbind(attribute.names, attribute.levels), prior, 3, 9)
+#' }
+modifiedFedorovDesign <- function(
                                pasted.attributes,
                                pasted.prior = NULL,
                                profiles.per.question,
