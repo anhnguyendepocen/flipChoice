@@ -1,6 +1,6 @@
 #' @importFrom stats model.matrix
 dScore <- function(design) {
-    attribute.columns <- data.frame(flattenDesign(design)[, 3:(dim(design)[3] + 2)])
+    attribute.columns <- data.frame(design[, 3:ncol(design)])
     attribute.columns <- data.frame(lapply(attribute.columns, as.factor))
     X <- model.matrix( ~ ., data = data.frame(attribute.columns))
     d.score <- det(t(X) %*% X) ^ (1 / ncol(X)) / nrow(X)
