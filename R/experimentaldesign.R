@@ -34,7 +34,7 @@
 #'     \code{"Prohibitions"}, \code{"Unlabelled design"},
 #'     \code{"Labelled design"}, \code{"Balances and overlaps"}, or
 #'     \code{"Standard errors"}.
-#' @param seed Integer; random see to be used by the algorithms.
+#' @param seed Integer; random seed to be used by the algorithms.
 #' @return A list with components
 #' \itemize{
 #' \item \code{design} - a numeric array of dimensions (number of questions by alternatives per
@@ -191,15 +191,9 @@ print.ChoiceModelDesign <- function(x, ...) {
 
         ml.model <- mlogitModel(x)
         print(list(d.score = dScore(x$design),
-<<<<<<< HEAD
-                    d.error = DerrorHZ(x$design, sapply(des$attribute.levels, length), effects = FALSE)))
+                    d.error = DerrorHZ(x$design, sapply(x$attribute.levels, length), effects = FALSE)))
         print(summary(ml.model))
     }
-=======
-                   d.error = DerrorHZ(flattenDesign(x$design),
-                                      sapply(x$attribute.levels, length), effects = FALSE)))
->>>>>>> 2b6e61be83386a413f300a36cf5913ad5ff7d426
-
     else
         stop("Unrecognized output.")
 }
@@ -394,6 +388,7 @@ randomChoices <- function(cmd, respondents = 300) {
 
 # format a design and choices for use with mlogit package
 #' @importFrom mlogit mlogit.data mlogit
+#' @importFrom stats as.formula
 mlogitModel <- function(cmd, choices = NULL) {
     if (is.null(choices))
         choices <- randomChoices(cmd)

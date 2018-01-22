@@ -12,12 +12,13 @@ Imports: flipData,
          flipFormat (>= 1.0.0),
          flipTime (>= 2.7.3),
          flipU,
+         httr,
+         idefix,
+         mlogit,
          rstan,
          readxl,
          stats,
-         utils,	 
-         httr,
-         idefix	 
+         utils
 Suggests: testthat
 Remotes: Displayr/flipData,
          Displayr/flipFormat,

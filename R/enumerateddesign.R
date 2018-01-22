@@ -3,7 +3,7 @@
 #
 #https://sawtoothsoftware.com/forum/5416/there-mathematical-framework-balanced-overlap-short-design
 #
-enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
+completeEnumerationDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
                              none.alternatives = 0, labelled.alternatives = FALSE) {
 
 
