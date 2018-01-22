@@ -8,7 +8,7 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
 
     set.seed(12345)
     n.attributes <- length(levels.per.attribute)
-    level.sequences <- sapply(levels.per.attribute, seq) # list of vectors of numeric levels per attribute
+    level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
     design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
     dimnames(design)[[3]] <- names(levels.per.attribute)
 
@@ -22,7 +22,7 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
             if (labelled.alternatives)
                 new.alternative[1] <- i.alternative
 
-            if (nrow(prohibitions) > 0)
+            if (!is.null(prohibitions) && nrow(prohibitions) > 0)
             {
                 # ignore new.alternative if prohibited
                 prohibition.matches <- t(apply(prohibitions, 1, function(x) x == new.alternative))
@@ -39,7 +39,7 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
             i.alternative <- i.alternative + 1
         }
     }
-    return(design)
+    return(flattenDesign(design))
 }
 
 
@@ -79,7 +79,7 @@ shortcutDesign <- function(levels.per.attribute, n.questions, alternatives.per.q
             }
         }
     }
-    return(design)
+    return(flattenDesign(design))
 }
 
 
