@@ -54,7 +54,7 @@ labels the alternatives.}
 \code{"Labelled design"}, \code{"Balances and overlaps"}, or
 \code{"Standard errors"}.}
 
-\item{seed}{Integer; random see to be used by the algorithms.}
+\item{seed}{Integer; random seed to be used by the algorithms.}
 }
 \value{
 A list with components
