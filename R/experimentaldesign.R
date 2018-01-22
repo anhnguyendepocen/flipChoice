@@ -2,24 +2,39 @@
 #'
 #' Creates choice model experimental designs according to a given algorithm.
 #'
-#' @param design.algorithm The algorithm used to create the design. One of \code{"Random"},
-#' \code{"Shortcut"}, \code{"Balanced overlap"} and \code{"Complete enumeration"}.
-#' @param attribute.levels \code{\link{list}} of \code{\link{vector}}s containing the labels of
-#' levels for each attribute. Named with the attribute labels.
-#' @param n.questions Integer; the number of questions asked to each respondent.
-#' @param n.versions Integer; the number of versions of the survey to create.
-#' @param alternatives.per.question Integer; the number of alternative products
-#' shown in each question. Ignored if \code{"labelled.alternatives"} is TRUE.
-#' @param prohibitions Character \code{\link{matrix}} where each row is a prohibited
-#' alternative consisting of the levels of each attribute. If a level is \code{""} or
-#' is \code{"All"} then all levels of that attribute in combination with the other
-#' specified attribute levels are prohibited.
-#' @param none.alternatives Integer; the number of 'None' in all questions.
-#' @param labelled.alternatives Logical; whether the first attribute labels the alternatives.
-#' @param output One of \code{"Attributes and levels"}, \code{"Prohibitions"},
-#' \code{"Unlabelled design"}, \code{"Labelled design"}, \code{"Balances and overlaps"},
-#' or \code{"Standard errors"}.
-#'
+#' @param design.algorithm The algorithm used to create the
+#'     design. One of \code{"Random"}, \code{"Shortcut"},
+#'     \code{"Balanced overlap"} and \code{"Complete enumeration"},
+#'     and \code{"Modified Federov"}.
+#' @param attribute.levels \code{\link{list}} of \code{\link{vector}}s
+#'     containing the labels of levels for each attribute, with names
+#'     corresponding to the attribute labels; \emph{or} a character
+#'     matrix with first row containing attribute names and subsequent
+#'     rows containing attribute levels.
+#' @param prior Character matrix containing prior values for the model
+#'     coefficients; only used for \code{design.algorithm ==
+#'     "Modified Federov"}; see Details.
+#' @param n.questions Integer; the number of questions asked to each
+#'     respondent.
+#' @param n.versions Integer; the number of versions of the survey to
+#'     create.
+#' @param alternatives.per.question Integer; the number of alternative
+#'     products shown in each question. Ignored if
+#'     \code{"labelled.alternatives"} is TRUE.
+#' @param prohibitions Character \code{\link{matrix}} where each row
+#'     is a prohibited alternative consisting of the levels of each
+#'     attribute. If a level is \code{""} or is \code{"All"} then all
+#'     levels of that attribute in combination with the other
+#'     specified attribute levels are prohibited.
+#' @param none.alternatives Integer; the number of 'None' in all
+#'     questions.
+#' @param labelled.alternatives Logical; whether the first attribute
+#'     labels the alternatives.
+#' @param output One of \code{"Attributes and levels"},
+#'     \code{"Prohibitions"}, \code{"Unlabelled design"},
+#'     \code{"Labelled design"}, \code{"Balances and overlaps"}, or
+#'     \code{"Standard errors"}.
+#' @param seed Integer; random see to be used by the algorithms.
 #' @return A list with components
 #' \itemize{
 #' \item \code{design} - a numeric array of dimensions (number of questions by alternatives per
@@ -28,37 +43,55 @@
 #' \item \code{attribute.levels} - as per input.
 #' \item \code{prohibitions} - as per input.
 #' \item \code{output} - as per input.
+#' \item \code{Derror} - The D-error of \code{design}.
 #' }
+#'
+#' @details If \code{prior} is supplied and \code{design.algorithm ==
+#'     "Modified Federov"}, the number of coefficients must correspond
+#'     to the number of attributes/attribute levels specified in
+#'     \code{attribute.levels}.  If \code{prior} is \code{NULL}, the prior for the
+#'     coefficients is assumed to be identically zero.  If the supplied matrix
+#'     contains two columns, the first column is taken as the prior
+#'     mean for the coefficients and the second is taken to be the
+#'     prior variances.  If only one column is present, the prior for
+#'     the coefficients is assumed to be centered at those values.
 #'
 #' @examples
 #' x <- CreateExperiment(c(3, 5, 7, 10), 20)
-#' ChoiceModelDesign("Random", x$attribute.levels, 30, 1, 4, x$prohibitions,
-#'                   0, FALSE, "Unlabelled design")
+#' ChoiceModelDesign("Random", x$attribute.levels, n.questions = 30,
+#'     alternatives.per.question = 4, prohibitions = x$prohibitions,
+#'     output = "Unlabelled design")
+#' @importFrom utils getFromNamespace
 #' @export
-ChoiceModelDesign <- function(design.algorithm,
+ChoiceModelDesign <- function(
+                              design.algorithm = c("Random", "Shortcut", "Balanced overlap",
+                                                   "Complete enumeration", "Shortcut2", "Modified Federov"),
                               attribute.levels,
+                              prior = NULL,
                               n.questions,
                               n.versions = 1,
                               alternatives.per.question,
                               prohibitions = NULL,
                               none.alternatives = 0,
                               labelled.alternatives = FALSE,
-                              output = "Unlabelled design") {
+                              output = "Unlabelled design",
+                              seed = 54123) {
 
 
     # Map the design.algorithm to the function
-    algorithms <- c("Random", "Shortcut", "Balanced overlap", "Complete enumeration", "Shortcut2")
-    function.names <- c("random", "shortcut", "balanced", "enumerated", "shortcut2")
-    design.function <- function.names[match(design.algorithm, algorithms)]
-    if (is.na(design.function))
-        stop("Unrecognized design.algorithm: ", design.algorithm)
+    design.algorithm <- match.arg(design.algorithm)
+    function.name <- sub("^([A-Z])", "\\L\\1", design.algorithm, perl = TRUE)
+    function.name <- gsub(" ([[:alpha:]])", "\\U\\1", function.name, perl = TRUE)
+    design.function <- getFromNamespace(paste0(function.name, "Design"),
+                                        ns = "flipChoice")
 
+    ## NEED TO ADD CODE TO CHECK SUPPLIED ARGS ARE VALID FOR REQUESTED ALGORITHM
 
     # If labelled.alternatives then alternatives.per.question is calculated and not supplied
     if (labelled.alternatives)
         alternatives.per.question <- length(attribute.levels[[1]])
 
-    if (is.null(names(attribute.levels)))
+    if (!is.character(attribute.levels) && is.null(names(attribute.levels)))
         names(attribute.levels) <- paste("Attribute", seq(length(attribute.levels)))
 
 
@@ -85,11 +118,24 @@ ChoiceModelDesign <- function(design.algorithm,
     # Design algorithms     - use only unlabelled levels (i.e. integer level indices)
     #                       - simply multiply question per respondent by n.versions
     #                       - ignore None alternatives, these are added later
-    args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions * n.versions,
-                 alternatives.per.question = alternatives.per.question, prohibitions = integer.prohibitions,
-                 none.alternatives = none.alternatives, labelled.alternatives = labelled.alternatives)
-
-    design <- do.call(paste0(design.function, "Design"), args)
+    if (design.algorithm == "Modified Federov")
+    {
+        prohibitions <- NA
+        if (none.alternatives != 0L)
+            stop(gettextf("Having none alternatives for %s equal to %s is not currently implemented.",
+                          sQuote("design.algorithm"), dQuote(design.algorithm)))
+        args <- list(pasted.attributes = attribute.levels, pasted.prior = prior,
+                     n.questions = n.questions * n.versions,
+                     profiles.per.question = alternatives.per.question,
+                     labelled.alternatives = labelled.alternatives,
+                     seed = seed)
+    }else
+    {
+        args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions * n.versions,
+                     alternatives.per.question = alternatives.per.question, prohibitions = integer.prohibitions,
+                     none.alternatives = none.alternatives, labelled.alternatives = labelled.alternatives)
+    }
+    design <- do.call(design.function, args)
 
     result <- list(design = design,
                    design.with.none = addNoneAlternatives(design, none.alternatives),
@@ -99,6 +145,11 @@ ChoiceModelDesign <- function(design.algorithm,
                    n.versions = n.versions,
                    none.alternatives = none.alternatives,
                    output = output)
+    if (design.algorithm == "Modified Federov")
+    {
+        result$design <- design$design
+        result$Derror <- design$error
+    }
 
     class(result) <- "ChoiceModelDesign"
     return(result)
