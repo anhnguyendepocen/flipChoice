@@ -92,11 +92,13 @@ ChoiceModelDesign <- function(design.algorithm,
     design <- do.call(paste0(design.function, "Design"), args)
 
     result <- list(design = design,
-                   design.with.none = addNoneAlternatives(design, none.alternatives),
+                   design.with.none = addNoneAlternatives(design, none.alternatives, alternatives.per.question),
                    design.algorithm = design.algorithm,
                    attribute.levels = attribute.levels,
                    prohibitions = prohibitions,
+                   n.questions = n.questions,
                    n.versions = n.versions,
+                   alternatives.per.question = alternatives.per.question,
                    none.alternatives = none.alternatives,
                    output = output)
 
@@ -124,9 +126,9 @@ print.ChoiceModelDesign <- function(x, ...) {
 
     # Output the design with indices or labels
     else if (x$output == "Unlabelled design")
-        print(flattenDesign(x$design.with.none))
+        print(x$design.with.none)
     else if (x$output == "Labelled design")
-        print(flattenDesign(labelDesign(x$design.with.none, x$attribute.levels)))
+        print(labelDesign(x$design.with.none, x$attribute.levels))
 
     # Single and pairwise level balances and overlaps
     # (where overlaps is the proportion of questions that have >= 1 repeated level, by attribute)
@@ -134,9 +136,13 @@ print.ChoiceModelDesign <- function(x, ...) {
         print(balancesAndOverlaps(x))
 
     # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
-    else if (x$output == "Standard errors")
+    else if (x$output == "Standard errors") {
+
+        ml.model <- mlogitModel(x)
         print(list(d.score = dScore(x$design),
-                    d.error = DerrorHZ(flattenDesign(x$design), sapply(des$attribute.levels, length), effects = FALSE)))
+                    d.error = DerrorHZ(x$design, sapply(des$attribute.levels, length), effects = FALSE)))
+        print(summary(ml.model))
+    }
 
     else
         stop("Unrecognized output.")
@@ -148,6 +154,9 @@ print.ChoiceModelDesign <- function(x, ...) {
 # Convert prohibitions from labels to indices (numeric levels)
 # and expand "" or "All" to all levels of the attribute.
 encodeProhibitions <- function(prohibitions, attribute.levels) {
+
+    if (is.null(prohibitions))
+        return(data.frame())
 
     prohibitions[prohibitions == ""] <- "All"
     prohibitions <- data.frame(prohibitions)
@@ -215,9 +224,10 @@ CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0) {
 labelDesign <- function(unlabelled.design, attribute.levels) {
 
     labelled.design <- array(character(0), dim = dim(unlabelled.design))
-    dimnames(labelled.design)[[3]] = dimnames(unlabelled.design)[[3]]
+    colnames(labelled.design) = colnames(unlabelled.design)
+    labelled.design[, 1:2] <- unlabelled.design[, 1:2]
     for (i in 1:length(attribute.levels))
-        labelled.design[, , i] <- attribute.levels[[i]][unlabelled.design[, , i]]
+        labelled.design[, i + 2] <- attribute.levels[[i]][unlabelled.design[, i + 2]]
     return(labelled.design)
 }
 
@@ -225,9 +235,9 @@ labelDesign <- function(unlabelled.design, attribute.levels) {
 # Compute one and two-way level balances and overlaps.
 balancesAndOverlaps <- function(cmd) {
 
-    singles <- singleLevelBalances(cmd$design, names(cmd$attribute.levels))
+    singles <- singleLevelBalances(cmd$design)
 
-    pairs <- pairLevelBalances(cmd$design, names(cmd$attribute.levels))
+    pairs <- pairLevelBalances(cmd$design)
 
     # label the levels
     singles <- labelSingleBalanceLevels(singles, cmd$attribute.levels)
@@ -237,27 +247,26 @@ balancesAndOverlaps <- function(cmd) {
     pairs <- unlist(pairs, recursive = FALSE)
     pairs <- pairs[!is.na(pairs)]
 
-    overlaps = overlaps(cmd$design, names(cmd$attribute.levels))
+    overlaps = countOverlaps(cmd$design)
 
     return(list(singles = singles, pairs = pairs, overlaps = overlaps))
 }
 
 
-singleLevelBalances <- function(design, attribute.names) {
-    singles <- apply(design, 3, table)
+singleLevelBalances <- function(design) {
+    singles <- apply(design[, 3:ncol(design)], 2, table)
     if (!is.list(singles))
         singles <- split(singles, rep(1:ncol(singles), each = nrow(singles)))
-    names(singles) <- attribute.names
     return(singles)
 }
 
-pairLevelBalances <- function(design, attribute.names) {
-    n.attributes <- dim(design)[3]
+pairLevelBalances <- function(design) {
+    n.attributes <- ncol(design) - 2
     pairs <- replicate(n.attributes, rep(list(NA), n.attributes), simplify = FALSE)
     for (i in 1:(n.attributes - 1))
         for (j in (i + 1):n.attributes) {
-            pairs[[i]][[j]] <- table(design[, , i], design[, , j])
-            names(pairs[[i]])[[j]] <- paste0(attribute.names[i], "/", attribute.names[j])
+            pairs[[i]][[j]] <- table(design[, i + 2], design[, j + 2])
+            names(pairs[[i]])[[j]] <- paste0(colnames(design)[i + 2], "/", colnames(design)[j + 2])
         }
     return(pairs)
 }
@@ -276,9 +285,14 @@ labelPairBalanceLevels <- function(pairs, attribute.levels) {
     return(pairs)
 }
 
-overlaps <- function(design, attribute.names) {
-    # matrix of qn by attribute indicting whether any level of that attribute is repeated in that qn
-    overlaps <- apply(design, c(1, 3), anyDuplicated) != 0
+countOverlaps <- function(design) {
+    # table of counts for each level by question, listed for each attribute
+    overlaps <- apply(design[, 3:ncol(design)], 2, table, design[, 1])
+    # duplicated levels
+    overlaps <- lapply(overlaps, ">=", 2)
+    # overlaps for questions (rows) by attribute (cols)
+    overlaps <- sapply(overlaps, function(x) apply(x, 2, any))
+
     return(colSums(overlaps) / nrow(overlaps))
 }
 
@@ -292,15 +306,55 @@ flattenDesign <- function(design) {
     return(flattened)
 }
 
-addNoneAlternatives <- function(design, none.alternatives) {
+addNoneAlternatives <- function(design, none.alternatives, alternatives.per.question) {
     if (none.alternatives == 0)
         return(design)
 
-    none.dim <- dim(design)
-    none.dim[2] <- none.dim[2] + none.alternatives
-    design.with.none <- array(NA, dim = none.dim, dimnames = dimnames(design))
-    design.with.none[, 1:dim(design)[2], ] <- design
+    n <- nrow(design)
+    new.n <- n * (alternatives.per.question + none.alternatives) / alternatives.per.question
+    design.with.none <- matrix(NA, nrow = new.n, ncol = ncol(design))
+
+    # copy existing alternatives
+    new.row.indices <- seq(n) + ((seq(n) - 1) %/% alternatives.per.question) * none.alternatives
+    design.with.none[new.row.indices, ] <- design
+
+    colnames(design.with.none) <- colnames(design)
+    design.with.none[, 1] <- rep(seq(n / alternatives.per.question), each = alternatives.per.question + none.alternatives)
+    design.with.none[, 2] <- rep(seq(alternatives.per.question + none.alternatives), n / alternatives.per.question)
     return(design.with.none)
 }
+
+# randomly choose responses to a ChoiceModelDesign
+randomChoices <- function(cmd, respondents = 300) {
+
+    n.alts <- cmd$alternatives.per.question
+    n.qns <- respondents * cmd$n.questions
+    chosen.alternatives <- replicate(n.qns, sample(seq(n.alts), 1))
+    chosen.indices <- chosen.alternatives + seq(n.qns) * n.alts - n.alts
+    chosen <- rep(FALSE, n.alts * n.qns)
+    chosen[chosen.indices] <- TRUE
+    return(chosen)
+}
+
+# format a design and choices for use with mlogit package
+#' @importFrom mlogit mlogit.data mlogit
+mlogitModel <- function(cmd, choices = NULL) {
+    if (is.null(choices))
+        choices <- randomChoices(cmd)
+
+    # TODO use design.with.none
+    labeled <- as.data.frame(labelDesign(cmd$design, cmd$attribute.levels))
+
+    copies <- length(choices) / nrow(labeled)
+    labeled <- labeled[rep(seq_len(nrow(labeled)), copies), ]
+    labeled$Choice <- choices
+    mlogit.df <- mlogit.data(labeled, choice = "Choice", shape = "long", varying = 3:ncol(labeled),
+                     alt.var = "Alternative", id.var = "Question", drop.index = TRUE)
+
+    form <- paste("Choice ~ ", paste(colnames(mlogit.df)[1:ncol(mlogit.df) - 1], collapse = "+"), "| -1")
+    ml.model <- mlogit(as.formula(form), data = mlogit.df)
+    return(ml.model)
+}
+
 
 

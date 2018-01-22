@@ -69,7 +69,7 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
         }
     }
 
-    return(design)
+    return(flattenDesign(design))
 }
 
 
@@ -195,7 +195,7 @@ shortcut2Design <- function(levels.per.attribute, n.questions, alternatives.per.
         }
     }
 
-    return(design)
+    return(flattenDesign(design))
 }
 
 
