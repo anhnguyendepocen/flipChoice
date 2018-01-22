@@ -1,6 +1,6 @@
 #' Construct an Efficient Choice Model Design
 #'
-#' Uses the Modified Fedorov algorithm and incorporates prior beliefs
+#' Uses the Modified Federov algorithm and incorporates prior beliefs
 #' on the true coefficient values to find a design for a discrete
 #' choice experiment that minimize D-error.
 #' @param pasted.attributes Character matrix with first row containing
@@ -20,6 +20,8 @@
 #'     profiles to show per question.
 #' @param n.questions Numeric value specifying the total number of
 #'     questions/tasks to be performed by each respondent.
+#' @param labelled.alternatives Logical; whether the first attribute
+#'     labels the alternatives.
 #' @param dummy.coding Logical value indicating whether dummy coding
 #'     should be used for the attributes in the design matrix.  If
 #'     \code{FALSE}, effects coding is used.
@@ -50,21 +52,24 @@
 #' prior <- matrix(as.character(1), ncol(attribute.levels)*(nrow(attribute.levels) - 1), 2)
 #'
 #' ## 3^3/3/9 design
-#' ModifiedFedorovChoiceDesign(rbind(attribute.names, attribute.levels), prior, 3, 9)
-#' @export
-ModifiedFedorovChoiceDesign <- function(
+#' \dontrun{
+#' modifiedFederov(rbind(attribute.names, attribute.levels), prior, 3, 9)
+#' }
+modifiedFederovDesign <- function(
                                pasted.attributes,
                                pasted.prior = NULL,
                                profiles.per.question,
                                n.questions,
+                               labelled.alternatives = FALSE,
                                dummy.coding = TRUE,
                                seed = 1776)
 {
     set.seed(seed)
     candidates <- pastedAttributesToProfile(pasted.attributes, dummy.coding)
     par.draws <- parsePastedPrior(pasted.prior, candidates)
+    alt.specific.const <- dummy.coding + integer(profiles.per.question)
     out <- Modfed(candidates, n.sets = n.questions, n.alts = profiles.per.question,
-                  alt.cte = numeric(profiles.per.question), par.draws = par.draws)
+                  alt.cte = alt.specific.const, par.draws = par.draws)
     out
 }
 
