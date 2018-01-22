@@ -1,12 +1,7 @@
 #' @importFrom stats model.matrix
-<<<<<<< HEAD
-dScore <- function(design) {
-    attribute.columns <- data.frame(design[, 3:ncol(design)])
-=======
 dScore <- function(design)
 {
-    attribute.columns <- data.frame(flattenDesign(design)[, 3:(dim(design)[3] + 2)])
->>>>>>> 2b6e61be83386a413f300a36cf5913ad5ff7d426
+    attribute.columns <- data.frame(design[, c(-1, -2)])
     attribute.columns <- data.frame(lapply(attribute.columns, as.factor))
     X <- model.matrix( ~ ., data = data.frame(attribute.columns))
     d.score <- det(crossprod(X)) ^ (1 / ncol(X)) / nrow(X)
