@@ -44,7 +44,6 @@ DerrorHZ <- function(design.matrix, attribute.levels, effects = TRUE, prior = NU
     }
 
     # Compute the D-error (according to Huber and Zwerina 1996)
-    diagP = diag(P)
     xbars = vector("numeric")
     for (j in 1L:N) {
         xbars = rbind(xbars, rep.row(colSums(coded.design[design.matrix[,1] == j, ] * diagP[design.matrix[,1] == j]), J))
@@ -83,10 +82,13 @@ effectsVector = function(n,k)
 
 
 
-dummyMatrix = function(design.matrix) {
-    coded.design = mapply(dummyVector, as.numeric(design.matrix[,1]), k = max(as.numeric(design.matrix[,1])), SIMPLIFY = TRUE)
+dummyMatrix <- function(design.matrix) {
+    coded.design = mapply(dummyVector, as.numeric(design.matrix[,1]),
+                          k = max(as.numeric(design.matrix[,1])), SIMPLIFY = TRUE)
     for (j in 2:ncol(design.matrix)) {
-        coded.design = rbind(coded.design, mapply(dummyVector, as.numeric(design.matrix[,j]), k = max(as.numeric(design.matrix[,j])), SIMPLIFY = TRUE))
+        coded.design = rbind(coded.design, mapply(dummyVector,
+                                                  as.numeric(design.matrix[,j]),
+                                                  k = max(as.numeric(design.matrix[,j])), SIMPLIFY = TRUE))
     }
     coded.design = t(coded.design)
     colnames(coded.design) = 1:ncol(coded.design)
@@ -94,7 +96,7 @@ dummyMatrix = function(design.matrix) {
 }
 
 
-effectsMatrix = function(design.matrix)
+effectsMatrix <- function(design.matrix)
 {
     coded.design <- mapply(effectsVector, as.numeric(design.matrix[,1]),
                            k = max(as.numeric(design.matrix[,1])), SIMPLIFY = TRUE)
