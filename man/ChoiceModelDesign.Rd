@@ -4,37 +4,57 @@
 \alias{ChoiceModelDesign}
 \title{Choice modeling experimental design}
 \usage{
-ChoiceModelDesign(design.algorithm, attribute.levels, n.questions,
-  n.versions = 1, alternatives.per.question, prohibitions = NULL,
-  none.alternatives = 0, labelled.alternatives = FALSE,
-  output = "Unlabelled design")
+ChoiceModelDesign(design.algorithm = c("Random", "Shortcut",
+  "Balanced overlap", "Complete enumeration", "Shortcut2", "Modified Federov"),
+  attribute.levels, prior = NULL, n.questions, n.versions = 1,
+  alternatives.per.question, prohibitions = NULL, none.alternatives = 0,
+  labelled.alternatives = FALSE, output = "Unlabelled design",
+  seed = 54123)
 }
 \arguments{
-\item{design.algorithm}{The algorithm used to create the design. One of \code{"Random"},
-\code{"Shortcut"}, \code{"Balanced overlap"} and \code{"Complete enumeration"}.}
+\item{design.algorithm}{The algorithm used to create the
+design. One of \code{"Random"}, \code{"Shortcut"},
+\code{"Balanced overlap"} and \code{"Complete enumeration"},
+and \code{"Modified Federov"}.}
 
-\item{attribute.levels}{\code{\link{list}} of \code{\link{vector}}s containing the labels of
-levels for each attribute. Named with the attribute labels.}
+\item{attribute.levels}{\code{\link{list}} of \code{\link{vector}}s
+containing the labels of levels for each attribute, with names
+corresponding to the attribute labels; \emph{or} a character
+matrix with first row containing attribute names and subsequent
+rows containing attribute levels.}
 
-\item{n.questions}{Integer; the number of questions asked to each respondent.}
+\item{prior}{Character matrix containing prior values for the model
+coefficients; only used for \code{design.algorithm ==
+"Modified Federov"}; see Details.}
 
-\item{n.versions}{Integer; the number of versions of the survey to create.}
+\item{n.questions}{Integer; the number of questions asked to each
+respondent.}
 
-\item{alternatives.per.question}{Integer; the number of alternative products
-shown in each question. Ignored if \code{"labelled.alternatives"} is TRUE.}
+\item{n.versions}{Integer; the number of versions of the survey to
+create.}
 
-\item{prohibitions}{Character \code{\link{matrix}} where each row is a prohibited
-alternative consisting of the levels of each attribute. If a level is \code{""} or
-is \code{"All"} then all levels of that attribute in combination with the other
+\item{alternatives.per.question}{Integer; the number of alternative
+products shown in each question. Ignored if
+\code{"labelled.alternatives"} is TRUE.}
+
+\item{prohibitions}{Character \code{\link{matrix}} where each row
+is a prohibited alternative consisting of the levels of each
+attribute. If a level is \code{""} or is \code{"All"} then all
+levels of that attribute in combination with the other
 specified attribute levels are prohibited.}
 
-\item{none.alternatives}{Integer; the number of 'None' in all questions.}
+\item{none.alternatives}{Integer; the number of 'None' in all
+questions.}
 
-\item{labelled.alternatives}{Logical; whether the first attribute labels the alternatives.}
+\item{labelled.alternatives}{Logical; whether the first attribute
+labels the alternatives.}
 
-\item{output}{One of \code{"Attributes and levels"}, \code{"Prohibitions"},
-\code{"Unlabelled design"}, \code{"Labelled design"}, \code{"Balances and overlaps"},
-or \code{"Standard errors"}.}
+\item{output}{One of \code{"Attributes and levels"},
+\code{"Prohibitions"}, \code{"Unlabelled design"},
+\code{"Labelled design"}, \code{"Balances and overlaps"}, or
+\code{"Standard errors"}.}
+
+\item{seed}{Integer; random see to be used by the algorithms.}
 }
 \value{
 A list with components
@@ -45,13 +65,26 @@ question by number of attributes) where each value is the index of a level.
 \item \code{attribute.levels} - as per input.
 \item \code{prohibitions} - as per input.
 \item \code{output} - as per input.
+\item \code{Derror} - The D-error of \code{design}.
 }
 }
 \description{
 Creates choice model experimental designs according to a given algorithm.
 }
+\details{
+If \code{prior} is supplied and \code{design.algorithm ==
+    "Modified Federov"}, the number of coefficients must correspond
+    to the number of attributes/attribute levels specified in
+    \code{attribute.levels}.  If \code{prior} is \code{NULL}, the prior for the
+    coefficients is assumed to be identically zero.  If the supplied matrix
+    contains two columns, the first column is taken as the prior
+    mean for the coefficients and the second is taken to be the
+    prior variances.  If only one column is present, the prior for
+    the coefficients is assumed to be centered at those values.
+}
 \examples{
 x <- CreateExperiment(c(3, 5, 7, 10), 20)
-ChoiceModelDesign("Random", x$attribute.levels, 30, 1, 4, x$prohibitions,
-                  0, FALSE, "Unlabelled design")
+ChoiceModelDesign("Random", x$attribute.levels, n.questions = 30,
+    alternatives.per.question = 4, prohibitions = x$prohibitions,
+    output = "Unlabelled design")
 }
