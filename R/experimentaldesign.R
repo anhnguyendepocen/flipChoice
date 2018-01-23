@@ -1,48 +1,108 @@
-#' Choice modelling experimental design
+#' Choice modeling experimental design
 #'
 #' Creates choice model experimental designs according to a given algorithm.
 #'
-#' @param design.algorithm The algorithm used to create the design. One of \code{"Random"},
-#' \code{"Shortcut"}, \code{"Balanced overlap"} and \code{"Complete enumeration"}.
-#' @param attribute.levels \code{\link{list}} of \code{\link{vector}}s of the labels of
-#' levels for each attribute.
-#' @param n.questions Integer; the number of questions asked to each respondent.
-#' @param alternatives.per.question Integer; the number of alternative products
-#' shown in each question. Ignored if \code{"labelled.alternatives"} is TRUE.
-#' @param prohibitions Character \code{\link{matrix}} where each row is a prohibited
-#' alternative consisting of the levels of each attribute. If a level is missing or
-#' is \code{"All"} then all levels of that attribute in combination with the other
-#' attribute levels are prohibited.
-#' @param none.alternative Logical; whether to show an alternative of 'None' in all questions.
-#' @param labelled.alternatives Logical; whether the first attribute labels the alternatives.
-#' @param output TODO
-#'
+#' @param design.algorithm The algorithm used to create the
+#'     design. One of \code{"Random"}, \code{"Shortcut"},
+#'     \code{"Balanced overlap"} and \code{"Complete enumeration"},
+#'     and \code{"Modified Federov"}.
+#' @param attribute.levels \code{\link{list}} of \code{\link{vector}}s
+#'     containing the labels of levels for each attribute, with names
+#'     corresponding to the attribute labels; \emph{or} a character
+#'     matrix with first row containing attribute names and subsequent
+#'     rows containing attribute levels.
+#' @param prior Character matrix containing prior values for the model
+#'     coefficients; only used for \code{design.algorithm ==
+#'     "Modified Federov"}; see Details.
+#' @param n.questions Integer; the number of questions asked to each
+#'     respondent.
+#' @param n.versions Integer; the number of versions of the survey to
+#'     create.
+#' @param alternatives.per.question Integer; the number of alternative
+#'     products shown in each question. Ignored if
+#'     \code{"labelled.alternatives"} is TRUE.
+#' @param prohibitions Character \code{\link{matrix}} where each row
+#'     is a prohibited alternative consisting of the levels of each
+#'     attribute. If a level is \code{""} or is \code{"All"} then all
+#'     levels of that attribute in combination with the other
+#'     specified attribute levels are prohibited.
+#' @param none.alternatives Integer; the number of 'None' in all
+#'     questions.
+#' @param labelled.alternatives Logical; whether the first attribute
+#'     labels the alternatives.
+#' @param output One of \code{"Attributes and levels"},
+#'     \code{"Prohibitions"}, \code{"Unlabelled design"},
+#'     \code{"Labelled design"}, \code{"Balances and overlaps"}, or
+#'     \code{"Standard errors"}.
+#' @param seed Integer; random seed to be used by the algorithms.
 #' @return A list with components
 #' \itemize{
-#' \item \code{design} - an array of dimensions (number of questions by alternatives per
+#' \item \code{design} - a numeric array of dimensions (number of questions by alternatives per
 #' question by number of attributes) where each value is the index of a level.
-#' \item \code{...} - other diagnostics according to \code{design.algorithm}.
+#' \item \code{design.algorithm} - as per input.
+#' \item \code{attribute.levels} - as per input.
+#' \item \code{prohibitions} - as per input.
+#' \item \code{output} - as per input.
+#' \item \code{Derror} - The D-error of \code{design}.
 #' }
+#'
+#' @details If \code{prior} is supplied and \code{design.algorithm ==
+#'     "Modified Federov"}, the number of coefficients must correspond
+#'     to the number of attributes/attribute levels specified in
+#'     \code{attribute.levels}.  If \code{prior} is \code{NULL}, the prior for the
+#'     coefficients is assumed to be identically zero.  If the supplied matrix
+#'     contains two columns, the first column is taken as the prior
+#'     mean for the coefficients and the second is taken to be the
+#'     prior variances.  If only one column is present, the prior for
+#'     the coefficients is assumed to be centered at those values.
+#'
+#' @examples
+#' x <- CreateExperiment(c(3, 5, 7, 10), 20)
+#' ChoiceModelDesign("Random", x$attribute.levels, n.questions = 30,
+#'     alternatives.per.question = 4, prohibitions = x$prohibitions,
+#'     output = "Unlabelled design")
+#' @importFrom utils getFromNamespace
 #' @export
-ChoiceModelDesign <- function(design.algorithm,
+ChoiceModelDesign <- function(
+                              design.algorithm = c("Random", "Shortcut", "Balanced overlap",
+                                                   "Complete enumeration", "Shortcut2", "Modified Federov"),
                               attribute.levels,
+                              prior = NULL,
                               n.questions,
+                              n.versions = 1,
                               alternatives.per.question,
                               prohibitions = NULL,
-                              none.alternative = FALSE,
+                              none.alternatives = 0,
                               labelled.alternatives = FALSE,
-                              output = "Unlabelled design") {
+                              output = "Unlabelled design",
+                              seed = 54123) {
 
-    algorithms <- c("Random", "Shortcut", "Balanced overlap", "Complete enumeration")
-    function.names <- c("random", "shortcut", "balanced", "enumerated")
-    design.function <- function.names[match(design.algorithm, algorithms)]
-    if (is.na(design.function))
-        stop("Unrecognized design.algorithm: ", design.algorithm)
 
+    # Map the design.algorithm to the function
+    design.algorithm <- match.arg(design.algorithm)
+    function.name <- sub("^([A-Z])", "\\L\\1", design.algorithm, perl = TRUE)
+    function.name <- gsub(" ([[:alpha:]])", "\\U\\1", function.name, perl = TRUE)
+    design.function <- getFromNamespace(paste0(function.name, "Design"),
+                                        ns = "flipChoice")
+
+    ## NEED TO ADD CODE TO CHECK SUPPLIED ARGS ARE VALID FOR REQUESTED ALGORITHM
+
+    # If labelled.alternatives then alternatives.per.question is calculated and not supplied
     if (labelled.alternatives)
-        alternatives.per.question = length(attribute.levels[[1]])
-    # TODO ensure levels of first attribute are cycled through in order of each qn
+        alternatives.per.question <- length(attribute.levels[[1]])
 
+    if (!is.character(attribute.levels) && is.null(names(attribute.levels)))
+        names(attribute.levels) <- paste("Attribute", seq(length(attribute.levels)))
+
+
+    # Convert from labels to numeric and factors
+    prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
+    integer.prohibitions <- data.frame(lapply(prohibitions, as.integer))
+    levels.per.attribute <- sapply(attribute.levels, length)
+    names(levels.per.attribute) <- names(attribute.levels)
+
+    # WHILE TESTING THIS FUNCTION I AM RETURNING THE FOLLOWING TWO OUTPUTS WITHOUT
+    # CALCULATING THE ChoiceModelDesign OBJECT (WHICH MAY TAKE A LONG TIME)
     if (output == "Attributes and levels")
     {
         max.levels <- max(sapply(attribute.levels, length))
@@ -50,53 +110,108 @@ ChoiceModelDesign <- function(design.algorithm,
         rownames(levels.table) <- paste("Level", seq(max.levels))
         return(levels.table)
     }
-
-    prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
-    levels.per.attribute <- sapply(attribute.levels, length)
-    names(levels.per.attribute) <- names(attribute.levels)
-
     if (output == "Prohibitions")
         return(prohibitions)
 
-    args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions,
-                 alternatives.per.question = alternatives.per.question, prohibitions = prohibitions)
-    result <- do.call(paste0(design.function, "Design"), args)
 
-    if (output == "Unlabelled design")
-        return(flattenDesign(result$design))
-
-    if (output == "Labelled design")
-        return(flattenDesign(labelDesign(result$design, attribute.levels)))
-
-    if (output == "Level balances")
-        return(levelBalances(result, attribute.levels))
-
-    # TODO OUTPUT OVERLAPS
-    if (output == "Overlaps")
-        return(NULL)
-
-    # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
-    # https://www.sawtoothsoftware.com/help/lighthouse-studio/manual/hid_web_cbc_designs_6.html
-    # https://www.sawtoothsoftware.com/help/lighthouse-studio/manual/estimating_utilities_with_logi.html
-    if (output == "Standard errors")
+    # Call the algorithm to create the design
+    # Design algorithms     - use only unlabelled levels (i.e. integer level indices)
+    #                       - simply multiply question per respondent by n.versions
+    #                       - ignore None alternatives, these are added later
+    if (design.algorithm == "Modified Federov")
     {
-        return(list(d.score = dScore(result$design),
-               d.error = DerrorHZ(flattenDesign(result$design), levels.per.attribute, effects = FALSE)))
+        prohibitions <- NA
+        if (none.alternatives != 0L)
+            stop(gettextf("Having none alternatives for %s equal to %s is not currently implemented.",
+                          sQuote("design.algorithm"), dQuote(design.algorithm)))
+        args <- list(pasted.attributes = attribute.levels, pasted.prior = prior,
+                     n.questions = n.questions * n.versions,
+                     profiles.per.question = alternatives.per.question,
+                     labelled.alternatives = labelled.alternatives,
+                     seed = seed)
+    }else
+    {
+        args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions * n.versions,
+                     alternatives.per.question = alternatives.per.question, prohibitions = integer.prohibitions,
+                     none.alternatives = none.alternatives, labelled.alternatives = labelled.alternatives)
+    }
+    design <- do.call(design.function, args)
+
+    result <- list(design = design,
+                   design.with.none = addNoneAlternatives(design, none.alternatives, alternatives.per.question),
+                   design.algorithm = design.algorithm,
+                   attribute.levels = attribute.levels,
+                   prohibitions = prohibitions,
+                   n.questions = n.questions,
+                   n.versions = n.versions,
+                   alternatives.per.question = alternatives.per.question,
+                   none.alternatives = none.alternatives,
+                   output = output)
+    if (design.algorithm == "Modified Federov")
+    {
+        result$design <- design$design
+        result$Derror <- design$error
     }
 
-    stop("Unrecognized output.")
+    class(result) <- "ChoiceModelDesign"
+    return(result)
 }
 
 
+#' @export
+#' @method print ChoiceModelDesign
+#' @noRd
+print.ChoiceModelDesign <- function(x, ...) {
 
-################## HELPER FUNCTIONS ###################
+    # Output a table with attributes along the columns and levels along the rows
+    if (x$output == "Attributes and levels")
+    {
+        max.levels <- max(sapply(x$attribute.levels, length))
+        levels.table <- sapply(x$attribute.levels, function (z) c(z, rep("", max.levels - length(z))))
+        rownames(levels.table) <- paste("Level", seq(max.levels))
+        print(levels.table)
+    }
+
+    else if (x$output == "Prohibitions")
+        print(x$prohibitions)
+
+    # Output the design with indices or labels
+    else if (x$output == "Unlabelled design")
+        print(x$design.with.none)
+    else if (x$output == "Labelled design")
+        print(labelDesign(x$design.with.none, x$attribute.levels))
+
+    # Single and pairwise level balances and overlaps
+    # (where overlaps is the proportion of questions that have >= 1 repeated level, by attribute)
+    else if (x$output == "Balances and overlaps")
+        print(balancesAndOverlaps(x))
+
+    # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
+    else if (x$output == "Standard errors") {
+
+        ml.model <- mlogitModel(x)
+        print(list(d.score = dScore(x$design),
+                    d.error = DerrorHZ(x$design, sapply(x$attribute.levels, length), effects = FALSE)))
+        print(summary(ml.model))
+    }
+    else
+        stop("Unrecognized output.")
+}
+
+
+######################### HELPER FUNCTIONS ###########################
 
 # Convert prohibitions from labels to indices (numeric levels)
-# and expand "" or "All" to all levels.
+# and expand "" or "All" to all levels of the attribute.
 encodeProhibitions <- function(prohibitions, attribute.levels) {
+
+    if (is.null(prohibitions))
+        return(data.frame())
 
     prohibitions[prohibitions == ""] <- "All"
     prohibitions <- data.frame(prohibitions)
+    if (nrow(prohibitions) == 0)
+        return(prohibitions)
 
     if (ncol(prohibitions) != length(attribute.levels))
         stop("Each prohibition must include a level for each attribute (possibly including 'All').")
@@ -127,7 +242,8 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
 
 #. Create an experimental design
 #'
-#' Creates attributes and levels of an experiment with random prohibitions.
+#' Creates attributes and levels of an experiment, possibly with random prohibitions.
+#' This is useful for quickly creating a design without typing in lists of levels.
 #' @param levels.per.attribute Numeric \code{\link{vector}} of the number of levels
 #' per attribute.
 #' @param n.prohibitions Integer; number of prohibitions.
@@ -143,8 +259,8 @@ CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0) {
 
     set.seed(12345)
     attributes <- LETTERS[1:length(levels.per.attribute)]
-    attribute.levels <- sapply(levels.per.attribute, seq)
-    attribute.levels <- mapply(paste0, attributes, attribute.levels)
+    attribute.levels <- sapply(levels.per.attribute, seq, simplify = FALSE)
+    attribute.levels <- mapply(paste0, attributes, attribute.levels, SIMPLIFY = FALSE)
     names(attribute.levels) <- attributes
 
     # may produce duplicate prohibitions
@@ -153,57 +269,60 @@ CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0) {
     experiment <- list(attribute.levels = attribute.levels, prohibitions = prohibitions)
 }
 
+
 # Convert an unlabelled design into a labelled design
 labelDesign <- function(unlabelled.design, attribute.levels) {
 
     labelled.design <- array(character(0), dim = dim(unlabelled.design))
-    dimnames(labelled.design)[[3]] = dimnames(unlabelled.design)[[3]]
+    colnames(labelled.design) = colnames(unlabelled.design)
+    labelled.design[, 1:2] <- unlabelled.design[, 1:2]
     for (i in 1:length(attribute.levels))
-        labelled.design[, , i] <- attribute.levels[[i]][unlabelled.design[, , i]]
+        labelled.design[, i + 2] <- attribute.levels[[i]][unlabelled.design[, i + 2]]
     return(labelled.design)
 }
 
-# Compute one and two-way level balances or extract from exiting list.
-levelBalances <- function(design.list, attribute.levels) {
 
-    singles <- if (!is.null(design.list$singles)) design.list$singles else singleLevelBalances(design.list$design,
-                                                                                               names(attribute.levels))
+# Compute one and two-way level balances and overlaps.
+balancesAndOverlaps <- function(cmd) {
 
-    pairs <- if (!is.null(design.list$pairs)) design.list$pairs else pairLevelBalances(design.list$design,
-                                                                                       names(attribute.levels))
+    singles <- singleLevelBalances(cmd$design)
+
+    pairs <- pairLevelBalances(cmd$design)
 
     # label the levels
-    singles <- labelSingleBalanceLevels(singles, attribute.levels)
-    pairs <- labelPairBalanceLevels(pairs, attribute.levels)
+    singles <- labelSingleBalanceLevels(singles, cmd$attribute.levels)
+    pairs <- labelPairBalanceLevels(pairs, cmd$attribute.levels)
 
     # flatten pairwise list of list and remove unused
     pairs <- unlist(pairs, recursive = FALSE)
     pairs <- pairs[!is.na(pairs)]
 
-    return(list(singles = singles, pairs = pairs))
+    overlaps = countOverlaps(cmd$design)
+
+    return(list(singles = singles, pairs = pairs, overlaps = overlaps))
 }
 
 
-singleLevelBalances <- function(design, attribute.names) {
-    singles <- apply(design, 3, table)
-    names(singles) <- attribute.names
+singleLevelBalances <- function(design) {
+    singles <- apply(design[, 3:ncol(design)], 2, table)
+    if (!is.list(singles))
+        singles <- split(singles, rep(1:ncol(singles), each = nrow(singles)))
     return(singles)
 }
 
-pairLevelBalances <- function(design, attribute.names) {
-    n.attributes <- dim(design)[3]
+pairLevelBalances <- function(design) {
+    n.attributes <- ncol(design) - 2
     pairs <- replicate(n.attributes, rep(list(NA), n.attributes), simplify = FALSE)
     for (i in 1:(n.attributes - 1))
         for (j in (i + 1):n.attributes) {
-            pairs[[i]][[j]] <- table(design[, , i], design[, , j])
-            names(pairs[[i]])[[j]] <- paste0(attribute.names[i], "/", attribute.names[j])
+            pairs[[i]][[j]] <- table(design[, i + 2], design[, j + 2])
+            names(pairs[[i]])[[j]] <- paste0(colnames(design)[i + 2], "/", colnames(design)[j + 2])
         }
     return(pairs)
 }
 
 labelSingleBalanceLevels <- function(singles, attribute.levels) {
-    # maybe there is a better way
-    return(mapply(function(x, y) {names(x) <- y; x}, singles, attribute.levels))
+    return(mapply(function(x, y) {names(x) <- y; x}, singles, attribute.levels, SIMPLIFY = FALSE))
 }
 
 labelPairBalanceLevels <- function(pairs, attribute.levels) {
@@ -216,89 +335,77 @@ labelPairBalanceLevels <- function(pairs, attribute.levels) {
     return(pairs)
 }
 
+countOverlaps <- function(design) {
+    # table of counts for each level by question, listed for each attribute
+    overlaps <- apply(design[, 3:ncol(design)], 2, table, design[, 1])
+    # duplicated levels
+    overlaps <- lapply(overlaps, ">=", 2)
+    # overlaps for questions (rows) by attribute (cols)
+    overlaps <- sapply(overlaps, function(x) apply(x, 2, any))
+
+    return(colSums(overlaps) / nrow(overlaps))
+}
+
 flattenDesign <- function(design) {
     n.qns <- dim(design)[1]
     n.alts <- dim(design)[2]
     flattened <- matrix(design, nrow = n.qns * n.alts)
-    flattened <- cbind(rep(seq(n.qns), each = n.alts), rep(seq(n.alts), n.qns), flattened)
+    flattened <- cbind(rep(seq(n.qns), n.alts), rep(seq(n.alts), each = n.qns), flattened)
+    flattened <- flattened[order(as.numeric(flattened[, 1])), ]
     colnames(flattened) <- c("Question", "Alternative", dimnames(design)[[3]])
     return(flattened)
 }
 
+addNoneAlternatives <- function(design, none.alternatives, alternatives.per.question) {
+    if (none.alternatives == 0)
+        return(design)
 
+    n <- nrow(design)
+    new.n <- n * (alternatives.per.question + none.alternatives) / alternatives.per.question
+    design.with.none <- matrix(NA, nrow = new.n, ncol = ncol(design))
 
-################## Shortcut method ################
-#
-# TODO EXPLAIN HOW THIS WORKS
-# TODO ADD PROHIBITIONS
-shortcutDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions) {
+    # copy existing alternatives
+    new.row.indices <- seq(n) + ((seq(n) - 1) %/% alternatives.per.question) * none.alternatives
+    design.with.none[new.row.indices, ] <- design
 
-    n.attributes <- length(levels.per.attribute)
-    level.sequences <- sapply(levels.per.attribute, seq) # list of vectors of numeric levels per attribute
-
-    design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
-    dimnames(design)[[3]] <- names(levels.per.attribute)
-    design.counts <- sapply(levels.per.attribute, function(x) rep(0, x)) # number of times each level shown in design
-
-    for (question in seq(n.questions)) {
-        qn.counts <- sapply(levels.per.attribute, function(x) rep(0, x)) # number of times each level shown in current question
-
-        for (alternative in seq(alternatives.per.question)) {
-
-            for (attribute in seq(n.attributes)) {
-                min.design.count <- min(design.counts[[attribute]]) # the count of the least used level(s) of this attribute in the design
-                min.design.levels <- which(design.counts[[attribute]] == min.design.count) # the least used level(s) of this attribute in the design
-
-                level.counts.in.qn <- qn.counts[[attribute]][min.design.levels] # the counts of the min.design.levels for this attribute in this question
-                min.level <- min.design.levels[which.min(level.counts.in.qn)] # the first min.design.levels with the least level.counts.in.qn
-
-                design[question, alternative, attribute] <- min.level
-                design.counts[[attribute]][min.level] <- design.counts[[attribute]][min.level] + 1
-                qn.counts[[attribute]][min.level] <- qn.counts[[attribute]][min.level] + 1
-            }
-        }
-    }
-    return(list(design = design))
+    colnames(design.with.none) <- colnames(design)
+    design.with.none[, 1] <- rep(seq(n / alternatives.per.question), each = alternatives.per.question + none.alternatives)
+    design.with.none[, 2] <- rep(seq(alternatives.per.question + none.alternatives), n / alternatives.per.question)
+    return(design.with.none)
 }
 
+# randomly choose responses to a ChoiceModelDesign
+randomChoices <- function(cmd, respondents = 300) {
 
-####################### Random method ###########################
-#
-# Chooses a random level for each attribute.
-# Ensure same alternative is not prohibited or duplicated within a question.
-randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions) {
-
-    set.seed(12345)
-    n.attributes <- length(levels.per.attribute)
-    level.sequences <- sapply(levels.per.attribute, seq) # list of vectors of numeric levels per attribute
-    design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
-    dimnames(design)[[3]] <- names(levels.per.attribute)
-
-    for (question in seq(n.questions)) {
-
-        i.alternative <- 1
-        while (i.alternative <= alternatives.per.question) {
-
-            new.alternative <- sapply(level.sequences, sample, 1)
-
-            # ignore new.alternative if prohibited
-            if (any(sapply(prohibitions, identical, new.alternative)))
-                next
-
-            # ignore new.alternative if not unique within this question
-            if (i.alternative > 1 && anyDuplicated(design[question, 1:i.alternative, ]))
-                next
-
-            # use new.alternative
-            design[question, i.alternative, ] <- new.alternative
-            i.alternative <- i.alternative + 1
-        }
-    }
-    return(list(design = design))
+    n.alts <- cmd$alternatives.per.question
+    n.qns <- respondents * cmd$n.questions
+    chosen.alternatives <- replicate(n.qns, sample(seq(n.alts), 1))
+    chosen.indices <- chosen.alternatives + seq(n.qns) * n.alts - n.alts
+    chosen <- rep(FALSE, n.alts * n.qns)
+    chosen[chosen.indices] <- TRUE
+    return(chosen)
 }
 
+# fit a design and choices with mlogit package
+#' @importFrom mlogit mlogit.data mlogit
+#' @importFrom stats as.formula
+mlogitModel <- function(cmd, choices = NULL) {
+    if (is.null(choices))
+        choices <- randomChoices(cmd)
 
+    # TODO use design.with.none
+    labeled <- as.data.frame(labelDesign(cmd$design, cmd$attribute.levels))
 
+    copies <- length(choices) / nrow(labeled)
+    labeled <- labeled[rep(seq_len(nrow(labeled)), copies), ]
+    labeled$Choice <- choices
+    mlogit.df <- mlogit.data(labeled, choice = "Choice", shape = "long", varying = 3:ncol(labeled),
+                     alt.var = "Alternative", id.var = "Question", drop.index = TRUE)
+
+    form <- paste("Choice ~ ", paste(colnames(mlogit.df)[1:ncol(mlogit.df) - 1], collapse = "+"), "| -1")
+    ml.model <- mlogit(as.formula(form), data = mlogit.df)
+    return(ml.model)
+}
 
 
 
