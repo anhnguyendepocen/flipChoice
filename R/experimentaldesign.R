@@ -92,14 +92,17 @@ ChoiceModelDesign <- function(
         alternatives.per.question <- length(attribute.levels[[1]])
 
     if (!is.character(attribute.levels) && is.null(names(attribute.levels)))
+    {
         names(attribute.levels) <- paste("Attribute", seq(length(attribute.levels)))
+        levels.per.attribute <- sapply(attribute.levels, length)
+        names(levels.per.attribute) <- names(attribute.levels)
+    }else
+        levels.per.attribute <- pastedAttributesToVector(attribute.levels)
 
 
     # Convert from labels to numeric and factors
     prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
     integer.prohibitions <- data.frame(lapply(prohibitions, as.integer))
-    levels.per.attribute <- sapply(attribute.levels, length)
-    names(levels.per.attribute) <- names(attribute.levels)
 
     # WHILE TESTING THIS FUNCTION I AM RETURNING THE FOLLOWING TWO OUTPUTS WITHOUT
     # CALCULATING THE ChoiceModelDesign OBJECT (WHICH MAY TAKE A LONG TIME)
@@ -118,23 +121,18 @@ ChoiceModelDesign <- function(
     # Design algorithms     - use only unlabelled levels (i.e. integer level indices)
     #                       - simply multiply question per respondent by n.versions
     #                       - ignore None alternatives, these are added later
-    if (design.algorithm == "Modified Federov")
-    {
-        prohibitions <- NA
-        if (none.alternatives != 0L)
-            stop(gettextf("Having none alternatives for %s equal to %s is not currently implemented.",
-                          sQuote("design.algorithm"), dQuote(design.algorithm)))
-        args <- list(pasted.attributes = attribute.levels, pasted.prior = prior,
-                     n.questions = n.questions * n.versions,
-                     profiles.per.question = alternatives.per.question,
-                     labelled.alternatives = labelled.alternatives,
-                     seed = seed)
-    }else
-    {
-        args <- list(levels.per.attribute = levels.per.attribute, n.questions = n.questions * n.versions,
-                     alternatives.per.question = alternatives.per.question, prohibitions = integer.prohibitions,
-                     none.alternatives = none.alternatives, labelled.alternatives = labelled.alternatives)
-    }
+    args <- list(levels.per.attribute = levels.per.attribute,
+                       prior = prior,
+                       n.questions = n.questions * n.versions,
+                       alternatives.per.question = alternatives.per.question,
+                       prohibitions = integer.prohibitions,
+                       none.alternatives = none.alternatives,
+                       labelled.alternatives = labelled.alternatives,
+                       seed = seed)
+
+    f <- formals(design.function)
+    args <- modifyList(as.list(f), args[names(args) %in% names(f)])
+
     design <- do.call(design.function, args)
 
     result <- list(design = design,
