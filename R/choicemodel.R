@@ -285,6 +285,7 @@ ParameterStatisticsInfo <- function(parameter.statistics, parameter.names,
 #' @importFrom flipFormat HistTable FormatAsPercent
 #' @importFrom flipTime FormatPeriod
 #' @export
+#' @method print FitChoice
 print.FitChoice <- function(x, ...)
 {
     title <- "Choice Model: Hierarchical Bayes"
