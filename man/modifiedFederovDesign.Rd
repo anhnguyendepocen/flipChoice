@@ -4,28 +4,26 @@
 \alias{modifiedFederovDesign}
 \title{Construct an Efficient Choice Model Design}
 \usage{
-modifiedFederovDesign(pasted.attributes, pasted.prior = NULL,
-  profiles.per.question, n.questions, labelled.alternatives = FALSE,
+modifiedFederovDesign(levels.per.attribute, prior = NULL,
+  alternatives.per.question, n.questions, labelled.alternatives = FALSE,
   dummy.coding = TRUE, seed = 1776)
 }
 \arguments{
-\item{pasted.attributes}{Character matrix with first row containing
-attribute names and subsequent rows containing attribute
-levels.}
+\item{levels.per.attribute}{A \emph{named} vector containing the
+number of levels for each attribute with names giving the attribute names.}
 
-\item{pasted.prior}{Character matrix containing prior values for
-the model coefficients.  The number of coefficients must
-correspond to the number of attributes/attribute levels
-specified in \code{pasted.attributes}.  If \code{NULL}, the
-prior for the coefficients is assumed to be identically zero.
-If the matrix contains two columns, the first column is taken
-as the prior mean for the coefficients and the second is taken
-to be the prior variances.  If only one column is present, the
-prior for the coefficients is assumed to be centered at those
-values.}
+\item{prior}{Character matrix containing prior values for the model
+coefficients.  The number of coefficients must correspond to
+the number of attributes/attribute levels specified in
+\code{levels.per.attribute}.  If \code{NULL}, the prior for the
+coefficients is assumed to be identically zero.  If the matrix
+contains two columns, the first column is taken as the prior
+mean for the coefficients and the second is taken to be the
+prior variances.  If only one column is present, the prior for
+the coefficients is assumed to be centered at those values.}
 
-\item{profiles.per.question}{Numeric value indicating the number of
-profiles to show per question.}
+\item{alternatives.per.question}{Numeric value indicating the
+number of profiles to show per question.}
 
 \item{n.questions}{Numeric value specifying the total number of
 questions/tasks to be performed by each respondent.}
@@ -37,20 +35,21 @@ labels the alternatives.}
 should be used for the attributes in the design matrix.  If
 \code{FALSE}, effects coding is used.}
 
-\item{seed}{Integer value specifying the random seed to use for the algorithm.}
+\item{seed}{Integer value specifying the random seed to use for the
+algorithm.}
 }
 \value{
-A list containing the following components.
-\itemize{
-\item \code{design} - A numeric matrix wich contains an efficient design.
-\item \code{error} - Numeric value indicating the D(B)-error of the design.
-\item \code{inf.error} - Numeric value indicating the percentage of samples for which
-         the D-error was \code{Inf}.
-\item\code{prob.diff} -  Numeric value indicating the difference between the
-alternative with the highest and the one with the lowest
-probability for each choice set. If prior means and variances were supplied in \code{pasted.prior},
-this is based on the average over all draws.
-}
+A list containing the following components.  \itemize{
+    \item \code{design} - A numeric matrix wich contains an
+    efficient design.  \item \code{error} - Numeric value
+    indicating the D(B)-error of the design.  \item
+    \code{inf.error} - Numeric value indicating the percentage of
+    samples for which the D-error was \code{Inf}.
+    \item\code{prob.diff} - Numeric value indicating the difference
+    between the alternative with the highest and the one with the
+    lowest probability for each choice set. If prior means and
+    variances were supplied in \code{prior}, this is based on the
+    average over all draws.  }
 }
 \description{
 Uses the Modified Federov algorithm and incorporates prior beliefs
@@ -58,18 +57,20 @@ on the true coefficient values to find a design for a discrete
 choice experiment that minimize D-error.
 }
 \examples{
-attribute.names <- c("car", "house", "boat")
-attribute.levels <- cbind(letters[1:3], LETTERS[1:3], LETTERS[24:26])
-prior <- matrix(as.character(1), ncol(attribute.levels)*(nrow(attribute.levels) - 1), 2)
+levels.per.attribute <- c(car = 3, house = 3, boat = 3)
+prior <- matrix(as.character(1), sum(levels.per.attribute - 1), 2)
 
 ## 3^3/3/9 design
 \dontrun{
-modifiedFederov(rbind(attribute.names, attribute.levels), prior, 3, 9)
+modifiedFederovDesign(levels.per.attribute, prior, 3, 9)
 }
 }
 \references{
-Huber, J. and K. Zwerina (1996). The Importance of Utility Balance in Efficient Choice Designs. Jouranl of Marketing
-Research. \url{https://faculty.fuqua.duke.edu/~jch8/bio/Papers/Huber Zwerina 1996 Marketing Research.pdf}
+Huber, J. and K. Zwerina (1996). The Importance of
+    Utility Balance in Efficient Choice Designs. Jouranl of
+    Marketing
+    Research. \url{https://faculty.fuqua.duke.edu/~jch8/bio/Papers/Huber
+    Zwerina 1996 Marketing Research.pdf}
 
 Zwerina, K., J. Huber and W. F. Kuhfeld. (2000). A General Method
 for Constructing Efficient Choice
