@@ -49,10 +49,10 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
 #
 # TODO EXPLAIN HOW THIS WORKS
 # TODO ADD PROHIBITIONS
+# TODO LABELLED ALTERNATIVES
+#' @importFrom nnet which.is.max
 shortcutDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
                            none.alternatives = 0, labelled.alternatives = FALSE) {
-
-    # TODO use labelled,alternatives
 
     n.attributes <- length(levels.per.attribute)
     level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
@@ -71,7 +71,8 @@ shortcutDesign <- function(levels.per.attribute, n.questions, alternatives.per.q
                 min.design.levels <- which(design.counts[[attribute]] == min.design.count) # the least used level(s) of this attribute in the design
 
                 level.counts.in.qn <- qn.counts[[attribute]][min.design.levels] # the counts of the min.design.levels for this attribute in this question
-                min.level <- min.design.levels[which.min(level.counts.in.qn)] # the first min.design.levels with the least level.counts.in.qn
+                #min.level <- min.design.levels[which.min(level.counts.in.qn)] # the first min.design.levels with the least level.counts.in.qn
+                min.level <- min.design.levels[which.is.max(-level.counts.in.qn)] # random min.design.levels with the least level.counts.in.qn
 
                 design[question, alternative, attribute] <- min.level
                 design.counts[[attribute]][min.level] <- design.counts[[attribute]][min.level] + 1
