@@ -1,7 +1,7 @@
 Package: flipChoice
 Type: Package
 Title: Choice-based Conjoint experiment analysis
-Version: 0.1.1
+Version: 1.0.0
 Author: Displayr <opensource@displayr.com>
 Maintainer: Displayr <opensource@displayr.com>
 Description: Choice-based Conjoint experiment analysis using Hierarchical Bayes.
@@ -12,13 +12,18 @@ Imports: flipData,
          flipFormat (>= 1.0.0),
          flipTime (>= 2.7.3),
          flipU (>= 1.2.2),
+         httr,
+         idefix,
+         mlogit,
+         nnet,
          rstan,
          readxl,
-         httr
+         stats,
+         utils
 Suggests: testthat
 Remotes: Displayr/flipData,
          Displayr/flipFormat,
          Displayr/flipTime,
          Displayr/flipU
 RoxygenNote: 6.0.1
-Depends: R(>= 2.10.0)
+Depends: R (>= 2.10.0)
