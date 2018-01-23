@@ -3,21 +3,19 @@
 #' Uses the Modified Federov algorithm and incorporates prior beliefs
 #' on the true coefficient values to find a design for a discrete
 #' choice experiment that minimize D-error.
-#' @param pasted.attributes Character matrix with first row containing
-#'     attribute names and subsequent rows containing attribute
-#'     levels.
-#' @param pasted.prior Character matrix containing prior values for
-#'     the model coefficients.  The number of coefficients must
-#'     correspond to the number of attributes/attribute levels
-#'     specified in \code{pasted.attributes}.  If \code{NULL}, the
-#'     prior for the coefficients is assumed to be identically zero.
-#'     If the matrix contains two columns, the first column is taken
-#'     as the prior mean for the coefficients and the second is taken
-#'     to be the prior variances.  If only one column is present, the
-#'     prior for the coefficients is assumed to be centered at those
-#'     values.
-#' @param profiles.per.question Numeric value indicating the number of
-#'     profiles to show per question.
+#' @param levels.per.attribute A \emph{named} vector containing the
+#'     number of levels for each attribute with names giving the attribute names.
+#' @param prior Character matrix containing prior values for the model
+#'     coefficients.  The number of coefficients must correspond to
+#'     the number of attributes/attribute levels specified in
+#'     \code{levels.per.attribute}.  If \code{NULL}, the prior for the
+#'     coefficients is assumed to be identically zero.  If the matrix
+#'     contains two columns, the first column is taken as the prior
+#'     mean for the coefficients and the second is taken to be the
+#'     prior variances.  If only one column is present, the prior for
+#'     the coefficients is assumed to be centered at those values.
+#' @param alternatives.per.question Numeric value indicating the
+#'     number of profiles to show per question.
 #' @param n.questions Numeric value specifying the total number of
 #'     questions/tasks to be performed by each respondent.
 #' @param labelled.alternatives Logical; whether the first attribute
@@ -25,64 +23,66 @@
 #' @param dummy.coding Logical value indicating whether dummy coding
 #'     should be used for the attributes in the design matrix.  If
 #'     \code{FALSE}, effects coding is used.
-#' @param seed Integer value specifying the random seed to use for the algorithm.
-#' @return A list containing the following components.
-#' \itemize{
-#' \item \code{design} - A numeric matrix wich contains an efficient design.
-#' \item \code{error} - Numeric value indicating the D(B)-error of the design.
-#' \item \code{inf.error} - Numeric value indicating the percentage of samples for which
-#'          the D-error was \code{Inf}.
-#' \item\code{prob.diff} -  Numeric value indicating the difference between the
-#' alternative with the highest and the one with the lowest
-#' probability for each choice set. If prior means and variances were supplied in \code{pasted.prior},
-#' this is based on the average over all draws.
-#' }
+#' @param seed Integer value specifying the random seed to use for the
+#'     algorithm.
+#' @return A list containing the following components.  \itemize{
+#'     \item \code{design} - A numeric matrix wich contains an
+#'     efficient design.  \item \code{error} - Numeric value
+#'     indicating the D(B)-error of the design.  \item
+#'     \code{inf.error} - Numeric value indicating the percentage of
+#'     samples for which the D-error was \code{Inf}.
+#'     \item\code{prob.diff} - Numeric value indicating the difference
+#'     between the alternative with the highest and the one with the
+#'     lowest probability for each choice set. If prior means and
+#'     variances were supplied in \code{prior}, this is based on the
+#'     average over all draws.  }
 #' @seealso \code{\link[idefix]{Modfed}}
-#' @references
-#' Huber, J. and K. Zwerina (1996). The Importance of Utility Balance in Efficient Choice Designs. Jouranl of Marketing
-#' Research. \url{https://faculty.fuqua.duke.edu/~jch8/bio/Papers/Huber Zwerina 1996 Marketing Research.pdf}
+#' @references Huber, J. and K. Zwerina (1996). The Importance of
+#'     Utility Balance in Efficient Choice Designs. Jouranl of
+#'     Marketing
+#'     Research. \url{https://faculty.fuqua.duke.edu/~jch8/bio/Papers/Huber
+#'     Zwerina 1996 Marketing Research.pdf}
 #'
 #' Zwerina, K., J. Huber and W. F. Kuhfeld. (2000). A General Method
 #' for Constructing Efficient Choice
 #' Designs. \url{http://support.sas.com/techsup/technote/mr2010e.pdf}
-#' @importFrom idefix Modfed
+#' @importFrom idefix Modfed Profiles
 #' @examples
-#' attribute.names <- c("car", "house", "boat")
-#' attribute.levels <- cbind(letters[1:3], LETTERS[1:3], LETTERS[24:26])
-#' prior <- matrix(as.character(1), ncol(attribute.levels)*(nrow(attribute.levels) - 1), 2)
+#' levels.per.attribute <- c(car = 3, house = 3, boat = 3)
+#' prior <- matrix(as.character(1), sum(levels.per.attribute - 1), 2)
 #'
 #' ## 3^3/3/9 design
 #' \dontrun{
-#' modifiedFederov(rbind(attribute.names, attribute.levels), prior, 3, 9)
+#' modifiedFederovDesign(levels.per.attribute, prior, 3, 9)
 #' }
 modifiedFederovDesign <- function(
-                               pasted.attributes,
-                               pasted.prior = NULL,
-                               profiles.per.question,
+                               levels.per.attribute,
+                               prior = NULL,
+                               alternatives.per.question,
                                n.questions,
                                labelled.alternatives = FALSE,
                                dummy.coding = TRUE,
                                seed = 1776)
 {
     set.seed(seed)
-    candidates <- pastedAttributesToProfile(pasted.attributes, dummy.coding)
-    par.draws <- parsePastedPrior(pasted.prior, candidates)
-    alt.specific.const <- dummy.coding + integer(profiles.per.question)
-    out <- Modfed(candidates, n.sets = n.questions, n.alts = profiles.per.question,
+    code <- ifelse(dummy.coding, "D", "E")
+    candidates <- Profiles(levels.per.attribute,
+                           coding = rep(code, length(levels.per.attribute)))
+
+    par.draws <- parsePastedPrior(prior, candidates)
+    alt.specific.const <- dummy.coding + integer(alternatives.per.question)
+    out <- Modfed(candidates, n.sets = n.questions, n.alts = alternatives.per.question,
                   alt.cte = alt.specific.const, par.draws = par.draws)
     out
 }
 
-#' @importFrom idefix Profiles
 #' @noRd
-pastedAttributesToProfile <- function(attributes, dummy.coding = TRUE)
+pastedAttributesToVector <- function(attributes)
 {
     attributes <- removeEmptyCells(attributes)
     lvls <- colSums(attributes != "") - 1L
     names(lvls) <- attributes[1L, ]
-    code <- ifelse(dummy.coding, "D", "E")
-
-    Profiles(lvls, coding = rep(code, length(lvls)))
+    lvls
 }
 
 #' @noRd
