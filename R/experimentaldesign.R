@@ -386,7 +386,7 @@ randomChoices <- function(cmd, respondents = 300) {
     return(chosen)
 }
 
-# format a design and choices for use with mlogit package
+# fit a design and choices with mlogit package
 #' @importFrom mlogit mlogit.data mlogit
 #' @importFrom stats as.formula
 mlogitModel <- function(cmd, choices = NULL) {

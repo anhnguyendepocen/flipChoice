@@ -19,7 +19,7 @@ experiment <- CreateExperiment(c(3, 5, 7, 10), 20)
 
 for (model in c("Random", "Shortcut", "Complete enumeration")) {
     for (output in c("Attributes and levels", "Prohibitions", "Unlabelled design", "Labelled design",
-                     "Balances and overlaps")) { # TODO add "Standard errors"
+                     "Balances and overlaps", "Standard errors")) {
 
         test_that(paste(model, output), {
             expect_error(print(ChoiceModelDesign(model, experiment$attribute.levels, NULL, n.questions, n.versions,
