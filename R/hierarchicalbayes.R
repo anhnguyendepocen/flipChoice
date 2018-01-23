@@ -1,5 +1,5 @@
 #' @importFrom rstan rstan_options stan extract sampling
-#' @importFrom flipU InterceptWarnings
+#' @importFrom flipU InterceptExceptions
 hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                          max.tree.depth = 10,
                                          adapt.delta = 0.8, seed = 123,
@@ -29,12 +29,14 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     }
 
     on.warnings <- GetStanWarningHandler(show.stan.warnings)
+    on.error <- GetStanErrorHandler()
 
-    InterceptWarnings({
+    InterceptExceptions({
         stan.fit <- RunStanSampling(stan.dat, n.iterations, n.chains,
                                     max.tree.depth, adapt.delta, seed,
                                     stan.model, stan.file, ...)},
-                                    on.warnings)
+                                    warning.handler = on.warnings,
+                                    error.handler = on.error)
 
     matched <- MatchChainClasses(stan.fit, n.chains, n.classes, stan.dat$V)
     stan.fit <- matched$stan.fit
@@ -77,6 +79,7 @@ RunStanSampling <- function(stan.dat, n.iterations, n.chains,
                             max.tree.depth, adapt.delta,
                             seed, stan.model, stan.file, ...)
 {
+    # if ()
     pars <- c("theta", "sigma", "beta")
 
     if (IsRServer()) # R servers
@@ -274,7 +277,7 @@ removeBeta <- function(stan.fit)
 }
 
 #' @title GetStanWarningHandler
-#' @description This function returns functions that handle Stan warnings.
+#' @description This function returns a function that handles Stan warnings.
 #' @param show.stan.warnings Whether to return a function that shows
 #' user-friendly Stan warnings.
 #' @return A function that takes a warning object.
@@ -285,6 +288,27 @@ GetStanWarningHandler <- function(show.stan.warnings)
         onStanWarning
     else
         function(x) {}
+}
+
+#' @title GetStanErrorHandler
+#' @description This function returns a function that handles Stan errors.
+#' @return A function that takes an error object.
+#' @export
+GetStanErrorHandler <- function()
+{
+    function(error)
+    {
+        msg <- error$message
+        if (grepl("missing value where", msg) ||
+            grepl("unable to fork", msg))
+        {
+            stop("The R server has reached maximum capacity. ",
+                 "Please rerun the calculation later or contact ",
+                 "support@q-researchsoftware.com for assistance.")
+        }
+        else
+            stop(msg)
+    }
 }
 
 onStanWarning <- function(warn)
@@ -315,8 +339,14 @@ onStanWarning <- function(warn)
 #' @export
 GetParameterStatistics <- function(stan.fit, parameter.names, n.classes)
 {
-    ex <- rstan::extract(stan.fit, pars = c('theta', 'sigma'),
-                         permuted = FALSE, inc_warmup = TRUE)
+    # pars <- if (n.classes > 1)
+    #     c('theta', 'sigma', 'class_weights')
+    # else
+    #     c('theta', 'sigma')
+    pars <- c('theta', 'sigma')
+
+    ex <- rstan::extract(stan.fit, pars = pars, permuted = FALSE,
+                         inc_warmup = TRUE)
     result <- suppressWarnings(rstan::monitor(ex, probs = c(), print = FALSE))
     lbls <- c(rep(paste0('Mean (', parameter.names, ')'), each = n.classes),
               rep(paste0('St. Dev. (', parameter.names, ')'),
