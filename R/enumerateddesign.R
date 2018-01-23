@@ -3,6 +3,7 @@
 #
 #https://sawtoothsoftware.com/forum/5416/there-mathematical-framework-balanced-overlap-short-design
 #
+#' @importFrom nnet which.is.max
 completeEnumerationDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
                              none.alternatives = 0, labelled.alternatives = FALSE) {
 
@@ -55,9 +56,9 @@ completeEnumerationDesign <- function(levels.per.attribute, n.questions, alterna
                 valid.enumerations <- enumeration
 
             costs <- apply(valid.enumerations, 1, totalCost, singles, pairs, qn.counts, pairs.singles.ratio)
-            # TODO break ties at random ?
-            #best.alternative <- valid.enumerations[which.is.max(-costs), ]
-            best.alternative <- valid.enumerations[which.min(costs), ]
+            # break ties at random instead of taking first minimum
+            best.alternative <- valid.enumerations[which.is.max(-costs), ]
+            #best.alternative <- valid.enumerations[which.min(costs), ]
 
             # add best.alternative to design
             design[question, i.alternative, ] <- best.alternative
@@ -144,6 +145,7 @@ totalShortcutCost <- function(alternative, singles, qn.counts) {
 ################## Shortcut method as simplification of enumeration #######################
 #
 #
+#' @importFrom nnet which.is.max
 shortcut2Design <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
                             none.alternatives = 0, labelled.alternatives = FALSE) {
 
@@ -184,7 +186,9 @@ shortcut2Design <- function(levels.per.attribute, n.questions, alternatives.per.
                 valid.enumerations <- enumeration
 
             costs <- apply(valid.enumerations, 1, totalShortcutCost, singles, qn.counts)
-            best.alternative <- valid.enumerations[which.min(costs), ]
+            # break ties at random instead of taking first minimum
+            best.alternative <- valid.enumerations[which.is.max(-costs), ]
+            #best.alternative <- valid.enumerations[which.min(costs), ]
 
             # add best.alternative to design
             design[question, i.alternative, ] <- best.alternative
