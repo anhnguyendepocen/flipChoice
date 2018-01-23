@@ -1,9 +1,10 @@
-
-dScore <- function(design) {
-    attribute.columns <- data.frame(flattenDesign(design)[, 3:(dim(design)[3] + 2)])
+#' @importFrom stats model.matrix
+dScore <- function(design)
+{
+    attribute.columns <- data.frame(design[, c(-1, -2)])
     attribute.columns <- data.frame(lapply(attribute.columns, as.factor))
     X <- model.matrix( ~ ., data = data.frame(attribute.columns))
-    d.score <- det(t(X) %*% X) ^ (1 / ncol(X)) / nrow(X)
+    d.score <- det(crossprod(X)) ^ (1 / ncol(X)) / nrow(X)
     return(d.score)
 }
 
@@ -11,7 +12,7 @@ dScore <- function(design) {
 # design.matrix is a matrix for an unlabeled choice design in the long format, meaning that
 #   each row describes one of the alternatives in one of the choice tasks. Complete data for
 #   each task is spread across several rows. The columns are:
-#   - Column 1 indicates the Task number for each profile
+#   - Column 1 indicates the task number for each profile
 #   - Column 2 indicates the alternative number
 #   - Columns 3 and up each correspond to an attribute, with the entries in the columns indicating
 #     the level of the attribute (beginning at level 1).
@@ -20,14 +21,12 @@ dScore <- function(design) {
 # effects is a boolean parameter indicating whether or not the error should be computed based on
 #   effects coding (TRUE) or dummy coding (FALSE).
 # prior is a vector of prior parameters for the attribute levels. Keeping prior = NULL uses a flat prior
-DerrorHZ = function(design.matrix, attribute.levels, effects = TRUE, prior = NULL) {
+DerrorHZ <- function(design.matrix, attribute.levels, effects = TRUE, prior = NULL)
+{
     K = sum(attribute.levels - 1) # Total number of parameters
     N = max(design.matrix[,1]) # Number of tasks
     J = max(design.matrix[,2]) # Number of alts per task
     M = N*J
-
-
-    # This needs to be redone as a function that takes a flat format design
 
     # Generate a coded version of the design using dummy coding or effects coding
     des.att = design.matrix[, 3:ncol(design.matrix)] # Part of the design matrix containing the attributes
@@ -39,19 +38,18 @@ DerrorHZ = function(design.matrix, attribute.levels, effects = TRUE, prior = NUL
 
     # Generate choice probabilities
     if (!is.null(prior)) {
-        P = diag(logitChoiceProbs(coded.design, prior, J, N))
+        diagP <- logitChoiceProbs(coded.design, prior, J, N)
     } else {
-        P = 1/J * diag(M)
+        diagP <- rep(1/J, M)
     }
 
     # Compute the D-error (according to Huber and Zwerina 1996)
-    flatP = diag(P)
     xbars = vector("numeric")
     for (j in 1L:N) {
-        xbars = rbind(xbars, rep.row(colSums(coded.design[design.matrix[,1] == j, ] * flatP[design.matrix[,1] == j]), J))
+        xbars = rbind(xbars, rep.row(colSums(coded.design[design.matrix[,1] == j, ] * diagP[design.matrix[,1] == j]), J))
     }
     Z = as.matrix(coded.design - xbars)
-    Omega = t(Z) %*% P %*% Z
+    Omega = crossprod(Z, diagP*Z)  # t(Z) %*% P %*% Z
     Derror = det(Omega)^(-1/K)
     return(Derror)
 }
@@ -59,32 +57,38 @@ DerrorHZ = function(design.matrix, attribute.levels, effects = TRUE, prior = NUL
 
 
 
-dummyVector = function(n, k) {
+dummyVector <-  function(n, k)
+{
     # Create a dummy vector for the nth level of an attribute with k levels
-    dummy = rep(0, k-1)
+    dummy <- numeric(k-1)
     if (n > 1)
-        dummy[n-1] = 1
+        dummy[n-1] <- 1
     return(dummy)
 }
 
-effectsVector = function(n,k) {
+effectsVector = function(n,k)
+{
     # Create an effects-coded vector for the nth level of an attribute with k
     # levels
     if (n == k)
-        effects = rep(-1,k-1)
-    else {
-        effects = rep(0,k-1)
-        effects[n] = 1
+        effects <- rep(-1,k-1)
+    else
+    {
+        effects <- numeric(k-1)
+        effects[n] <- 1
     }
     return(effects)
 }
 
 
 
-dummyMatrix = function(design.matrix) {
-    coded.design = mapply(dummyVector, as.numeric(design.matrix[,1]), k = max(as.numeric(design.matrix[,1])), SIMPLIFY = TRUE)
+dummyMatrix <- function(design.matrix) {
+    coded.design = mapply(dummyVector, as.numeric(design.matrix[,1]),
+                          k = max(as.numeric(design.matrix[,1])), SIMPLIFY = TRUE)
     for (j in 2:ncol(design.matrix)) {
-        coded.design = rbind(coded.design, mapply(dummyVector, as.numeric(design.matrix[,j]), k = max(as.numeric(design.matrix[,j])), SIMPLIFY = TRUE))
+        coded.design = rbind(coded.design, mapply(dummyVector,
+                                                  as.numeric(design.matrix[,j]),
+                                                  k = max(as.numeric(design.matrix[,j])), SIMPLIFY = TRUE))
     }
     coded.design = t(coded.design)
     colnames(coded.design) = 1:ncol(coded.design)
@@ -92,13 +96,18 @@ dummyMatrix = function(design.matrix) {
 }
 
 
-effectsMatrix = function(design.matrix) {
-    coded.design = mapply(effectsVector, as.numeric(design.matrix[,1]), k = max(as.numeric(design.matrix[,1])), SIMPLIFY = TRUE)
-    for (j in 2:ncol(design.matrix)) {
-        coded.design = rbind(coded.design, mapply(effectsVector, as.numeric(design.matrix[,j]), k = max(as.numeric(design.matrix[,j])), SIMPLIFY = TRUE))
+effectsMatrix <- function(design.matrix)
+{
+    coded.design <- mapply(effectsVector, as.numeric(design.matrix[,1]),
+                           k = max(as.numeric(design.matrix[,1])), SIMPLIFY = TRUE)
+    for (j in 2:ncol(design.matrix))
+    {
+        coded.design <- rbind(coded.design, mapply(effectsVector,
+                                                  as.numeric(design.matrix[,j]),
+                                                  k = max(as.numeric(design.matrix[,j])), SIMPLIFY = TRUE))
     }
-    coded.design = t(coded.design)
-    colnames(coded.design) = 1:ncol(coded.design)
+    coded.design <- t(coded.design)
+    colnames(coded.design) <- 1:ncol(coded.design)
     return(coded.design)
 }
 

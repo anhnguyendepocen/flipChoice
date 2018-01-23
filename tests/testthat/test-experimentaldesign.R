@@ -1,33 +1,33 @@
 context("Experimental design")
 
 # Manual test case
-attributes <- c("brand", "engine", "transmission", "colour")
 attribute.levels <- list(c("yamaha", "honda", "ducati", "triumph", "bmw", "kawasaki"),
                          c("125cc", "250cc", "500cc"),
                          c("manual", "automatic"),
                          c("red", "green", "blue", "yellow", "black", "white", "silver"))
+names(attribute.levels) <- c("brand", "engine", "transmission", "colour")
 prohibitions <- matrix(c("ducati", "125cc", "manual", "red", "ducati", "", "manual", "red", "honda", "All", "", "yellow"),
                        ncol = 4, byrow = TRUE)
-n.questions <- 30
+n.questions <- 10
+n.versions <- 2
 alternatives.per.question <- 3
 
 # Automated test case
 experiment <- CreateExperiment(c(3, 5, 7, 10), 20)
 
-# TODO test none.alternative
-
+# TODO add tests for equality with specific designs
 
 for (model in c("Random", "Shortcut", "Complete enumeration")) {
     for (output in c("Attributes and levels", "Prohibitions", "Unlabelled design", "Labelled design",
-                     "Level balances")) {
+                     "Balances and overlaps", "Standard errors")) {
 
         test_that(paste(model, output), {
-            expect_error(ChoiceModelDesign(model, experiment$attribute.levels, n.questions,
+            expect_error(print(ChoiceModelDesign(model, experiment$attribute.levels, NULL, n.questions, n.versions,
                                            alternatives.per.question, experiment$prohibitions,
-                                           FALSE, FALSE, output), NA)
-            #expect_error(ChoiceModelDesign(model, attribute.levels, n.questions,
-            #                               alternatives.per.question, prohibitions,
-            #                               FALSE, FALSE, output), NA)
+                                           0, FALSE, output)), NA)
+            expect_error(print(ChoiceModelDesign(model, attribute.levels, NULL, n.questions, n.versions,
+                                           alternatives.per.question, prohibitions,
+                                           2, TRUE, output)), NA)
         })
     }
 }
