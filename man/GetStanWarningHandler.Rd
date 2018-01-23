@@ -14,5 +14,5 @@ user-friendly Stan warnings.}
 A function that takes a warning object.
 }
 \description{
-This function returns functions that handle Stan warnings.
+This function returns a function that handles Stan warnings.
 }
