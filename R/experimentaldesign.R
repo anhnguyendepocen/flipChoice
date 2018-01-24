@@ -91,9 +91,10 @@ ChoiceModelDesign <- function(
     if (labelled.alternatives)
         alternatives.per.question <- length(attribute.levels[[1]])
 
-    if (!is.character(attribute.levels) && is.null(names(attribute.levels)))
+    if (!is.character(attribute.levels))
     {
-        names(attribute.levels) <- paste("Attribute", seq(length(attribute.levels)))
+        if (is.null(names(attribute.levels)))
+            names(attribute.levels) <- paste("Attribute", seq(length(attribute.levels)))
         levels.per.attribute <- sapply(attribute.levels, length)
         names(levels.per.attribute) <- names(attribute.levels)
     }else
