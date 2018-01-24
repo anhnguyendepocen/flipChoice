@@ -18,38 +18,38 @@ data(sawtooth, package = "flipChoice")
 data(jmp, package = "flipChoice")
 data(jmplevels, package = "flipChoice")
 
-# test_that("cho file", {
-#     result <- FitChoiceModel(cho.file = cho.file,
-#                              attribute.levels.file = attribute.levels.file.cho,
-#                              hb.iterations = 10, hb.chains = 1,
-#                              hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
+test_that("cho file", {
+    result <- FitChoiceModel(cho.file = cho.file,
+                             attribute.levels.file = attribute.levels.file.cho,
+                             hb.iterations = 10, hb.chains = 1,
+                             hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
 
-# test_that("dual file format", {
-#     result <- FitChoiceModel(design.file = sawtooth.design.file,
-#                              attribute.levels.file = attribute.levels.file.dual,
-#                              choices = choices, questions = tasks,
-#                              hb.iterations = 10, hb.chains = 1,
-#                              hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
-#
-# test_that("jmp format", {
-#     result <- FitChoiceModel(design.file = jmp.design.file,
-#                              attribute.levels.file = attribute.levels.file.jmp,
-#                              choices = choices.jmp, questions = tasks.jmp,
-#                              hb.iterations = 10, hb.chains = 1,
-#                              hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
-#
-# test_that("jmp labels format", {
-#     expect_warning(result <- FitChoiceModel(design.file = jmp.levels.design.file,
-#                              choices = choices.jmp.levels,
-#                              questions = tasks.jmp.levels,
-#                              hb.iterations = 10, hb.chains = 1,
-#                              hb.warnings = FALSE),
-#         "9 respondents with missing data were omitted from the analysis")
-#     expect_error(print(result), NA)
-# })
+test_that("dual file format", {
+    result <- FitChoiceModel(design.file = sawtooth.design.file,
+                             attribute.levels.file = attribute.levels.file.dual,
+                             choices = choices, questions = tasks,
+                             hb.iterations = 10, hb.chains = 1,
+                             hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
+
+test_that("jmp format", {
+    result <- FitChoiceModel(design.file = jmp.design.file,
+                             attribute.levels.file = attribute.levels.file.jmp,
+                             choices = choices.jmp, questions = tasks.jmp,
+                             hb.iterations = 10, hb.chains = 1,
+                             hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
+
+test_that("jmp labels format", {
+    expect_warning(result <- FitChoiceModel(design.file = jmp.levels.design.file,
+                             choices = choices.jmp.levels,
+                             questions = tasks.jmp.levels,
+                             hb.iterations = 10, hb.chains = 1,
+                             hb.warnings = FALSE),
+        "9 respondents with missing data were omitted from the analysis")
+    expect_error(print(result), NA)
+})
