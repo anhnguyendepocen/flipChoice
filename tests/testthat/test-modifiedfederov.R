@@ -16,7 +16,7 @@ test_that("3*3*2/4/10 dummy coding",
                              attribute.levels = pa, prior = prior, n.questions = 10,
                              alternatives.per.question = 4, seed = seed)
     expect_identical(out, out2)
-    expect_equal(out$Derror, .52, tolerance = .001)
+    expect_equal(out$Derror, .52, tolerance = .0015)
     expect_true(all(out$design %in% c(0, 1)))
 })
 
