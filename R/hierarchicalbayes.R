@@ -82,6 +82,8 @@ RunStanSampling <- function(stan.dat, n.iterations, n.chains,
     pars <- c("theta", "sigma", "beta")
     if (is.null(stan.dat$U))
         pars <- c(pars, "L_omega")
+    if (!is.null(stan.dat$P))
+        pars <- c(pars, "class_weights")
 
     if (IsRServer()) # R servers
     {
