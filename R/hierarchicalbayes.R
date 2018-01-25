@@ -79,8 +79,7 @@ RunStanSampling <- function(stan.dat, n.iterations, n.chains,
                             max.tree.depth, adapt.delta,
                             seed, stan.model, stan.file, ...)
 {
-    # if ()
-    pars <- c("theta", "sigma", "beta")
+    pars <- c("theta", "sigma", "beta", "L_omega")
 
     if (IsRServer()) # R servers
     {
@@ -339,10 +338,6 @@ onStanWarning <- function(warn)
 #' @export
 GetParameterStatistics <- function(stan.fit, parameter.names, n.classes)
 {
-    # pars <- if (n.classes > 1)
-    #     c('theta', 'sigma', 'class_weights')
-    # else
-    #     c('theta', 'sigma')
     pars <- c('theta', 'sigma')
 
     ex <- rstan::extract(stan.fit, pars = pars, permuted = FALSE,
