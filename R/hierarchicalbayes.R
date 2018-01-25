@@ -79,7 +79,9 @@ RunStanSampling <- function(stan.dat, n.iterations, n.chains,
                             max.tree.depth, adapt.delta,
                             seed, stan.model, stan.file, ...)
 {
-    pars <- c("theta", "sigma", "beta", "L_omega")
+    pars <- c("theta", "sigma", "beta")
+    if (is.null(stan.dat$U))
+        pars <- c(pars, "L_omega")
 
     if (IsRServer()) # R servers
     {
