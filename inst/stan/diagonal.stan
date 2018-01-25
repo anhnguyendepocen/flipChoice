@@ -48,7 +48,6 @@ data {
 
 parameters {
     vector[V_raw] theta_raw;
-    cholesky_factor_corr[V] L_omega;
     vector<lower=0>[U] sigma_unique;
     vector[V] standard_normal[R];
 }
