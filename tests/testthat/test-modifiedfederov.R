@@ -17,7 +17,10 @@ test_that("3*3*2/4/10 dummy coding",
                              alternatives.per.question = 4, seed = seed)
     expect_identical(out, out2)
     expect_equal(out$Derror, .52, tolerance = .0015)
-    expect_true(all(out$design %in% c(0, 1)))
+    expect_true(all(out$mode.matrix %in% c(0, 1)))
+    expect_equal(names(out$design), pa[1, ])
+    expect_equal(levels(out$design[[1]]), pa[-1, 1])
+    expect_true(all(grepl("^set[0-9]{1,2}[.]alt[1-4]", rownames(out$design))))
 })
 
 test_that("3^3/3/9 effects coding",
@@ -30,7 +33,7 @@ test_that("3^3/3/9 effects coding",
     out <- modifiedFederovDesign(al, prior, 4, 12,
                                        dummy.coding = FALSE,
                                        seed = seed)
-    expect_true(all(out$design %in% c(-1, 0, 1)))
+    expect_true(all(out$model.matrix %in% c(-1, 0, 1)))
 })
 
 test_that("ModifiedFederov: bad prior",
