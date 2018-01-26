@@ -140,7 +140,7 @@ ChoiceModelDesign <- function(
     design <- do.call(design.function, args)
 
     result <- list(design = design,
-                   design.with.none <- addNoneAlternatives(design,
+                   design.with.none = addNoneAlternatives(design,
                                                    none.alternatives, alternatives.per.question),
                    design.algorithm = design.algorithm,
                    attribute.levels = attribute.levels,
@@ -192,7 +192,8 @@ print.ChoiceModelDesign <- function(x, ...) {
         print(balancesAndOverlaps(x))
 
     # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
-    else if (x$output == "Standard errors") {
+    else if (x$output == "Standard errors")
+    {
 
         ml.model <- mlogitModel(x)
         print(list(d.score = dScore(x$design),
