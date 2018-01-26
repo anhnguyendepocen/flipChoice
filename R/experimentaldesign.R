@@ -162,49 +162,6 @@ ChoiceModelDesign <- function(
     return(result)
 }
 
-
-#' @export
-#' @method print ChoiceModelDesign
-#' @noRd
-print.ChoiceModelDesign <- function(x, ...) {
-
-    # Output a table with attributes along the columns and levels along the rows
-    if (x$output == "Attributes and levels")
-    {
-        max.levels <- max(sapply(x$attribute.levels, length))
-        levels.table <- sapply(x$attribute.levels, function (z) c(z, rep("", max.levels - length(z))))
-        rownames(levels.table) <- paste("Level", seq.int(max.levels))
-        print(levels.table)
-    }
-
-    else if (x$output == "Prohibitions")
-        print(x$prohibitions)
-
-    # Output the design with indices or labels
-    else if (x$output == "Unlabelled design")
-        print(x$design.with.none)
-    else if (x$output == "Labelled design")
-        print(labelDesign(x$design.with.none, x$attribute.levels))
-
-    # Single and pairwise level balances and overlaps
-    # (where overlaps is the proportion of questions that have >= 1 repeated level, by attribute)
-    else if (x$output == "Balances and overlaps")
-        print(balancesAndOverlaps(x))
-
-    # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
-    else if (x$output == "Standard errors")
-    {
-
-        ml.model <- mlogitModel(x)
-        print(list(d.score = dScore(x$design),
-                    d.error = DerrorHZ(x$design, sapply(x$attribute.levels, length), effects = FALSE)))
-        print(summary(ml.model))
-    }
-    else
-        stop("Unrecognized output.")
-}
-
-
 ######################### HELPER FUNCTIONS ###########################
 
 # Convert prohibitions from labels to indices (numeric levels)
@@ -246,37 +203,6 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
     colnames(prohibitions) <- names(attribute.levels)
     return(prohibitions)
 }
-
-#' Create an experimental design
-#'
-#' Creates attributes and levels of an experiment, possibly with random prohibitions.
-#' This is useful for quickly creating a design without typing in lists of levels.
-#' @param levels.per.attribute Numeric \code{\link{vector}} of the number of levels
-#' per attribute.
-#' @param n.prohibitions Integer; number of prohibitions.
-#' @param seed Integer; random seed to be used by the algorithms.
-#' @return A list with components
-#' \itemize{
-#' \item \code{attribute.levels} - a \code{\link{list}} of \code{\link{vector}}s of the
-#' labels of levels for each attribute. The names of the vectors are the attribute labels.
-#' \item \code{prohibitions} - Character \code{\link{matrix}} where each row is a prohibited
-#' alternative consisting of the levels of each attribute.
-#' }
-#' @export
-CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0, seed = 12345) {
-
-    set.seed(seed)
-    attributes <- LETTERS[1:length(levels.per.attribute)]
-    attribute.levels <- sapply(levels.per.attribute, seq, simplify = FALSE)
-    attribute.levels <- mapply(paste0, attributes, attribute.levels, SIMPLIFY = FALSE)
-    names(attribute.levels) <- attributes
-
-    # may produce duplicate prohibitions
-    prohibitions <- t(replicate(n.prohibitions, sapply(attribute.levels, sample, 1)))
-
-    experiment <- list(attribute.levels = attribute.levels, prohibitions = prohibitions)
-}
-
 
 # Convert an unlabelled design into a labelled design
 labelDesign <- function(unlabelled.design, attribute.levels) {
