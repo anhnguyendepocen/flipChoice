@@ -5,7 +5,7 @@
 \title{Construct an Efficient Choice Model Design}
 \usage{
 modifiedFederovDesign(levels.per.attribute, prior = NULL,
-  alternatives.per.question, n.questions, labelled.alternatives = FALSE,
+  alternatives.per.question, n.questions, labeled.alternatives = FALSE,
   dummy.coding = TRUE, seed = 1776)
 }
 \arguments{
@@ -28,7 +28,7 @@ number of profiles to show per question.}
 \item{n.questions}{Numeric value specifying the total number of
 questions/tasks to be performed by each respondent.}
 
-\item{labelled.alternatives}{Logical; whether the first attribute
+\item{labeled.alternatives}{Logical; whether the first attribute
 labels the alternatives.}
 
 \item{dummy.coding}{Logical value indicating whether dummy coding

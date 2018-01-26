@@ -16,9 +16,9 @@ print.ChoiceModelDesign <- function(x, ...) {
         print(x$prohibitions)
 
     # Output the design with indices or labels
-    else if (x$output == "Unlabelled design")
+    else if (x$output == "Unlabeled design")
         print(x$design.with.none)
-    else if (x$output == "Labelled design")
+    else if (x$output == "Labeled design")
         print(labelDesign(x$design.with.none, x$attribute.levels))
 
     # Single and pairwise level balances and overlaps

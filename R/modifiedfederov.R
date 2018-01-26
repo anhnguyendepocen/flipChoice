@@ -18,7 +18,7 @@
 #'     number of profiles to show per question.
 #' @param n.questions Numeric value specifying the total number of
 #'     questions/tasks to be performed by each respondent.
-#' @param labelled.alternatives Logical; whether the first attribute
+#' @param labeled.alternatives Logical; whether the first attribute
 #'     labels the alternatives.
 #' @param dummy.coding Logical value indicating whether dummy coding
 #'     should be used for the attributes in the design matrix.  If
@@ -60,7 +60,7 @@ modifiedFederovDesign <- function(
                                prior = NULL,
                                alternatives.per.question,
                                n.questions,
-                               labelled.alternatives = FALSE,
+                               labeled.alternatives = FALSE,
                                dummy.coding = TRUE,
                                seed = 1776)
 {
@@ -70,7 +70,7 @@ modifiedFederovDesign <- function(
                            coding = rep(code, length(levels.per.attribute)))
 
     par.draws <- parsePastedPrior(prior, candidates)
-    alt.specific.const <- labelled.alternatives + integer(alternatives.per.question)
+    alt.specific.const <- labeled.alternatives + integer(alternatives.per.question)
     out <- Modfed(candidates, n.sets = n.questions, n.alts = alternatives.per.question,
                   alt.cte = alt.specific.const, par.draws = par.draws)
     out
