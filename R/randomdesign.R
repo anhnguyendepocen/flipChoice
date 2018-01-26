@@ -4,9 +4,8 @@
 # Chooses a random level for each attribute.
 # Ensure same alternative is not prohibited or duplicated within a question.
 randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
-                         none.alternatives = 0, labelled.alternatives = FALSE) {
-
-    set.seed(12345)
+                         none.alternatives = 0, labelled.alternatives = FALSE, seed = 12345) {
+    set.seed(seed)
     n.attributes <- length(levels.per.attribute)
     level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
     design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
