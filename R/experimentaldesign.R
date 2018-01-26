@@ -63,7 +63,7 @@
 #' ChoiceModelDesign("Random", x$attribute.levels, n.questions = 30,
 #'     alternatives.per.question = 4, prohibitions = x$prohibitions,
 #'     output = "Unlabelled design")
-#' @importFrom utils getFromNamespace
+#' @importFrom utils getFromNamespace modifyList
 #' @export
 ChoiceModelDesign <- function(
                               design.algorithm = c("Random", "Shortcut", "Balanced overlap",
