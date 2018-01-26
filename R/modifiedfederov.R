@@ -70,7 +70,7 @@ modifiedFederovDesign <- function(
                            coding = rep(code, length(levels.per.attribute)))
 
     par.draws <- parsePastedPrior(prior, candidates)
-    alt.specific.const <- dummy.coding + integer(alternatives.per.question)
+    alt.specific.const <- labelled.alternatives + integer(alternatives.per.question)
     out <- Modfed(candidates, n.sets = n.questions, n.alts = alternatives.per.question,
                   alt.cte = alt.specific.const, par.draws = par.draws)
     out
@@ -83,6 +83,40 @@ pastedAttributesToVector <- function(attributes)
     lvls <- colSums(attributes != "") - 1L
     names(lvls) <- attributes[1L, ]
     lvls
+}
+
+#' @noRd
+#' @param model design output from \code{\link[idefix]{Modfed}}
+#' @importFrom idefix Decode
+modelMatrixToDataFrame <- function(
+                                   model,
+                                   pasted.attributes,
+                                   alternatives.per.question,
+                                   labeled.alternatives)
+{
+    attr.list <- pastedAttributesToList(pasted.attributes)
+    code <- ifelse(any(model == -1), "E", "D")
+    alt.specific.const <- labeled.alternatives + integer(alternatives.per.question)
+    out <- Decode(model, attr.list, coding = rep(code, ncol(pasted.attributes)),
+                  alt.cte = alt.specific.const)
+    out <- as.data.frame(out)
+    names(out) <- pasted.attributes[1, ]
+    rownames(out) <- rownames(model)
+    out
+}
+
+#' @noRd
+pastedAttributesToList <- function(attributes)
+{
+    n.attr <- ncol(attributes)
+    out <- vector("list", n.attr)
+    for (i in seq_len(n.attr))
+    {
+        tatt <- attributes[-1, i]
+        out[[i]] <- tatt[tatt != ""]
+    }
+    names(out) <- attributes[1, ]
+    out
 }
 
 #' @noRd

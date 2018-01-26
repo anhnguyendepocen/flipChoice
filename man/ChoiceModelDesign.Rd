@@ -66,6 +66,8 @@ question by number of attributes) where each value is the index of a level.
 \item \code{prohibitions} - as per input.
 \item \code{output} - as per input.
 \item \code{Derror} - The D-error of \code{design}.
+\item \code{model.matrix} - The model matrix of dummy coded variables for each alternative
+in every choice set.
 }
 }
 \description{
