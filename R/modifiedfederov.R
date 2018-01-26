@@ -100,8 +100,11 @@ modelMatrixToDataFrame <- function(
     out <- Decode(model, attr.list, coding = rep(code, ncol(pasted.attributes)),
                   alt.cte = alt.specific.const)
     out <- as.data.frame(out)
-    names(out) <- pasted.attributes[1, ]
-    rownames(out) <- rownames(model)
+    question <- as.numeric(sub("set([0-9]+)[.]alt[0-9]+", "\\1", rownames(model)))
+    alternative <- as.numeric(sub("set[0-9]+[.]alt([0-9]+)", "\\1", rownames(model)))
+    out <- cbind(question, alternative, out)
+    names(out) <- c("question", "alternative", pasted.attributes[1, ])
+    ## rownames(out) <- rownames(model)
     out
 }
 
