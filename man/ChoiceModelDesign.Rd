@@ -8,8 +8,7 @@ ChoiceModelDesign(design.algorithm = c("Random", "Shortcut",
   "Balanced overlap", "Complete enumeration", "Shortcut2", "Modified Federov"),
   attribute.levels, prior = NULL, n.questions, n.versions = 1,
   alternatives.per.question, prohibitions = NULL, none.alternatives = 0,
-  labelled.alternatives = FALSE, output = "Unlabelled design",
-  seed = 54123)
+  labeled.alternatives = FALSE, output = "Unlabeled design", seed = 54123)
 }
 \arguments{
 \item{design.algorithm}{The algorithm used to create the
@@ -35,7 +34,7 @@ create.}
 
 \item{alternatives.per.question}{Integer; the number of alternative
 products shown in each question. Ignored if
-\code{"labelled.alternatives"} is TRUE.}
+\code{"labeled.alternatives"} is TRUE.}
 
 \item{prohibitions}{Character \code{\link{matrix}} where each row
 is a prohibited alternative consisting of the levels of each
@@ -46,12 +45,12 @@ specified attribute levels are prohibited.}
 \item{none.alternatives}{Integer; the number of 'None' in all
 questions.}
 
-\item{labelled.alternatives}{Logical; whether the first attribute
+\item{labeled.alternatives}{Logical; whether the first attribute
 labels the alternatives.}
 
 \item{output}{One of \code{"Attributes and levels"},
-\code{"Prohibitions"}, \code{"Unlabelled design"},
-\code{"Labelled design"}, \code{"Balances and overlaps"}, or
+\code{"Prohibitions"}, \code{"Unlabeled design"},
+\code{"Labeled design"}, \code{"Balances and overlaps"}, or
 \code{"Standard errors"}.}
 
 \item{seed}{Integer; random seed to be used by the algorithms.}
@@ -88,5 +87,5 @@ If \code{prior} is supplied and \code{design.algorithm ==
 x <- CreateExperiment(c(3, 5, 7, 10), 20)
 ChoiceModelDesign("Random", x$attribute.levels, n.questions = 30,
     alternatives.per.question = 4, prohibitions = x$prohibitions,
-    output = "Unlabelled design")
+    output = "Unlabeled design")
 }
