@@ -20,7 +20,7 @@
 #'     create.
 #' @param alternatives.per.question Integer; the number of alternative
 #'     products shown in each question. Ignored if
-#'     \code{"labelled.alternatives"} is TRUE.
+#'     \code{"labeled.alternatives"} is TRUE.
 #' @param prohibitions Character \code{\link{matrix}} where each row
 #'     is a prohibited alternative consisting of the levels of each
 #'     attribute. If a level is \code{""} or is \code{"All"} then all
@@ -28,11 +28,11 @@
 #'     specified attribute levels are prohibited.
 #' @param none.alternatives Integer; the number of 'None' in all
 #'     questions.
-#' @param labelled.alternatives Logical; whether the first attribute
+#' @param labeled.alternatives Logical; whether the first attribute
 #'     labels the alternatives.
 #' @param output One of \code{"Attributes and levels"},
-#'     \code{"Prohibitions"}, \code{"Unlabelled design"},
-#'     \code{"Labelled design"}, \code{"Balances and overlaps"}, or
+#'     \code{"Prohibitions"}, \code{"Unlabeled design"},
+#'     \code{"Labeled design"}, \code{"Balances and overlaps"}, or
 #'     \code{"Standard errors"}.
 #' @param seed Integer; random seed to be used by the algorithms.
 #' @return A list with components
@@ -62,7 +62,7 @@
 #' x <- CreateExperiment(c(3, 5, 7, 10), 20)
 #' ChoiceModelDesign("Random", x$attribute.levels, n.questions = 30,
 #'     alternatives.per.question = 4, prohibitions = x$prohibitions,
-#'     output = "Unlabelled design")
+#'     output = "Unlabeled design")
 #' @importFrom utils getFromNamespace modifyList
 #' @export
 ChoiceModelDesign <- function(
@@ -75,8 +75,8 @@ ChoiceModelDesign <- function(
                               alternatives.per.question,
                               prohibitions = NULL,
                               none.alternatives = 0,
-                              labelled.alternatives = FALSE,
-                              output = "Unlabelled design",
+                              labeled.alternatives = FALSE,
+                              output = "Unlabeled design",
                               seed = 54123) {
 
 
@@ -89,8 +89,8 @@ ChoiceModelDesign <- function(
 
     ## NEED TO ADD CODE TO CHECK SUPPLIED ARGS ARE VALID FOR REQUESTED ALGORITHM
 
-    # If labelled.alternatives then alternatives.per.question is calculated and not supplied
-    if (labelled.alternatives && design.algorithm != "Modified Federov")
+    # If labeled.alternatives then alternatives.per.question is calculated and not supplied
+    if (labeled.alternatives && design.algorithm != "Modified Federov")
         alternatives.per.question <- length(attribute.levels[[1]])
 
     if (!is.character(attribute.levels))
@@ -122,7 +122,7 @@ ChoiceModelDesign <- function(
 
 
     # Call the algorithm to create the design
-    # Design algorithms     - use only unlabelled levels (i.e. integer level indices)
+    # Design algorithms     - use only unlabeled levels (i.e. integer level indices)
     #                       - simply multiply question per respondent by n.versions
     #                       - ignore None alternatives, these are added later
     args <- list(levels.per.attribute = levels.per.attribute,
@@ -131,7 +131,7 @@ ChoiceModelDesign <- function(
                        alternatives.per.question = alternatives.per.question,
                        prohibitions = integer.prohibitions,
                        none.alternatives = none.alternatives,
-                       labelled.alternatives = labelled.alternatives,
+                       labeled.alternatives = labeled.alternatives,
                        seed = seed)
 
     f <- formals(design.function)
@@ -152,7 +152,7 @@ ChoiceModelDesign <- function(
     {
         result$model.matrix <- design$design
         result$design <- modelMatrixToDataFrame(design$design, attribute.levels,
-                                                alternatives.per.question, labelled.alternatives)
+                                                alternatives.per.question, labeled.alternatives)
         result$Derror <- design$error
     }
     result$design.with.none <- addNoneAlternatives(result$design,
@@ -204,15 +204,15 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
     return(prohibitions)
 }
 
-# Convert an unlabelled design into a labelled design
-labelDesign <- function(unlabelled.design, attribute.levels) {
+# Convert an unlabeled design into a labeled design
+labelDesign <- function(unlabeled.design, attribute.levels) {
 
-    labelled.design <- array(character(0), dim = dim(unlabelled.design))
-    colnames(labelled.design) = colnames(unlabelled.design)
-    labelled.design[, 1:2] <- unlabelled.design[, 1:2]
+    labeled.design <- array(character(0), dim = dim(unlabeled.design))
+    colnames(labeled.design) = colnames(unlabeled.design)
+    labeled.design[, 1:2] <- unlabeled.design[, 1:2]
     for (i in 1:length(attribute.levels))
-        labelled.design[, i + 2] <- attribute.levels[[i]][unlabelled.design[, i + 2]]
-    return(labelled.design)
+        labeled.design[, i + 2] <- attribute.levels[[i]][unlabeled.design[, i + 2]]
+    return(labeled.design)
 }
 
 
