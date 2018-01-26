@@ -5,13 +5,15 @@
 \title{Creates attributes and levels of an experiment, possibly with random prohibitions.
 This is useful for quickly creating a design without typing in lists of levels.}
 \usage{
-CreateExperiment(levels.per.attribute, n.prohibitions = 0)
+CreateExperiment(levels.per.attribute, n.prohibitions = 0, seed = 12345)
 }
 \arguments{
 \item{levels.per.attribute}{Numeric \code{\link{vector}} of the number of levels
 per attribute.}
 
 \item{n.prohibitions}{Integer; number of prohibitions.}
+
+\item{seed}{Integer; random seed to be used by the algorithms.}
 }
 \value{
 A list with components
