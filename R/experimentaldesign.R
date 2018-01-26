@@ -254,6 +254,7 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
 #' @param levels.per.attribute Numeric \code{\link{vector}} of the number of levels
 #' per attribute.
 #' @param n.prohibitions Integer; number of prohibitions.
+#' @param seed Integer; random seed to be used by the algorithms.
 #' @return A list with components
 #' \itemize{
 #' \item \code{attribute.levels} - a \code{\link{list}} of \code{\link{vector}}s of the
@@ -262,9 +263,9 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
 #' alternative consisting of the levels of each attribute.
 #' }
 #' @export
-CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0) {
+CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0, seed = 12345) {
 
-    set.seed(12345)
+    set.seed(seed)
     attributes <- LETTERS[1:length(levels.per.attribute)]
     attribute.levels <- sapply(levels.per.attribute, seq, simplify = FALSE)
     attribute.levels <- mapply(paste0, attributes, attribute.levels, SIMPLIFY = FALSE)
