@@ -18,7 +18,7 @@ experiment <- CreateExperiment(c(3, 5, 7, 10), 20)
 # TODO add tests for equality with specific designs
 
 for (model in c("Random", "Shortcut", "Complete enumeration")) {
-    for (output in c("Attributes and levels", "Prohibitions", "Unlabelled design", "Labelled design",
+    for (output in c("Attributes and levels", "Prohibitions", "Unlabeled design", "Labeled design",
                      "Balances and overlaps", "Standard errors")) {
 
         test_that(paste(model, output), {

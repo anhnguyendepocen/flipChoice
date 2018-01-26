@@ -4,7 +4,7 @@
 # Chooses a random level for each attribute.
 # Ensure same alternative is not prohibited or duplicated within a question.
 randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
-                         none.alternatives = 0, labelled.alternatives = FALSE, seed = 12345) {
+                         none.alternatives = 0, labeled.alternatives = FALSE, seed = 12345) {
     set.seed(seed)
     n.attributes <- length(levels.per.attribute)
     level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
@@ -17,8 +17,8 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
         while (i.alternative <= alternatives.per.question) {
 
             new.alternative <- sapply(level.sequences, sample, 1)
-            # With labelled.alternatives, first attribute is set by alternative number
-            if (labelled.alternatives)
+            # With labeled.alternatives, first attribute is set by alternative number
+            if (labeled.alternatives)
                 new.alternative[1] <- i.alternative
 
             if (!is.null(prohibitions) && nrow(prohibitions) > 0)
@@ -48,10 +48,10 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
 #
 # TODO EXPLAIN HOW THIS WORKS
 # TODO ADD PROHIBITIONS
-# TODO LABELLED ALTERNATIVES
+# TODO LABELED ALTERNATIVES
 #' @importFrom nnet which.is.max
 shortcutDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
-                           none.alternatives = 0, labelled.alternatives = FALSE) {
+                           none.alternatives = 0, labeled.alternatives = FALSE) {
 
     n.attributes <- length(levels.per.attribute)
     level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
