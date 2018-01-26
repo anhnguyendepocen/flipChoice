@@ -44,6 +44,8 @@
 #' \item \code{prohibitions} - as per input.
 #' \item \code{output} - as per input.
 #' \item \code{Derror} - The D-error of \code{design}.
+#' \item \code{model.matrix} - The model matrix of dummy coded variables for each alternative
+#' in every choice set.
 #' }
 #'
 #' @details If \code{prior} is supplied and \code{design.algorithm ==
@@ -88,7 +90,7 @@ ChoiceModelDesign <- function(
     ## NEED TO ADD CODE TO CHECK SUPPLIED ARGS ARE VALID FOR REQUESTED ALGORITHM
 
     # If labelled.alternatives then alternatives.per.question is calculated and not supplied
-    if (labelled.alternatives)
+    if (labelled.alternatives && design.algorithm != "Modified Federov")
         alternatives.per.question <- length(attribute.levels[[1]])
 
     if (!is.character(attribute.levels))
@@ -110,7 +112,8 @@ ChoiceModelDesign <- function(
     if (output == "Attributes and levels")
     {
         max.levels <- max(sapply(attribute.levels, length))
-        levels.table <- sapply(attribute.levels, function (x) c(x, rep("", max.levels - length(x))))
+        levels.table <- sapply(attribute.levels, function (x) c(x,
+                                                                character(max.levels - length(x))))
         rownames(levels.table) <- paste("Level", seq(max.levels))
         return(levels.table)
     }
@@ -137,7 +140,8 @@ ChoiceModelDesign <- function(
     design <- do.call(design.function, args)
 
     result <- list(design = design,
-                   design.with.none = addNoneAlternatives(design, none.alternatives, alternatives.per.question),
+                   design.with.none <- addNoneAlternatives(design,
+                                                   none.alternatives, alternatives.per.question),
                    design.algorithm = design.algorithm,
                    attribute.levels = attribute.levels,
                    prohibitions = prohibitions,
@@ -148,7 +152,9 @@ ChoiceModelDesign <- function(
                    output = output)
     if (design.algorithm == "Modified Federov")
     {
-        result$design <- design$design
+        result$model.matrix <- design$design
+        result$design <- modelMatrixToDataFrame(design$design, attribute.levels,
+                                                alternatives.per.question, labelled.alternatives)
         result$Derror <- design$error
     }
 
@@ -167,7 +173,7 @@ print.ChoiceModelDesign <- function(x, ...) {
     {
         max.levels <- max(sapply(x$attribute.levels, length))
         levels.table <- sapply(x$attribute.levels, function (z) c(z, rep("", max.levels - length(z))))
-        rownames(levels.table) <- paste("Level", seq(max.levels))
+        rownames(levels.table) <- paste("Level", seq.int(max.levels))
         print(levels.table)
     }
 
