@@ -140,8 +140,6 @@ ChoiceModelDesign <- function(
     design <- do.call(design.function, args)
 
     result <- list(design = design,
-                   design.with.none = addNoneAlternatives(design,
-                                                   none.alternatives, alternatives.per.question),
                    design.algorithm = design.algorithm,
                    attribute.levels = attribute.levels,
                    prohibitions = prohibitions,
@@ -157,6 +155,8 @@ ChoiceModelDesign <- function(
                                                 alternatives.per.question, labelled.alternatives)
         result$Derror <- design$error
     }
+    result$design.with.none <- addNoneAlternatives(result$design,
+                                                   none.alternatives, alternatives.per.question)
 
     class(result) <- "ChoiceModelDesign"
     return(result)
@@ -236,7 +236,8 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
         if (any(rows.with.all))
         {
             # duplicate rows with "All" then fill with levels
-            expanded.rows <- rep(rownames(prohibitions), (length(attribute.levels[[i]]) - 1) * rows.with.all + 1)
+            expanded.rows <- rep(rownames(prohibitions),
+                                                  (length(attribute.levels[[i]]) - 1) * rows.with.all + 1)
             prohibitions <- prohibitions[expanded.rows, ]
             prohibitions[prohibitions[, i] == "All", i] <- attribute.levels[[i]]
         }
@@ -366,6 +367,18 @@ addNoneAlternatives <- function(design, none.alternatives, alternatives.per.ques
     if (none.alternatives == 0)
         return(design)
 
+    if (is.data.frame(design))
+    {
+        n.questions <- design[[1]][nrow(design)]
+        new.rows <- matrix(nrow = n.questions*none.alternatives, ncol = ncol(design))
+        new.rows[, 1] <- rep(seq_len(n.questions), each = none.alternatives)
+        new.rows[, 2] <- rep((alternatives.per.question+1):(alternatives.per.question+none.alternatives),
+                             times = n.questions)
+        colnames(new.rows) <- colnames(design)
+        out <- rbind(design, new.rows)
+        out <- out[order(out$question, out$alternative), ]
+        return(out)
+    }
     n <- nrow(design)
     new.n <- n * (alternatives.per.question + none.alternatives) / alternatives.per.question
     design.with.none <- matrix(NA, nrow = new.n, ncol = ncol(design))

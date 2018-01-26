@@ -8,19 +8,24 @@ test_that("3*3*2/4/10 dummy coding",
     prior <- matrix(nrow = 0, ncol = 0)
     ## out <- modifiedFederovDesign(al, prior, 4, 10, dummy.coding = TRUE,
     ##                                    seed = seed)
+    n.q <- 10
+    apq <- 4
     out <- ChoiceModelDesign(design.algorithm = "Modified Federov",
-                             attribute.levels = pa, prior = prior, n.questions = 10,
-                             alternatives.per.question = 4, seed = seed)
+                             attribute.levels = pa, prior = prior, n.questions = n.q,
+                             alternatives.per.question = apq, seed = seed)
     prior <- matrix("0", nrow = 5, ncol =1)
     out2 <- ChoiceModelDesign(design.algorithm = "Modified Federov",
-                             attribute.levels = pa, prior = prior, n.questions = 10,
-                             alternatives.per.question = 4, seed = seed)
+                             attribute.levels = pa, prior = prior, n.questions = n.q,
+                             alternatives.per.question = apq, seed = seed)
     expect_identical(out, out2)
     expect_equal(out$Derror, .52, tolerance = .0015)
     expect_true(all(out$mode.matrix %in% c(0, 1)))
-    expect_equal(names(out$design), pa[1, ])
-    expect_equal(levels(out$design[[1]]), pa[-1, 1])
-    expect_true(all(grepl("^set[0-9]{1,2}[.]alt[1-4]", rownames(out$design))))
+    expect_equal(names(out$design)[-2:-1], pa[1, ])
+    expect_equal(levels(out$design[[3]]), pa[-1, 1])
+    expect_equal(unique(out$design[[1]]), 1:n.q)
+    expect_equal(unique(out$design[[2]]), 1:apq)
+
+    ## expect_true(all(grepl("^set[0-9]{1,2}[.]alt[1-4]", rownames(out$design))))
 })
 
 test_that("3^3/3/9 effects coding",
@@ -82,4 +87,23 @@ test_that("ModifiedFederov: prior means and variances",
                              prior = prior, n.questions = 8, alternatives.per.question = 3,
                                        seed = seed)
     expect_equal(out$Derror, 1.871, tolerance = 1e-3)
+})
+
+test_that("Federov: none alternatives",
+{
+    seed <- 20
+    pa <- cbind(c("price", "200", "250", "300"), c("time", "morn", "aft", "eve"),
+                c("type", "train", "bus", ""))
+    prior <- matrix(nrow = 0, ncol = 0)
+    ## out <- modifiedFederovDesign(al, prior, 4, 10, dummy.coding = TRUE,
+    ##                                    seed = seed)
+    n.q <- 10
+    apq <- 4
+    n.a <- 2
+    out <- ChoiceModelDesign(design.algorithm = "Modified Federov",
+                             attribute.levels = pa, prior = prior, n.questions = n.q,
+                             alternatives.per.question = apq, seed = seed,
+                             none.alternatives = 2)
+    expect_equal(sum(is.na(out$design.with.none[[3]])), n.q*n.a)
+    expect_equal(max(out$design.with.none[[2L]]), n.a + apq)
 })
