@@ -247,7 +247,7 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
     return(prohibitions)
 }
 
-#. Create an experimental design
+#' Create an experimental design
 #'
 #' Creates attributes and levels of an experiment, possibly with random prohibitions.
 #' This is useful for quickly creating a design without typing in lists of levels.
