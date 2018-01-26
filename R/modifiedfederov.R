@@ -87,7 +87,6 @@ pastedAttributesToVector <- function(attributes)
 
 #' @noRd
 #' @param model design output from \code{\link[idefix]{Modfed}}
-#' @importFrom idefix Decode
 modelMatrixToDataFrame <- function(
                                    model,
                                    pasted.attributes,
@@ -97,7 +96,7 @@ modelMatrixToDataFrame <- function(
     attr.list <- pastedAttributesToList(pasted.attributes)
     code <- ifelse(any(model == -1), "E", "D")
     alt.specific.const <- labeled.alternatives + integer(alternatives.per.question)
-    out <- Decode(model, attr.list, coding = rep(code, ncol(pasted.attributes)),
+    out <- decode(model, attr.list, coding = rep(code, ncol(pasted.attributes)),
                   alt.cte = alt.specific.const)
     out <- as.data.frame(out)
     question <- as.numeric(sub("set([0-9]+)[.]alt[0-9]+", "\\1", rownames(model)))
@@ -106,6 +105,47 @@ modelMatrixToDataFrame <- function(
     names(out) <- c("question", "alternative", pasted.attributes[1, ])
     ## rownames(out) <- rownames(model)
     out
+}
+
+#' Convert model matrix to data frame of factors
+#' @note Based of the function Decode from idefix, which is
+#' no longer exported by the package as of v0.2.4
+#' @noRd
+#' @importFrom idefix Profiles
+decode <- function (set, lvl.names, coding, alt.cte = NULL, c.lvls = NULL) 
+{
+    if (!is.null(alt.cte)) {
+        contins <- which(alt.cte == 1)
+        if (!length(contins) == 0) {
+            set <- set[, -length(contins)]
+        }
+    }
+    n.alts <- nrow(set)
+    n.att <- length(lvl.names)
+    conts <- which(coding == "C")
+    lvls <- numeric(n.att)
+    for (i in 1:n.att) {
+        lvls[i] <- length(lvl.names[[i]])
+    }
+    dc <- Profiles(lvls = lvls, coding = coding, c.lvls = c.lvls)
+    d <- as.data.frame(expand.grid(lvl.names))
+    m <- matrix(data = NA, nrow = n.alts, ncol = n.att)
+    if (ncol(set) != ncol(dc)) {
+        stop("Number of columns of the set does not match expected number based ",
+             "on the other arguments.")
+    }
+    for (i in 1:n.alts) {
+        lev.num <- d[as.numeric(which(apply(dc, 1,
+                                            function(x) all(x == set[i, ])))), ]
+        lev.num <- as.numeric(lev.num)
+        if (any(is.na(lev.num))) {
+            stop("The set does not match with the type of coding provided")
+        }
+        for (c in 1:n.att) {
+            m[i, c] <- lvl.names[[c]][lev.num[c]]
+        }
+    }
+    return(m)
 }
 
 #' @noRd
