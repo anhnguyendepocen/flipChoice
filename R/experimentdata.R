@@ -4,8 +4,11 @@ processExperimentData <- function(experiment.data, subset, weights,
                                   input.prior.mean,
                                   input.prior.sd)
 {
+    non.missing <- !is.na(rowSums(sapply(experiment.data, as.numeric)))
+
     # Tidying weights and subset
-    subset <- CleanSubset(subset, nrow(experiment.data))
+    filter.subset <- CleanSubset(subset, nrow(experiment.data))
+    subset <- filter.subset & non.missing
     weights <- prepareWeights(weights, subset)
 
     nms <- names(experiment.data)
