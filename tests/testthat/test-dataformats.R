@@ -17,6 +17,7 @@ attribute.levels.file.jmp <- findInstDirFile("Labels_for_Choice_Profiles.xlsx")
 data(sawtooth, package = "flipChoice")
 data(jmp, package = "flipChoice")
 data(jmplevels, package = "flipChoice")
+data(eggs, package = "flipChoice")
 
 test_that("cho file", {
     result <- FitChoiceModel(cho.file = cho.file,
@@ -52,4 +53,17 @@ test_that("jmp labels format", {
                              hb.warnings = FALSE),
         "9 respondents with missing data were omitted from the analysis")
     expect_error(print(result), NA)
+})
+
+test_that("Missing data", {
+    eggs.data.missing <- eggs.data
+    eggs.data.missing[1, 1] <- NA
+    dat <- processExperimentData(experiment.data = eggs.data.missing,
+                                 subset = NULL, weights = NULL,
+                                 n.questions.left.out = 0,
+                                 seed = 123, input.prior.mean = 0,
+                                 input.prior.sd = 5)
+    expect_equal(dat$n.respondents, 379)
+    expect_equal(dput(dim(dat$X.in)), c(379L, 8L, 3L, 20L))
+    expect_equal(dput(dim(dat$Y.in)), c(379L, 8L))
 })
