@@ -79,11 +79,8 @@ RunStanSampling <- function(stan.dat, n.iterations, n.chains,
                             max.tree.depth, adapt.delta,
                             seed, stan.model, stan.file, ...)
 {
-    pars <- c("theta", "sigma", "beta")
-    if (is.null(stan.dat$U))
-        pars <- c(pars, "L_omega")
-    if (!is.null(stan.dat$P))
-        pars <- c(pars, "class_weights")
+    pars <- stanParameters(stan.dat)
+    init <- initialParameterValues(stan.dat)
 
     if (IsRServer()) # R servers
     {
@@ -96,16 +93,61 @@ RunStanSampling <- function(stan.dat, n.iterations, n.chains,
         result <- sampling(stan.model, data = stan.dat, chains = n.chains,
                            pars = pars, iter = n.iterations, seed = seed,
                            control = list(max_treedepth = max.tree.depth,
-                                          adapt_delta = adapt.delta), ...)
+                                          adapt_delta = adapt.delta),
+                           init = init, ...)
     }
     else # Not R servers
     {
         result <- stan(file = stan.file, data = stan.dat, iter = n.iterations,
                        chains = n.chains, seed = seed, pars = pars,
                        control = list(max_treedepth = max.tree.depth,
-                                      adapt_delta = adapt.delta), ...)
+                                      adapt_delta = adapt.delta),
+                       init = init, ...)
     }
     result
+}
+
+stanParameters <- function(stan.dat)
+{
+    full.covariance <- is.null(stan.dat$U)
+    multiple.classes <- !is.null(stan.dat$P)
+
+    pars <- c("theta", "sigma", "beta")
+    if (full.covariance)
+        pars <- c(pars, "L_omega")
+    if (multiple.classes)
+        pars <- c(pars, "class_weights")
+
+    pars
+}
+
+initialParameterValues <- function(stan.dat)
+{
+    full.covariance <- is.null(stan.dat$U)
+    multiple.classes <- !is.null(stan.dat$P)
+
+    init <- function () structure(list(), .Names = character(0))
+    if (full.covariance)
+    {
+        n.pars <- if (!is.null(stan.dat$K))
+            stan.dat$K
+        else
+            stan.dat$V
+
+        if (multiple.classes)
+        {
+            n.classes <- stan.dat$P
+            init <- function () {
+                L_omega <- array(NA, dim = c(n.classes, n.pars, n.pars))
+                for (i in 1:n.classes)
+                    L_omega[i, , ] <- diag(n.pars)
+                list(L_omega = L_omega)
+            }
+        }
+        else
+            init <- function () list(L_omega = diag(n.pars))
+    }
+    init
 }
 
 createStanData <- function(dat, n.classes, normal.covariance)
