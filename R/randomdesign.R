@@ -79,6 +79,9 @@ shortcutDesign <- function(levels.per.attribute, n.questions, alternatives.per.q
             }
         }
     }
+    ##:ess-bp-start::browser@nil:##
+browser(expr=is.null(.ESSBP.[["@4@"]]));##:ess-bp-end:##
+print("hi")
     return(flattenDesign(design))
 }
 

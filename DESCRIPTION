@@ -20,7 +20,8 @@ Imports: flipData,
          readxl,
          stats,
          utils
-Suggests: testthat
+Suggests: testthat,
+         withr
 Remotes: Displayr/flipData,
          Displayr/flipFormat,
          Displayr/flipTime,
