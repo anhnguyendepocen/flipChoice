@@ -124,6 +124,7 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions,
                     }
                     else
                     {
+
                         n.v <- length(levels(v))
                         numeric.v <- as.numeric(v)
                         X[, q, j, c:(c + n.v - 1)] <- 0
