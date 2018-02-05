@@ -1,11 +1,11 @@
 context("Modified Federov")
 
-test_that("3*3*2/4/10 dummy coding",
+test_that("3*3*2/4/10 dummy coding; old interface",
 {
     seed <- 3000
     pa <- cbind(c("price", "200", "250", "300"), c("time", "morn", "aft", "eve"),
                 c("type", "train", "bus", ""))
-    prior <- matrix(nrow = 0, ncol = 0)
+    prior <- NULL  # matrix(nrow = 0, ncol = 0)
     ## out <- modifiedFederovDesign(al, prior, 4, 10, dummy.coding = TRUE,
     ##                                    seed = seed)
     n.q <- 10
@@ -13,28 +13,69 @@ test_that("3*3*2/4/10 dummy coding",
     out <- ChoiceModelDesign(design.algorithm = "Modified Federov",
                              attribute.levels = pa, prior = prior, n.questions = n.q,
                              alternatives.per.question = apq, seed = seed)
-    prior <- matrix("0", nrow = 5, ncol =1)
+    prior <- numeric(5)
     out2 <- ChoiceModelDesign(design.algorithm = "Modified Federov",
                              attribute.levels = pa, prior = prior, n.questions = n.q,
                              alternatives.per.question = apq, seed = seed)
     expect_identical(out, out2)
     expect_equal(out$Derror, .52, tolerance = .0015)
-    expect_true(all(out$mode.matrix %in% c(0, 1)))
-    expect_equal(names(out$design)[-2:-1], pa[1, ])
-    expect_equal(levels(out$design[[3]]), pa[-1, 1])
-    expect_equal(unique(out$design[[1]]), 1:n.q)
-    expect_equal(unique(out$design[[2]]), 1:apq)
+    expect_true(all(out$model.matrix %in% c(0, 1)))
+    expect_equal(colnames(out$design)[-2:-1], pa[1, ])
+    expect_equal(unique(out$design[, 1]), 1:n.q)
+    expect_equal(unique(out$design[, 2]), 1:apq)
 
     ## expect_true(all(grepl("^set[0-9]{1,2}[.]alt[1-4]", rownames(out$design))))
 })
+
+seed <- 765
+pd <- cbind(c("price", "200", "250", "300"), c("Mean", 0, 1, 1),
+            c("SD", 1, 1, 1),
+            c("time", "morn", "aft", "eve"), c("Mean", 0, 0, 0),
+            c("SD", 1, 1, 1),
+            c("type", "train", "bus", ""), c("mean", 2, 3, ""), c("sd", 1, 2, ""))
+
+n.q <- 10
+apq <- 4
+
+out <- ChoiceModelDesign(design.algorithm = "Modified Federov",
+                         attribute.levels = pd, prior = NULL, n.questions = n.q,
+                         alternatives.per.question = apq, seed = seed,
+                         output = "Labeled design")
+
+test_that("Some prior inputs missing",
+{
+
+    expect_equal(out$Derror, .945, tolerance = .01)
+    expect_true(all(out$model.matrix %in% c(0, 1)))
+    expect_equal(colnames(out$design)[-2:-1], pa[1, ])
+    expect_equal(unique(out$design[, 1]), 1:n.q)
+    expect_equal(unique(out$design[, 2]), 1:apq)
+
+     ## expect_true(all(grepl("^set[0-9]{1,2}[.]alt[1-4]", rownames(out$design))))
+})
+
+test_that("ChoiceModelDesign: print labels working",
+{
+
+    foo <- tempfile()
+    withr::with_output_sink(foo, {
+        expect_is(print(out), "data.frame")
+        expect_equal(levels(print(out)[[3]]), pd[-1, 1])
+        expect_equal(levels(print(out)[[4]]), pd[-1, 3])
+        expect_named(print(out), c("Question", "Alternative", "price", "time", "type"))
+    })
+    unlink(foo)
+
+})
+
 
 test_that("3^3/3/9 effects coding",
 {
     seed <- 101
     pa <- cbind(c("price", "200", "250", "300"), c("time", "morn", "aft", "eve"),
                 c("type", "train", "bus", "car"))
-    prior <- matrix(nrow = 0, ncol = 0)
     al <- pastedAttributesToVector(pa)
+    prior <- numeric(sum(al) - length(al))
     out <- modifiedFederovDesign(al, prior, 4, 12,
                                        dummy.coding = FALSE,
                                        seed = seed)
@@ -44,20 +85,19 @@ test_that("3^3/3/9 effects coding",
 test_that("ModifiedFederov: bad prior",
 {
     seed <- 331
-    pa <- cbind(c("price", "1", "2", "", ""),
-                c("time", "morn", "aft", "eve", ""),
-                c("type", "train", "bus", "boat", "car"))
-    al <- pastedAttributesToVector(pa)
-    n.coef <- sum(pa[-1, ] != "") - ncol(pa)
-    prior <- matrix("1", nrow = 3, ncol = 1)
-    expect_error(modifiedFederovDesign(al, prior, 4, 12,
-                                       dummy.coding = FALSE,
-                                       seed = seed), sQuote(n.coef))
+    pd <- cbind(c("price", "200", "250", "300"), c("mean", 0, 1, ""),
+                c("time", "morn", "aft", "eve"),
+                c("type", "train", "bus", ""), c("mean", 2, 3, ""), c("sd", 1, 2, ""))
+    expect_error(ChoiceModelDesign("Modified Federov", pd,
+                                   alternatives.per.question = 4, n.questions = 12,
+                                       seed = seed), "price, 3")
 
-    prior <- matrix("1", nrow = 6, ncol = 3)
-    expect_error(modifiedFederovDesign(al, prior, 4, 12,
-                                       dummy.coding = FALSE,
-                                       seed = seed), "either one or two columns.")
+    pd <- cbind(c("price", "200", "250", "300"), c("mean", 0, 1, "2"),
+                c("time", "morn", "aft", "eve"),
+                c("type", "train", "bus", ""), c("mean", 2, 3, ""), c("sd", 1, "", ""))
+    expect_error(ChoiceModelDesign("Modified Federov", pd,
+                                   alternatives.per.question = 4, n.questions = 12,
+                                       seed = seed), "type, 2")
 })
 
 test_that("ModifiedFederov: vector prior",
@@ -69,24 +109,24 @@ test_that("ModifiedFederov: vector prior",
                 c("food", "candy", "sandwich", "nuts", "", ""))
     al <- pastedAttributesToVector(pa)
     n.coef <- sum(pa[-1, ] != "") - ncol(pa)
-    prior <- matrix("1", nrow = n.coef, ncol = 1)
+    prior <- 1 + numeric(n.coef)
     out <- modifiedFederovDesign(al, prior, 5, 15,
                                        dummy.coding = FALSE,
                                        seed = seed)
     expect_equal(out$error, .325, tolerance = .05)
 })
 
-test_that("ModifiedFederov: prior means and variances",
+test_that("ModifiedFederov: prior means and variances old interface",
 {
     seed <- 97
     pa <- cbind(c("price", "100", "125", "150", "175", "200"),
                 c("time", "morn", "aft", "eve", "late night", ""))
     n.coef <- sum(pa[-1, ] != "") - ncol(pa)
-    prior <- matrix(c("0", "2"), nrow = n.coef, ncol = 2, byrow = TRUE)
+    prior <- matrix(c(0, 2), nrow = n.coef, ncol = 2, byrow = TRUE)
     out <- ChoiceModelDesign(design.algorithm = "Modified Federov", attribute.levels = pa,
                              prior = prior, n.questions = 8, alternatives.per.question = 3,
                                        seed = seed)
-    expect_equal(out$Derror, 1.871, tolerance = 1e-3)
+    expect_equal(out$Derror, 2.43, tolerance = 1e-3)
 })
 
 test_that("Federov: none alternatives",
@@ -101,9 +141,9 @@ test_that("Federov: none alternatives",
     apq <- 4
     n.a <- 2
     out <- ChoiceModelDesign(design.algorithm = "Modified Federov",
-                             attribute.levels = pa, prior = prior, n.questions = n.q,
+                             attribute.levels = pa, prior = NULL, n.questions = n.q,
                              alternatives.per.question = apq, seed = seed,
                              none.alternatives = 2)
-    expect_equal(sum(is.na(out$design.with.none[[3]])), n.q*n.a)
-    expect_equal(max(out$design.with.none[[2L]]), n.a + apq)
+    expect_equal(sum(is.na(out$design.with.none[, 3L])), n.q*n.a)
+    expect_equal(max(out$design.with.none[, 2L]), n.a + apq)
 })
