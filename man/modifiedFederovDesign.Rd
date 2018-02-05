@@ -4,23 +4,25 @@
 \alias{modifiedFederovDesign}
 \title{Construct an Efficient Choice Model Design}
 \usage{
-modifiedFederovDesign(levels.per.attribute, prior = NULL,
+modifiedFederovDesign(levels.per.attribute = NULL, prior = NULL,
   alternatives.per.question, n.questions, labeled.alternatives = FALSE,
-  dummy.coding = TRUE, seed = 1776)
+  dummy.coding = TRUE, seed = 1776, n.sim = 10)
 }
 \arguments{
 \item{levels.per.attribute}{A \emph{named} vector containing the
-number of levels for each attribute with names giving the attribute names.}
+number of levels for each attribute with names giving the
+attribute names.}
 
-\item{prior}{Character matrix containing prior values for the model
-coefficients.  The number of coefficients must correspond to
-the number of attributes/attribute levels specified in
+\item{prior}{Number vector or two-column matrix containing prior
+values for the model coefficients.  The vector length or number
+of rows in the matrix must correspond to the number of
+attributes/attribute levels specified in
 \code{levels.per.attribute}.  If \code{NULL}, the prior for the
-coefficients is assumed to be identically zero.  If the matrix
-contains two columns, the first column is taken as the prior
-mean for the coefficients and the second is taken to be the
-prior variances.  If only one column is present, the prior for
-the coefficients is assumed to be centered at those values.}
+coefficients is assumed to be identically zero.  In the matrix
+case, the first column is taken as the prior mean for the
+coefficients and the second is taken to be the prior variances.
+If only one column is present, the prior for the coefficients
+is assumed to be centered at those values.}
 
 \item{alternatives.per.question}{Numeric value indicating the
 number of profiles to show per question.}

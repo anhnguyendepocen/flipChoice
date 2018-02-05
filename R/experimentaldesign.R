@@ -68,7 +68,7 @@
 ChoiceModelDesign <- function(
                               design.algorithm = c("Random", "Shortcut", "Balanced overlap",
                                                    "Complete enumeration", "Shortcut2", "Modified Federov"),
-                              attribute.levels,
+                              attribute.levels = NULL,
                               prior = NULL,
                               n.questions,
                               n.versions = 1,
@@ -80,7 +80,7 @@ ChoiceModelDesign <- function(
                               seed = 54123) {
 
 
-    # Map the design.algorithm to the function
+    ## Map the design.algorithm to the function
     design.algorithm <- match.arg(design.algorithm)
     function.name <- sub("^([A-Z])", "\\L\\1", design.algorithm, perl = TRUE)
     function.name <- gsub(" ([[:alpha:]])", "\\U\\1", function.name, perl = TRUE)
@@ -89,21 +89,41 @@ ChoiceModelDesign <- function(
 
     ## NEED TO ADD CODE TO CHECK SUPPLIED ARGS ARE VALID FOR REQUESTED ALGORITHM
 
-    # If labeled.alternatives then alternatives.per.question is calculated and not supplied
-    if (labeled.alternatives && design.algorithm != "Modified Federov")
-        alternatives.per.question <- length(attribute.levels[[1]])
+                                        # If labeled.alternatives then alternatives.per.question is calculated and not supplied
 
-    if (!is.character(attribute.levels))
+    ## if (labeled.alternatives && design.algorithm != "Modified Federov")
+    ##     alternatives.per.question <- length(attribute.levels[[1]])
+
+    if (is.list(attribute.levels))
     {
         if (is.null(names(attribute.levels)))
             names(attribute.levels) <- paste("Attribute", seq(length(attribute.levels)))
         levels.per.attribute <- sapply(attribute.levels, length)
         names(levels.per.attribute) <- names(attribute.levels)
-    }else
-        levels.per.attribute <- pastedAttributesToVector(attribute.levels)
+    }else if (is.character(attribute.levels))
+    {
+        parsed.data <- parsePastedData(attribute.levels, n.sim = 10, coding = "D")
+        levels.per.attribute <- parsed.data[["lvls"]]
+        attribute.levels <- parsed.data[["attribute.list"]]
+        if (is.null(prior))
+            prior <- parsed.data[["prior"]]
 
+        if (!is.null(prior) && design.algorithm != "Modified Federov")
+            warning(getttextf("Prior data can only be used with algorithm %s and will be ignored.",
+                    sQuote("Modified Federov")))
+    }
 
-    # Convert from labels to numeric and factors
+    else  # attribute levels input with prior
+        levels.per.attribute <- NULL
+
+    if (is.null(alternatives.per.question))
+        alternatives.per.question <- length(attribute.levels[[1]])
+
+    ## Convert from labels to numeric and factors
+    if (!is.null(prohibitions) && design.algorithm == "Modified Federov")
+        warning(getttextf("Prohibitions are not yet implemented for algorithm %s and will be ignored.",
+                    sQuote("Modified Federov")))
+
     prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
     integer.prohibitions <- data.frame(lapply(prohibitions, as.integer))
 
@@ -150,9 +170,8 @@ ChoiceModelDesign <- function(
                    output = output)
     if (design.algorithm == "Modified Federov")
     {
-        result$model.matrix <- design$design
-        result$design <- modelMatrixToDataFrame(design$design, attribute.levels,
-                                                alternatives.per.question, labeled.alternatives)
+        result$design <- design$design
+        result$model.matrix <- design$model.matrix
         result$Derror <- design$error
     }
     result$design.with.none <- addNoneAlternatives(result$design,
@@ -207,11 +226,14 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
 # Convert an unlabeled design into a labeled design
 labelDesign <- function(unlabeled.design, attribute.levels) {
 
-    labeled.design <- array(character(0), dim = dim(unlabeled.design))
-    colnames(labeled.design) = colnames(unlabeled.design)
-    labeled.design[, 1:2] <- unlabeled.design[, 1:2]
-    for (i in 1:length(attribute.levels))
-        labeled.design[, i + 2] <- attribute.levels[[i]][unlabeled.design[, i + 2]]
+    ## labeled.design <- array(character(0), dim = dim(unlabeled.design))
+    browser()
+    labeled.design <- lapply(seq_along(attribute.levels),
+                             function(i) factor(unlabeled.design[, i + 2],
+                                                labels = attribute.levels[[i]]))
+    labeled.design <- as.data.frame(labeled.design)
+    labeled.design <- cbind(unlabeled.design[, 1:2], labeled.design)
+    colnames(labeled.design) = c("Question", "Alternative", names(attribute.levels))
     return(labeled.design)
 }
 
