@@ -147,3 +147,48 @@ test_that("Federov: none alternatives",
     expect_equal(sum(is.na(out$design.with.none[, 3L])), n.q*n.a)
     expect_equal(max(out$design.with.none[, 2L]), n.a + apq)
 })
+
+test_that("Federov: labeled alternatives",
+{
+    seed <- 98
+    lpa1 <- c(engine = 3, transmission = 2, colour = 7)
+    lpa2 <- c(brand = 4, lpa1)
+    prior <- matrix(nrow = 0, ncol = 0)
+    ## out <- modifiedFederovDesign(al, prior, 4, 10, dummy.coding = TRUE,
+    ##                                    seed = seed)
+    n.q <- 20
+
+    out <- modifiedFederovDesign(
+                                   levels.per.attribute = lpa2,
+                                   prior = NULL,
+                                   lpa2[1],
+                                   n.q,
+                                   labeled.alternatives = TRUE,
+                                   dummy.coding = TRUE,
+                                   seed = seed,
+                                   n.sim = 10)
+    expect_equal(dim(out$design), c(lpa2[1]*n.q, 1+ length(lpa2)),
+                 check.attributes = FALSE)
+    expect_equal(colnames(out$design), c("question", names(lpa2)))
+    expect_equal(dim(out$model.matrix), c(lpa2[1]*n.q,
+                                          sum(lpa2) - length(lpa2)),
+                 check.attributes = FALSE)
+
+    pa <- cbind(c("yamaha", "honda", "ducati", "kawasaki", "", "", ""),
+                             c("125cc", "250cc", "500cc", "", "", "", ""),
+                             c("manual", "automatic", "", "", "", "", ""),
+                             c("red", "green", "blue", "yellow", "black", "white", "silver"))
+    pa <- rbind(c("brand", "engine", "transmission", "colour"), pa)
+    out2 <- ChoiceModelDesign(design.algorithm = "Modified Federov",
+                             attribute.levels = pa, prior = NULL, n.questions = n.q,
+                             seed = seed,
+                             labeled.alternatives = TRUE)
+    n.coef <- sum(pa[-1, ] != "") - ncol(pa)
+    apq <- sum(pa[-1, 1] != "")
+    expect_equal(dim(out2$design), c(apq*n.q, 1+ ncol(pa)),
+                 check.attributes = FALSE)
+    expect_equal(colnames(out2$design), c("question", pa[1, ]))
+    expect_equal(dim(out2$model.matrix), c(apq*n.q,
+                                          n.coef),
+                 check.attributes = FALSE)
+})

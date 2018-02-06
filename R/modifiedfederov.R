@@ -5,7 +5,7 @@
 #' choice experiment that minimize D-error.
 #' @param levels.per.attribute A \emph{named} vector containing the
 #'     number of levels for each attribute with names giving the
-#'     attribute names.
+#'     attribute names.  See the Details.
 #' @param prior Number vector or two-column matrix containing prior
 #'     values for the model coefficients.  The vector length or number
 #'     of rows in the matrix must correspond to the number of
@@ -21,12 +21,14 @@
 #' @param n.questions Numeric value specifying the total number of
 #'     questions/tasks to be performed by each respondent.
 #' @param labeled.alternatives Logical; whether the first attribute
-#'     labels the alternatives.
+#'     labels the alternatives.  See the Details.
 #' @param dummy.coding Logical value indicating whether dummy coding
 #'     should be used for the attributes in the design matrix.  If
 #'     \code{FALSE}, effects coding is used.
 #' @param seed Integer value specifying the random seed to use for the
 #'     algorithm.
+#' @param nsim Number of simulations to draw from the prior to initial
+#'     the algorithm.
 #' @return A list containing the following components.  \itemize{
 #'     \item \code{design} - A numeric matrix wich contains an
 #'     efficient design.  \item \code{error} - Numeric value
@@ -38,9 +40,15 @@
 #'     lowest probability for each choice set. If prior means and
 #'     variances were supplied in \code{prior}, this is based on the
 #'     average over all draws.  }
+#' @details If \code{labeled.alternatives} is \code{TRUE}, an
+#'     alternative-specific constant will be added to the model and
+#'     the first component of \code{levels.per.attribute} is assumed
+#'     to contain a name for the labels and the number of labels;
+#'     i.e. the number of alternatives per question, and hence,
+#'     \code{alternatives.per.question} will be ignored.
 #' @seealso \code{\link[idefix]{Modfed}}
 #' @references Huber, J. and K. Zwerina (1996). The Importance of
-#'     Utility Balance in Efficient Choice Designs. Jouranl of
+#'     Utility Balance in Efficient Choice Designs. Journal of
 #'     Marketing
 #'     Research. \url{https://faculty.fuqua.duke.edu/~jch8/bio/Papers/Huber
 #'     Zwerina 1996 Marketing Research.pdf}
@@ -73,11 +81,23 @@ modifiedFederovDesign <- function(
     ## parsed.data <- parsePastedData(attrib, n.sim = n.sim, coding = code)
     ## levels.per.attribute <- parsed.data[["lvls"]]
     ## par.draws <- parsed.data[["prior"]]
+    if (labeled.alternatives)
+    {
+        idx <- 2:length(levels.per.attribute)
+        alternatives.per.question <- levels.per.attribute[1]
+    }else
+        idx <- 1:length(levels.per.attribute)
 
-    candidates <- Profiles(levels.per.attribute,
-                           coding = rep(code, length(levels.per.attribute)))
-    n.coef <- ncol(candidates)
-    if (NROW(prior) != n.coef || NCOL(prior) > 2L)
+    candidates <- Profiles(levels.per.attribute[idx],
+                           coding = rep(code, length(levels.per.attribute[idx])))
+
+    alt.specific.const <- labeled.alternatives + integer(alternatives.per.question)
+    alt.specific.const[1L] <- 0  # needed for identifiable model
+
+    n.coef <- ncol(candidates) + sum(alt.specific.const == 1L)
+    if (is.null(prior))
+        prior <- numeric(n.coef)
+    else if (NROW(prior) != n.coef || NCOL(prior) > 2L)
         stop(gettextf("Prior should be a length-%d vector or a two-column matrix with %d rows",
                       n.coef, n.coef))
 
@@ -86,7 +106,6 @@ modifiedFederovDesign <- function(
         par.draws <- matrix(rnorm(n.coef*n.sim, prior[, 1], prior[, 2]),
                             n.sim, n.coef, byrow = TRUE)
 
-    alt.specific.const <- labeled.alternatives + integer(alternatives.per.question)
     out <- Modfed(candidates, n.sets = n.questions, n.alts = alternatives.per.question,
                   alt.cte = alt.specific.const, par.draws = par.draws)
     out$model.matrix <- out$design
@@ -116,13 +135,19 @@ modelMatrixToUnlabeledDesign <- function(
     attr.list <- lapply(lvls, seq.int)
     code <- ifelse(any(model == -1), "E", "D")
     alt.specific.const <- labeled.alternatives + integer(alternatives.per.question)
-    out <- decode(model, attr.list, coding = rep(code, length(lvls)),
+    alt.specific.const[1] <- 0
+    idx <- if(labeled.alternatives)
+                 -1
+              else
+                 1:length(attr.list)
+    out <- decode(model, attr.list[idx], coding = rep(code, length(lvls[idx])),
                   alt.cte = alt.specific.const)
     ## out <- as.data.frame(out)
     question <- as.numeric(sub("set([0-9]+)[.]alt[0-9]+", "\\1", rownames(model)))
     alternative <- as.numeric(sub("set[0-9]+[.]alt([0-9]+)", "\\1", rownames(model)))
     out <- cbind(question, alternative, out)
-    colnames(out) <- c("question", "alternative", names(lvls))
+    colnames(out) <- c("question", if (!labeled.alternatives) "alternative",
+                       names(lvls))
     ## rownames(out) <- rownames(model)
     out
 }
@@ -138,7 +163,7 @@ decode <- function (set, lvl.names, coding, alt.cte = NULL, c.lvls = NULL)
     {
         contins <- which(alt.cte == 1)
         if (!length(contins) == 0)
-            set <- set[, -length(contins)]
+            set <- set[, !grepl("alt[0-9]*.cte", colnames(set))]
     }
     n.alts <- nrow(set)
     n.att <- length(lvl.names)
@@ -222,7 +247,7 @@ parsePastedPrior <- function(prior, candidates, n.sim = 10)
 
 #' @importFrom stats rnorm
 #' @noRd
-parsePastedData <- function(paste.data, n.sim = 10, coding = "D")
+parsePastedData <- function(paste.data, n.sim = 10, coding = "D", labeled.alts = FALSE)
 {
     ## if (is.null(prior) || length(prior) == 0L)
     ##     return(numeric(n.par))
