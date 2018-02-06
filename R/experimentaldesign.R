@@ -87,12 +87,9 @@ ChoiceModelDesign <- function(
     design.function <- getFromNamespace(paste0(function.name, "Design"),
                                         ns = "flipChoice")
 
-    ## NEED TO ADD CODE TO CHECK SUPPLIED ARGS ARE VALID FOR REQUESTED ALGORITHM
-
-                                        # If labeled.alternatives then alternatives.per.question is calculated and not supplied
-
-    ## if (labeled.alternatives && design.algorithm != "Modified Federov")
-    ##     alternatives.per.question <- length(attribute.levels[[1]])
+    ## If labeled.alternatives then alternatives.per.question is calculated and not supplied
+    if (labeled.alternatives)
+        alternatives.per.question <- length(attribute.levels[[1]])
 
     if (is.list(attribute.levels))
     {
@@ -102,14 +99,15 @@ ChoiceModelDesign <- function(
         names(levels.per.attribute) <- names(attribute.levels)
     }else if (is.character(attribute.levels))
     {
-        parsed.data <- parsePastedData(attribute.levels, n.sim = 10, coding = "D")
+        parsed.data <- parsePastedData(attribute.levels, n.sim = 10, coding = "D",
+                                       labeled.alternatives)
         levels.per.attribute <- parsed.data[["lvls"]]
         attribute.levels <- parsed.data[["attribute.list"]]
         if (is.null(prior))
             prior <- parsed.data[["prior"]]
 
         if (!is.null(prior) && design.algorithm != "Modified Federov")
-            warning(getttextf("Prior data can only be used with algorithm %s and will be ignored.",
+            warning(gettextf("Prior data can only be used with algorithm %s and will be ignored.",
                     sQuote("Modified Federov")))
     }
 
@@ -225,9 +223,6 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
 
 # Convert an unlabeled design into a labeled design
 labelDesign <- function(unlabeled.design, attribute.levels) {
-
-    ## labeled.design <- array(character(0), dim = dim(unlabeled.design))
-    browser()
     labeled.design <- lapply(seq_along(attribute.levels),
                              function(i) factor(unlabeled.design[, i + 2],
                                                 labels = attribute.levels[[i]]))
