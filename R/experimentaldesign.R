@@ -119,7 +119,7 @@ ChoiceModelDesign <- function(
 
     ## Convert from labels to numeric and factors
     if (!is.null(prohibitions) && design.algorithm == "Modified Federov")
-        warning(getttextf("Prohibitions are not yet implemented for algorithm %s and will be ignored.",
+        warning(gettextf("Prohibitions are not yet implemented for algorithm %s and will be ignored.",
                     sQuote("Modified Federov")))
 
     prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
