@@ -11,7 +11,7 @@ modifiedFederovDesign(levels.per.attribute = NULL, prior = NULL,
 \arguments{
 \item{levels.per.attribute}{A \emph{named} vector containing the
 number of levels for each attribute with names giving the
-attribute names.}
+attribute names.  See the Details.}
 
 \item{prior}{Number vector or two-column matrix containing prior
 values for the model coefficients.  The vector length or number
@@ -31,7 +31,7 @@ number of profiles to show per question.}
 questions/tasks to be performed by each respondent.}
 
 \item{labeled.alternatives}{Logical; whether the first attribute
-labels the alternatives.}
+labels the alternatives.  See the Details.}
 
 \item{dummy.coding}{Logical value indicating whether dummy coding
 should be used for the attributes in the design matrix.  If
@@ -58,6 +58,14 @@ Uses the Modified Federov algorithm and incorporates prior beliefs
 on the true coefficient values to find a design for a discrete
 choice experiment that minimize D-error.
 }
+\details{
+If \code{labeled.alternatives} is \code{TRUE}, an
+    alternative-specific constant will be added to the model and
+    the first component of \code{levels.per.attribute} is assumed
+    to contain a name for the labels and the number of labels;
+    i.e. the number of alternatives per question, and hence,
+    \code{alternatives.per.question} will be ignored.
+}
 \examples{
 levels.per.attribute <- c(car = 3, house = 3, boat = 3)
 prior <- matrix(as.character(1), sum(levels.per.attribute - 1), 2)
@@ -69,7 +77,7 @@ modifiedFederovDesign(levels.per.attribute, prior, 3, 9)
 }
 \references{
 Huber, J. and K. Zwerina (1996). The Importance of
-    Utility Balance in Efficient Choice Designs. Jouranl of
+    Utility Balance in Efficient Choice Designs. Journal of
     Marketing
     Research. \url{https://faculty.fuqua.duke.edu/~jch8/bio/Papers/Huber
     Zwerina 1996 Marketing Research.pdf}
