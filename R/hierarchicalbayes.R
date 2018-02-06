@@ -16,7 +16,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     options(mc.cores = parallel::detectCores())
 
     stan.dat <- createStanData(dat, n.classes, normal.covariance)
-browser()
+
     if (IsRServer()) # R servers
     {
         stan.model <- stanModel(n.classes, normal.covariance)
