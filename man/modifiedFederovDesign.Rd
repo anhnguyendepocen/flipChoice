@@ -40,7 +40,7 @@ should be used for the attributes in the design matrix.  If
 \item{seed}{Integer value specifying the random seed to use for the
 algorithm.}
 
-\item{nsim}{Number of simulations to draw from the prior to initial
+\item{n.sim}{Number of simulations to draw from the prior to initial
 the algorithm.}
 }
 \value{
