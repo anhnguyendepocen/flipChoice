@@ -32,8 +32,8 @@ pd <- cbind(c("price", "200", "250", "300"), c("Mean", 0, 1, 1),
             c("SD", 1, 1, 1),
             c("time", "morn", "aft", "eve"), c("Mean", 0, 0, 0),
             c("SD", 1, 1, 1),
-            c("type", "train", "bus", ""), c("mean", 2, 3, ""), c("sd", 1, 2, ""))
-
+            c("type", "train", "bus", ""), c("Mean", 2, 3, ""), c("SD", 1, 2, ""))
+vnames <- pd[1, !pd[1,] %in% c("SD", "Mean")]
 n.q <- 10
 apq <- 4
 
@@ -47,7 +47,7 @@ test_that("Some prior inputs missing",
 
     expect_equal(out$Derror, .945, tolerance = .01)
     expect_true(all(out$model.matrix %in% c(0, 1)))
-    expect_equal(colnames(out$design)[-2:-1], pa[1, ])
+    expect_equal(colnames(out$design)[-2:-1], vnames)
     expect_equal(unique(out$design[, 1]), 1:n.q)
     expect_equal(unique(out$design[, 2]), 1:apq)
 
@@ -57,15 +57,15 @@ test_that("Some prior inputs missing",
 test_that("ChoiceModelDesign: print labels working",
 {
 
-    foo <- tempfile()
+    tfile <- tempfile()
     withr::with_output_sink(foo, {
         expect_is(print(out), "data.frame")
         expect_equal(levels(print(out)[[3]]), pd[-1, 1])
-        expect_equal(levels(print(out)[[4]]), pd[-1, 3])
+        expect_equal(levels(print(out)[[4]]),
+                     pd[-1, pd[1,] == colnames(print(out))[4]])
         expect_named(print(out), c("Question", "Alternative", "price", "time", "type"))
     })
-    unlink(foo)
-
+    unlink(tfile)
 })
 
 
