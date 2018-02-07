@@ -17,19 +17,21 @@ experiment <- CreateExperiment(c(3, 5, 7, 10), 20)
 
 # TODO add tests for equality with specific designs
 tfile <- tempfile()
-for (model in c("Random", "Shortcut", "Complete enumeration")) {
-    for (output in c("Attributes and levels", "Prohibitions", "Unlabeled design", "Labeled design",
-                     "Balances and overlaps", "Standard errors")) {
-##        withr::with_output_sink(tfile, {
-            test_that(paste(model, output), {
-                expect_error(print(ChoiceModelDesign(model, experiment$attribute.levels, NULL,
-                                                     n.questions, n.versions, alternatives.per.question,
-                                                     experiment$prohibitions, 0, FALSE, output)), NA)
-                expect_error(print(ChoiceModelDesign(model, attribute.levels, NULL,
-                                                     n.questions, n.versions, alternatives.per.question, prohibitions,
-                                               2, TRUE, output)), NA)
-            })
-##        })
-    }
-}
+withr::with_output_sink(tfile, {
+    for (model in c("Random", "Shortcut")) {  # , "Complete enumeration"
+        for (output in c("Attributes and levels", "Prohibitions", "Unlabeled design", "Labeled design",
+                         "Balances and overlaps", "Standard errors")) {
+
+                test_that(paste(model, output), {
+                    expect_error(print(ChoiceModelDesign(model, experiment$attribute.levels, NULL,
+                                                         n.questions, n.versions, alternatives.per.question,
+                                                         experiment$prohibitions, 0, FALSE, output)), NA)
+                    expect_error(print(ChoiceModelDesign(model, attribute.levels, NULL,
+                                                         n.questions, n.versions, alternatives.per.question, prohibitions,
+                                                   2, TRUE, output)), NA)
+                })
+
+      }
+  }
+})
 unlink(tfile)
