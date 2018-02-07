@@ -27,7 +27,7 @@
 #'     \code{FALSE}, effects coding is used.
 #' @param seed Integer value specifying the random seed to use for the
 #'     algorithm.
-#' @param nsim Number of simulations to draw from the prior to initial
+#' @param n.sim Number of simulations to draw from the prior to initial
 #'     the algorithm.
 #' @return A list containing the following components.  \itemize{
 #'     \item \code{design} - A numeric matrix wich contains an
