@@ -20,16 +20,16 @@ tfile <- tempfile()
 for (model in c("Random", "Shortcut", "Complete enumeration")) {
     for (output in c("Attributes and levels", "Prohibitions", "Unlabeled design", "Labeled design",
                      "Balances and overlaps", "Standard errors")) {
-        withr::with_output_sink(tfile, {
+##        withr::with_output_sink(tfile, {
             test_that(paste(model, output), {
                 expect_error(print(ChoiceModelDesign(model, experiment$attribute.levels, NULL,
                                                      n.questions, n.versions, alternatives.per.question,
                                                      experiment$prohibitions, 0, FALSE, output)), NA)
-                expect_error(print(ChoiceModelDesign(model, experiment$attribute.levels, NULL,
+                expect_error(print(ChoiceModelDesign(model, attribute.levels, NULL,
                                                      n.questions, n.versions, alternatives.per.question, prohibitions,
                                                2, TRUE, output)), NA)
             })
-        })
+##        })
     }
 }
 unlink(tfile)
