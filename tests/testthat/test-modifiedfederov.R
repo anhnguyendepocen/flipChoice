@@ -58,7 +58,7 @@ test_that("ChoiceModelDesign: print labels working",
 {
 
     tfile <- tempfile()
-    withr::with_output_sink(foo, {
+    withr::with_output_sink(tfile, {
         expect_is(print(out), "data.frame")
         expect_equal(levels(print(out)[[3]]), pd[-1, 1])
         expect_equal(levels(print(out)[[4]]),
