@@ -35,8 +35,6 @@ randomDesign <- function(levels.per.attribute, n.questions, alternatives.per.que
             # ignore new.alternative if not unique within this question
             if (i.alternative == 1 || anyDuplicated(design[question, 1:i.alternative, ]) == 0)
                 i.alternative <- i.alternative + 1
-
-            print(paste(question, i.alternative))
         }
     }
     return(flattenDesign(design))
