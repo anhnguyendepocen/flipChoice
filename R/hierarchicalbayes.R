@@ -145,7 +145,12 @@ initialParameterValues <- function(stan.dat)
             }
         }
         else
-            init <- function () list(L_omega = diag(n.pars - 1))
+        {
+            if (!is.null(stan.dat$K))
+                init <- function () list(L_omega = diag(n.pars - 1))
+            else
+                init <- function () list(L_omega = diag(n.pars))
+        }
     }
     init
 }
