@@ -63,9 +63,9 @@
 #'
 #' ## 3^3/3/9 design
 #' \dontrun{
-#' modifiedFederovDesign(levels.per.attribute, prior, 3, 9)
+#' efficientDesign(levels.per.attribute, prior, 3, 9)
 #' }
-modifiedFederovDesign <- function(
+efficientDesign <- function(
                                levels.per.attribute = NULL,
                                prior = NULL,
                                alternatives.per.question,

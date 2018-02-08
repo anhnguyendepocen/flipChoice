@@ -55,10 +55,16 @@ completeEnumerationDesign <- function(levels.per.attribute, n.questions, alterna
             else
                 valid.enumerations <- enumeration
 
-            costs <- apply(valid.enumerations, 1, totalCost, singles, pairs, qn.counts, pairs.singles.ratio)
+            # precompute the cost of incrementing every level of every attribute
+            singles.costs <- sapply(singles, precomputeCosts, simplify = FALSE)
+            qn.counts.costs <- sapply(qn.counts, precomputeCosts, simplify = FALSE)
+            pairs.costs <- precomputePairsCosts(pairs)
+            costs <- apply(valid.enumerations, 1, totalCostPrecomputed, singles.costs, pairs.costs, qn.counts.costs, pairs.singles.ratio)
+            # or calculate the cost of each enumeration indivdually
+            #costs <- apply(valid.enumerations, 1, totalCost, singles, pairs, qn.counts, pairs.singles.ratio)
+
             # break ties at random instead of taking first minimum
             best.alternative <- valid.enumerations[which.is.max(-costs), ]
-            #best.alternative <- valid.enumerations[which.min(costs), ]
 
             # add best.alternative to design
             design[question, i.alternative, ] <- best.alternative
@@ -122,6 +128,20 @@ totalCost <- function(alternative, singles, pairs, qn.counts, pairs.singles.rati
     # otherwise pair cost will dominate as number of attributes increases
     pair.cost <- pairCost(alternative, pairs) / pairs.singles.ratio
     question.overlap.cost <- singleCost(alternative, qn.counts)
+
+    # TODO tune the relative weightings of these costs
+    cost <- 2 * pair.cost + 4 * single.cost + 1 * question.overlap.cost
+    return(cost)
+}
+
+# Calculate the total cost as a weighted sum
+totalCostPrecomputed <- function(alternative, singles.costs, pairs.costs, qn.counts.costs, pairs.singles.ratio) {
+
+    single.cost <- singlePrecomputed(alternative, singles.costs)
+    # scale the pair cost down by the ratio of the number of pairs to the number of singles
+    # otherwise pair cost will dominate as number of attributes increases
+    pair.cost <- pairPrecomputed(alternative, pairs.costs) / pairs.singles.ratio
+    question.overlap.cost <- singlePrecomputed(alternative, qn.counts.costs)
 
     # TODO tune the relative weightings of these costs
     cost <- 2 * pair.cost + 4 * single.cost + 1 * question.overlap.cost
@@ -203,4 +223,141 @@ shortcut2Design <- function(levels.per.attribute, n.questions, alternatives.per.
 }
 
 
+
+################## Shortcut method as with precompute #######################
+#
+#
+#' @importFrom nnet which.is.max
+shortcut3Design <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
+                            none.alternatives = 0, labeled.alternatives = FALSE) {
+
+    set.seed(12345)
+
+    # initialize empty design
+    n.attributes <- length(levels.per.attribute)
+    level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
+    design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
+    dimnames(design)[[3]] <- names(levels.per.attribute)
+
+    # enumerate all alternatives
+    enumeration <- as.matrix(expand.grid(level.sequences))
+
+    # remove prohibited alternatives
+    if (!is.null(prohibitions) && length(prohibitions) != 0)
+    {
+        colnames(prohibitions) <- colnames(enumeration)
+        dups <- duplicated(rbind(enumeration, prohibitions), fromLast = TRUE)[1:nrow(enumeration)]
+        enumeration <- as.matrix(enumeration[!dups, ])
+    }
+
+    # create a list of vectors to count single level occurences
+    levels.per.attribute <- sapply(level.sequences, length)
+    singles <- sapply(levels.per.attribute, function(x) rep(0, x), simplify = FALSE)
+    names(singles) <- names(levels.per.attribute)
+
+    for (question in seq(n.questions)) {
+
+        # count number of times each level is shown in current question
+        qn.counts <- sapply(levels.per.attribute, function(x) rep(0, x), simplify = FALSE)
+
+        for (i.alternative in seq(alternatives.per.question)) {
+
+            if (labeled.alternatives)
+                valid.enumerations <- enumeration[enumeration[, 1] == i.alternative, ]
+            else
+                valid.enumerations <- enumeration
+
+            # precompute the cost of incrementing every level of every attribute
+            singles.costs <- sapply(singles, precomputeCosts, simplify = FALSE)
+            qn.counts.costs <- sapply(qn.counts, precomputeCosts, simplify = FALSE)
+
+            costs <- apply(valid.enumerations, 1, precomputedShortcutCost, singles.costs, qn.counts.costs)
+            # break ties at random instead of taking first minimum
+            best.alternative <- valid.enumerations[which.is.max(-costs), ]
+
+            # add best.alternative to design
+            design[question, i.alternative, ] <- best.alternative
+
+            # increment singles, qn.overlap
+            singles <- addSingles(best.alternative, singles)
+            qn.counts <- addSingles(best.alternative, qn.counts)
+        }
+    }
+
+    return(flattenDesign(design))
+}
+
+
+precomputeCosts <- function(single) {
+    n <- length(single)
+    range <- range(single)
+    min <- range[1]
+    max <- range[2]
+    if (min == max)
+        return (rep(1, n))
+
+    min.count <- sum(single == min)
+    costs <- rep((max - min)^2, n)
+    costs[single == max] <- (max + 1 - min)^2
+    if (min.count == 1)
+        costs[single == min] <- (max - min - 1)^2
+    return(costs)
+}
+
+
+precomputePairsCosts <- function(pairs) {
+
+    for (i in 1:(length(pairs))) {
+        for (j in 1:length(pairs[[i]])) {
+
+            pair <- pairs[[i]][[j]]
+            if(length(dim(pairs)) == 0)
+                next
+
+            rows <- NROW(pair)
+            cols <- NCOL(pair)
+            range <- range(pair)
+            min <- range[1]
+            max <- range[2]
+            if (min == max) {
+                costs <- matrix(1, nrow = rows, ncol = cols)
+                next
+            }
+
+            min.count <- sum(pair == min)
+            costs <- matrix((max - min)^2, nrow = rows, ncol = cols)
+            costs[pair == max] <- (max + 1 - min)^2
+            if (min.count == 1)
+                costs[pair == min] <- (max - min - 1)^2
+
+            pairs[[i]][[j]] <- costs
+        }
+    }
+    return(pairs)
+}
+
+
+precomputedShortcutCost <- function(alternative, singles.costs, qn.counts.costs) {
+
+    single.cost <- singlePrecomputed(alternative, singles.costs)
+    question.overlap.cost <- singlePrecomputed(alternative, qn.counts.costs)
+
+    # TODO tune the relative weightings of these costs
+    cost <- 1 * single.cost + 1 * question.overlap.cost
+    return(cost)
+}
+
+singlePrecomputed <- function(alternative, precomputed) {
+    return(sum(mapply(function(x, y) y[x], alternative, precomputed)))
+}
+
+pairPrecomputed <- function(alternative, precomputed) {
+    cost <- 0
+    for (i in 1:(length(alternative) - 1)) {
+        for (j in (i + 1):length(alternative)) {
+            cost <- cost + precomputed[[i]][[j]][alternative[i], alternative[j]]
+        }
+    }
+    return(cost)
+}
 
