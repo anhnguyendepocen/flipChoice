@@ -5,7 +5,7 @@
 #' @param design.algorithm The algorithm used to create the
 #'     design. One of \code{"Random"}, \code{"Shortcut"},
 #'     \code{"Balanced overlap"} and \code{"Complete enumeration"},
-#'     and \code{"Modified Federov"}.
+#'     and \code{"Efficient"}.
 #' @param attribute.levels \code{\link{list}} of \code{\link{vector}}s
 #'     containing the labels of levels for each attribute, with names
 #'     corresponding to the attribute labels; \emph{or} a character
@@ -13,7 +13,7 @@
 #'     rows containing attribute levels.
 #' @param prior Character matrix containing prior values for the model
 #'     coefficients; only used for \code{design.algorithm ==
-#'     "Modified Federov"}; see Details.
+#'     "Efficient"}; see Details.
 #' @param n.questions Integer; the number of questions asked to each
 #'     respondent.
 #' @param n.versions Integer; the number of versions of the survey to
@@ -49,7 +49,7 @@
 #' }
 #'
 #' @details If \code{prior} is supplied and \code{design.algorithm ==
-#'     "Modified Federov"}, the number of coefficients must correspond
+#'     "Efficient"}, the number of coefficients must correspond
 #'     to the number of attributes/attribute levels specified in
 #'     \code{attribute.levels}.  If \code{prior} is \code{NULL}, the prior for the
 #'     coefficients is assumed to be identically zero.  If the supplied matrix
@@ -66,8 +66,8 @@
 #' @importFrom utils getFromNamespace modifyList
 #' @export
 ChoiceModelDesign <- function(
-                              design.algorithm = c("Random", "Shortcut", "Balanced overlap",
-                                                   "Complete enumeration", "Shortcut2", "Modified Federov"),
+                              design.algorithm = c("Random", "Shortcut", "Balanced overlap", "Complete enumeration",
+                                                   "Shortcut2", "Shortcut3", "Efficient"),
                               attribute.levels = NULL,
                               prior = NULL,
                               n.questions,
@@ -106,9 +106,9 @@ ChoiceModelDesign <- function(
         if (is.null(prior))
             prior <- parsed.data[["prior"]]
 
-        if (!is.null(prior) && design.algorithm != "Modified Federov")
+        if (!is.null(prior) && design.algorithm != "Efficient")
             warning(gettextf("Prior data can only be used with algorithm %s and will be ignored.",
-                    sQuote("Modified Federov")))
+                    sQuote("Efficient")))
     }
 
     else  # attribute levels input with prior
@@ -118,9 +118,9 @@ ChoiceModelDesign <- function(
         alternatives.per.question <- length(attribute.levels[[1]])
 
     ## Convert from labels to numeric and factors
-    if (!is.null(prohibitions) && design.algorithm == "Modified Federov")
+    if (!is.null(prohibitions) && design.algorithm == "Efficient" || design.algorithm == "Shortcut")
         warning(gettextf("Prohibitions are not yet implemented for algorithm %s and will be ignored.",
-                    sQuote("Modified Federov")))
+                    sQuote(design.algorithm)))
 
     prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
     integer.prohibitions <- data.frame(lapply(prohibitions, as.integer))
@@ -166,7 +166,8 @@ ChoiceModelDesign <- function(
                    alternatives.per.question = alternatives.per.question,
                    none.alternatives = none.alternatives,
                    output = output)
-    if (design.algorithm == "Modified Federov")
+
+    if (design.algorithm == "Efficient")
     {
         result$design <- design$design
         result$model.matrix <- design$model.matrix
@@ -233,7 +234,7 @@ labelDesign <- function(unlabeled.design, attribute.levels) {
 }
 
 
-# Compute one and two-way level balances and overlaps.
+# Compute one and two-way level balances and overlaps
 balancesAndOverlaps <- function(cmd) {
 
     singles <- singleLevelBalances(cmd$design)
@@ -288,7 +289,9 @@ labelPairBalanceLevels <- function(pairs, attribute.levels) {
 
 countOverlaps <- function(design) {
     # table of counts for each level by question, listed for each attribute
-    overlaps <- apply(design[, 3:ncol(design)], 2, table, design[, 1])
+    design <- design[, c(-1, -2)]
+    columns <- split(design, seq(NCOL(design)))
+    overlaps <- lapply(columns, table, design[, 1])
     # duplicated levels
     overlaps <- lapply(overlaps, ">=", 2)
     # overlaps for questions (rows) by attribute (cols)

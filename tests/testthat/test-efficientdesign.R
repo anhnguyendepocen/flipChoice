@@ -1,4 +1,4 @@
-context("Modified Federov")
+context("Efficient")
 
 test_that("3*3*2/4/10 dummy coding; old interface",
 {
@@ -6,15 +6,15 @@ test_that("3*3*2/4/10 dummy coding; old interface",
     pa <- cbind(c("price", "200", "250", "300"), c("time", "morn", "aft", "eve"),
                 c("type", "train", "bus", ""))
     prior <- NULL  # matrix(nrow = 0, ncol = 0)
-    ## out <- modifiedFederovDesign(al, prior, 4, 10, dummy.coding = TRUE,
+    ## out <- efficientDesign(al, prior, 4, 10, dummy.coding = TRUE,
     ##                                    seed = seed)
     n.q <- 10
     apq <- 4
-    out <- ChoiceModelDesign(design.algorithm = "Modified Federov",
+    out <- ChoiceModelDesign(design.algorithm = "Efficient",
                              attribute.levels = pa, prior = prior, n.questions = n.q,
                              alternatives.per.question = apq, seed = seed)
     prior <- numeric(5)
-    out2 <- ChoiceModelDesign(design.algorithm = "Modified Federov",
+    out2 <- ChoiceModelDesign(design.algorithm = "Efficient",
                              attribute.levels = pa, prior = prior, n.questions = n.q,
                              alternatives.per.question = apq, seed = seed)
     expect_identical(out, out2)
@@ -37,7 +37,7 @@ vnames <- pd[1, !pd[1,] %in% c("SD", "Mean")]
 n.q <- 10
 apq <- 4
 
-out <- ChoiceModelDesign(design.algorithm = "Modified Federov",
+out <- ChoiceModelDesign(design.algorithm = "Efficient",
                          attribute.levels = pd, prior = NULL, n.questions = n.q,
                          alternatives.per.question = apq, seed = seed,
                          output = "Labeled design")
@@ -76,31 +76,31 @@ test_that("3^3/3/9 effects coding",
                 c("type", "train", "bus", "car"))
     al <- pastedAttributesToVector(pa)
     prior <- numeric(sum(al) - length(al))
-    out <- modifiedFederovDesign(al, prior, 4, 12,
+    out <- efficientDesign(al, prior, 4, 12,
                                        dummy.coding = FALSE,
                                        seed = seed)
     expect_true(all(out$model.matrix %in% c(-1, 0, 1)))
 })
 
-test_that("ModifiedFederov: bad prior",
+test_that("Efficient: bad prior",
 {
     seed <- 331
     pd <- cbind(c("price", "200", "250", "300"), c("mean", 0, 1, ""),
                 c("time", "morn", "aft", "eve"),
                 c("type", "train", "bus", ""), c("mean", 2, 3, ""), c("sd", 1, 2, ""))
-    expect_error(ChoiceModelDesign("Modified Federov", pd,
+    expect_error(ChoiceModelDesign("Efficient", pd,
                                    alternatives.per.question = 4, n.questions = 12,
                                        seed = seed), "price, 3")
 
     pd <- cbind(c("price", "200", "250", "300"), c("mean", 0, 1, "2"),
                 c("time", "morn", "aft", "eve"),
                 c("type", "train", "bus", ""), c("mean", 2, 3, ""), c("sd", 1, "", ""))
-    expect_error(ChoiceModelDesign("Modified Federov", pd,
+    expect_error(ChoiceModelDesign("Efficient", pd,
                                    alternatives.per.question = 4, n.questions = 12,
                                        seed = seed), "type, 2")
 })
 
-test_that("ModifiedFederov: vector prior",
+test_that("Efficient: vector prior",
 {
     seed <- 2218789
     pa <- cbind(c("price", "100", "125", "150", "175", "200"),
@@ -110,37 +110,37 @@ test_that("ModifiedFederov: vector prior",
     al <- pastedAttributesToVector(pa)
     n.coef <- sum(pa[-1, ] != "") - ncol(pa)
     prior <- 1 + numeric(n.coef)
-    out <- modifiedFederovDesign(al, prior, 5, 15,
+    out <- efficientDesign(al, prior, 5, 15,
                                        dummy.coding = FALSE,
                                        seed = seed)
     expect_equal(out$error, .325, tolerance = .05)
 })
 
-test_that("ModifiedFederov: prior means and variances old interface",
+test_that("Efficient: prior means and variances old interface",
 {
     seed <- 97
     pa <- cbind(c("price", "100", "125", "150", "175", "200"),
                 c("time", "morn", "aft", "eve", "late night", ""))
     n.coef <- sum(pa[-1, ] != "") - ncol(pa)
     prior <- matrix(c(0, 2), nrow = n.coef, ncol = 2, byrow = TRUE)
-    out <- ChoiceModelDesign(design.algorithm = "Modified Federov", attribute.levels = pa,
+    out <- ChoiceModelDesign(design.algorithm = "Efficient", attribute.levels = pa,
                              prior = prior, n.questions = 8, alternatives.per.question = 3,
                                        seed = seed)
     expect_equal(out$Derror, 2.43, tolerance = 1e-3)
 })
 
-test_that("Federov: none alternatives",
+test_that("Efficient: none alternatives",
 {
     seed <- 20
     pa <- cbind(c("price", "200", "250", "300"), c("time", "morn", "aft", "eve"),
                 c("type", "train", "bus", ""))
     prior <- matrix(nrow = 0, ncol = 0)
-    ## out <- modifiedFederovDesign(al, prior, 4, 10, dummy.coding = TRUE,
+    ## out <- efficientDesign(al, prior, 4, 10, dummy.coding = TRUE,
     ##                                    seed = seed)
     n.q <- 10
     apq <- 4
     n.a <- 2
-    out <- ChoiceModelDesign(design.algorithm = "Modified Federov",
+    out <- ChoiceModelDesign(design.algorithm = "Efficient",
                              attribute.levels = pa, prior = NULL, n.questions = n.q,
                              alternatives.per.question = apq, seed = seed,
                              none.alternatives = 2)
@@ -148,17 +148,17 @@ test_that("Federov: none alternatives",
     expect_equal(max(out$design.with.none[, 2L]), n.a + apq)
 })
 
-test_that("Federov: labeled alternatives",
+test_that("Efficient: labeled alternatives",
 {
     seed <- 98
     lpa1 <- c(engine = 3, transmission = 2, colour = 7)
     lpa2 <- c(brand = 4, lpa1)
     prior <- matrix(nrow = 0, ncol = 0)
-    ## out <- modifiedFederovDesign(al, prior, 4, 10, dummy.coding = TRUE,
+    ## out <- efficientDesign(al, prior, 4, 10, dummy.coding = TRUE,
     ##                                    seed = seed)
     n.q <- 20
 
-    out <- modifiedFederovDesign(
+    out <- efficientDesign(
                                    levels.per.attribute = lpa2,
                                    prior = NULL,
                                    lpa2[1],
@@ -179,7 +179,7 @@ test_that("Federov: labeled alternatives",
                              c("manual", "automatic", "", "", "", "", ""),
                              c("red", "green", "blue", "yellow", "black", "white", "silver"))
     pa <- rbind(c("brand", "engine", "transmission", "colour"), pa)
-    out2 <- ChoiceModelDesign(design.algorithm = "Modified Federov",
+    out2 <- ChoiceModelDesign(design.algorithm = "Efficient",
                              attribute.levels = pa, prior = NULL, n.questions = n.q,
                              seed = seed,
                              labeled.alternatives = TRUE)
