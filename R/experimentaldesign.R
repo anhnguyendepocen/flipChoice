@@ -225,8 +225,7 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
 # Convert an unlabeled design into a labeled design
 labelDesign <- function(unlabeled.design, attribute.levels) {
     labeled.design <- lapply(seq_along(attribute.levels),
-                             function(i) factor(unlabeled.design[, i + 2],
-                                                labels = attribute.levels[[i]]))
+                             function(i) attribute.levels[[i]][unlabeled.design[, i + 2]])
     labeled.design <- as.data.frame(labeled.design)
     labeled.design <- cbind(unlabeled.design[, 1:2], labeled.design)
     colnames(labeled.design) = c("Question", "Alternative", names(attribute.levels))
