@@ -116,9 +116,11 @@ ChoiceModelDesign <- function(
 
     if (is.null(alternatives.per.question))
         alternatives.per.question <- length(attribute.levels[[1]])
+    if (!is.null(prohibitions) && sum(dim(prohibitions)) == 0)
+        prohibitions <- NULL
 
     ## Convert from labels to numeric and factors
-    if (!is.null(prohibitions) && design.algorithm == "Efficient" || design.algorithm == "Shortcut")
+    if (!is.null(prohibitions) && design.algorithm %in% c("Efficient", "Shortcut"))
         warning(gettextf("Prohibitions are not yet implemented for algorithm %s and will be ignored.",
                     sQuote(design.algorithm)))
 
@@ -225,7 +227,9 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
 # Convert an unlabeled design into a labeled design
 labelDesign <- function(unlabeled.design, attribute.levels) {
     labeled.design <- lapply(seq_along(attribute.levels),
-                             function(i) attribute.levels[[i]][unlabeled.design[, i + 2]])
+                             function(i) factor(unlabeled.design[, i + 2],
+                                                levels = seq(length(attribute.levels[[i]])),
+                                                labels = attribute.levels[[i]]))
     labeled.design <- as.data.frame(labeled.design)
     labeled.design <- cbind(unlabeled.design[, 1:2], labeled.design)
     colnames(labeled.design) = c("Question", "Alternative", names(attribute.levels))
