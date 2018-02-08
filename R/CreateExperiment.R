@@ -17,9 +17,9 @@
 CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0, seed = 12345) {
 
     set.seed(seed)
-    attributes <- LETTERS[1:length(levels.per.attribute)]
+    attributes <- paste0("Attribute", seq(length(levels.per.attribute)))
     attribute.levels <- sapply(levels.per.attribute, seq, simplify = FALSE)
-    attribute.levels <- mapply(paste0, attributes, attribute.levels, SIMPLIFY = FALSE)
+    #attribute.levels <- mapply(paste0, attributes, attribute.levels, SIMPLIFY = FALSE)
     names(attribute.levels) <- attributes
 
     # may produce duplicate prohibitions

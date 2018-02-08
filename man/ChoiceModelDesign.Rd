@@ -5,16 +5,17 @@
 \title{Choice modeling experimental design}
 \usage{
 ChoiceModelDesign(design.algorithm = c("Random", "Shortcut",
-  "Balanced overlap", "Complete enumeration", "Shortcut2", "Modified Federov"),
-  attribute.levels = NULL, prior = NULL, n.questions, n.versions = 1,
-  alternatives.per.question, prohibitions = NULL, none.alternatives = 0,
-  labeled.alternatives = FALSE, output = "Unlabeled design", seed = 54123)
+  "Balanced overlap", "Complete enumeration", "Shortcut2", "Shortcut3",
+  "Efficient"), attribute.levels = NULL, prior = NULL, n.questions,
+  n.versions = 1, alternatives.per.question, prohibitions = NULL,
+  none.alternatives = 0, labeled.alternatives = FALSE,
+  output = "Unlabeled design", seed = 54123)
 }
 \arguments{
 \item{design.algorithm}{The algorithm used to create the
 design. One of \code{"Random"}, \code{"Shortcut"},
 \code{"Balanced overlap"} and \code{"Complete enumeration"},
-and \code{"Modified Federov"}.}
+and \code{"Efficient"}.}
 
 \item{attribute.levels}{\code{\link{list}} of \code{\link{vector}}s
 containing the labels of levels for each attribute, with names
@@ -24,7 +25,7 @@ rows containing attribute levels.}
 
 \item{prior}{Character matrix containing prior values for the model
 coefficients; only used for \code{design.algorithm ==
-"Modified Federov"}; see Details.}
+"Efficient"}; see Details.}
 
 \item{n.questions}{Integer; the number of questions asked to each
 respondent.}
@@ -74,7 +75,7 @@ Creates choice model experimental designs according to a given algorithm.
 }
 \details{
 If \code{prior} is supplied and \code{design.algorithm ==
-    "Modified Federov"}, the number of coefficients must correspond
+    "Efficient"}, the number of coefficients must correspond
     to the number of attributes/attribute levels specified in
     \code{attribute.levels}.  If \code{prior} is \code{NULL}, the prior for the
     coefficients is assumed to be identically zero.  If the supplied matrix
