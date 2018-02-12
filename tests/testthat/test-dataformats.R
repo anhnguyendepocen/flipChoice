@@ -64,6 +64,6 @@ test_that("Missing data", {
                                  seed = 123, input.prior.mean = 0,
                                  input.prior.sd = 5)
     expect_equal(dat$n.respondents, 379)
-    expect_equal(dput(dim(dat$X.in)), c(379L, 8L, 3L, 20L))
+    expect_equal(dput(dim(dat$X.in)), c(379L, 8L, 3L, 13L))
     expect_equal(dput(dim(dat$Y.in)), c(379L, 8L))
 })

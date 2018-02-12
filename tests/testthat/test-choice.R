@@ -7,7 +7,7 @@ test_that("HB", {
                              hb.chains = 1, hb.warnings = FALSE,
                              hb.max.draws = 2)
     expect_error(print(result), NA)
-    expect_equal(dim(result$beta.draws), c(2L, 380L, 20L))
+    expect_equal(dim(result$beta.draws), c(2L, 380L, 13L))
 })
 
 test_that("HB cross validation", {
@@ -39,26 +39,19 @@ test_that("HB 2 classes", {
     expect_error(print(result), NA)
 })
 
-# test_that("HB diagonal", {
-#     result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
-#                              hb.chains = 1, normal.covariance = "Diagonal",
-#                              hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
+test_that("HB diagonal", {
+    result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
+                             hb.chains = 1, normal.covariance = "Diagonal",
+                             hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
 
-# test_that("HB diagonal 2 classes", {
-#     result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
-#                              hb.chains = 1, normal.covariance = "Diagonal",
-#                              n.classes = 2, hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
-
-# test_that("HB spherical", {
-#     result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
-#                              hb.chains = 1, normal.covariance = "Spherical",
-#                              hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
+test_that("HB diagonal 2 classes", {
+    result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
+                             hb.chains = 1, normal.covariance = "Diagonal",
+                             n.classes = 2, hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
 
 test_that("HB constraints", {
     result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,

@@ -128,7 +128,7 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
 accuracyResults <- function(dat, result)
 {
     n.respondents <- dat$n.respondents
-    resp.pars <- result$respondent.parameters
+    resp.pars <- result$reduced.respondent.parameters
     in.sample.accuracies <- predictionAccuracies(resp.pars, dat$X.in, dat$Y.in, dat$subset)
     w <- dat$weights
     result$in.sample.accuracy <- sum(in.sample.accuracies * w) / sum(w)
