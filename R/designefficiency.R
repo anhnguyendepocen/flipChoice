@@ -1,7 +1,7 @@
 #' @importFrom stats model.matrix
 dScore <- function(design)
 {
-    attribute.columns <- data.frame(design[, c(-1, -2)])
+    attribute.columns <- data.frame(design[, c(-1, -2, -3)])
     attribute.columns <- data.frame(lapply(attribute.columns, as.factor))
     X <- model.matrix( ~ ., data = data.frame(attribute.columns))
     d.score <- det(crossprod(X)) ^ (1 / ncol(X)) / nrow(X)
@@ -12,31 +12,41 @@ dScore <- function(design)
 # design.matrix is a matrix for an unlabeled choice design in the long format, meaning that
 #   each row describes one of the alternatives in one of the choice tasks. Complete data for
 #   each task is spread across several rows. The columns are:
-#   - Column 1 indicates the task number for each profile
-#   - Column 2 indicates the alternative number
-#   - Columns 3 and up each correspond to an attribute, with the entries in the columns indicating
+#   - Column 1 indicates the version number for each profile
+#   - Column 2 indicates the task number for each profile
+#   - Column 3 indicates the alternative number
+#   - Columns 4 and up each correspond to an attribute, with the entries in the columns indicating
 #     the level of the attribute (beginning at level 1).
 # attribute.levels is a vector of numbers indicating how many levels are in each attribute. The order should
 #   correspond to the order of columns in the design.
 # effects is a boolean parameter indicating whether or not the error should be computed based on
 #   effects coding (TRUE) or dummy coding (FALSE).
 # prior is a vector of prior parameters for the attribute levels. Keeping prior = NULL uses a flat prior
+# See https://faculty.fuqua.duke.edu/~jch8/bio/Papers/Huber%20Zwerina%201996%20Marketing%20Research.pdf
 DerrorHZ <- function(design.matrix, attribute.levels, effects = TRUE, prior = NULL)
 {
     K = sum(attribute.levels - 1) # Total number of parameters
-    N = max(design.matrix[,1]) # Number of tasks
-    J = max(design.matrix[,2]) # Number of alts per task
-    M = N*J
+    J = max(design.matrix[, 3]) # Number of alts per task
+
+    # Treat multiple versions as additional questions
+    n.versions <- design.matrix[NROW(design.matrix), 1]
+    n.questions <- max(design.matrix[, 2])
+    N = n.versions * n.questions  # Number of tasks
+    design.matrix[, 2] <- rep(seq(N), each = J)
+    design.matrix <- design.matrix[, -1]
+
+    M = N * J
 
     # Generate a coded version of the design using dummy coding or effects coding
-    des.att = design.matrix[, 3:ncol(design.matrix)] # Part of the design matrix containing the attributes
+    des.att <- design.matrix[, 3:ncol(design.matrix)] # Part of the design matrix containing the attributes
+
     if (effects) {
         coded.design = effectsMatrix(des.att)
     } else {
         coded.design = dummyMatrix(des.att)
     }
 
-    # Generate choice probabilities
+    # Generate choice probabilities of each alternative
     if (!is.null(prior)) {
         diagP <- logitChoiceProbs(coded.design, prior, J, N)
     } else {
@@ -46,11 +56,11 @@ DerrorHZ <- function(design.matrix, attribute.levels, effects = TRUE, prior = NU
     # Compute the D-error (according to Huber and Zwerina 1996)
     xbars = vector("numeric")
     for (j in 1L:N) {
-        xbars = rbind(xbars, rep.row(colSums(coded.design[design.matrix[,1] == j, ] * diagP[design.matrix[,1] == j]), J))
+        xbars = rbind(xbars, rep.row(colSums(coded.design[design.matrix[, 1] == j, ] * diagP[design.matrix[, 1] == j]), J))
     }
     Z = as.matrix(coded.design - xbars)
-    Omega = crossprod(Z, diagP*Z)  # t(Z) %*% P %*% Z
-    Derror = det(Omega)^(-1/K)
+    Omega = crossprod(Z, diagP*Z)   # t(Z) %*% P %*% Z
+    Derror = det(Omega)^(-1/K)      # det of inverse == inverse of det
     return(Derror)
 }
 
