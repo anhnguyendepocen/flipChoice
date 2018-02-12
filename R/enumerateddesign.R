@@ -5,7 +5,7 @@
 #
 #' @importFrom nnet which.is.max
 completeEnumerationDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
-                             none.alternatives = 0, labeled.alternatives = FALSE) {
+                             labeled.alternatives = FALSE) {
 
 
     set.seed(12345)
@@ -167,7 +167,7 @@ totalShortcutCost <- function(alternative, singles, qn.counts) {
 #
 #' @importFrom nnet which.is.max
 shortcut2Design <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
-                            none.alternatives = 0, labeled.alternatives = FALSE) {
+                            labeled.alternatives = FALSE) {
 
     set.seed(12345)
 
@@ -229,7 +229,7 @@ shortcut2Design <- function(levels.per.attribute, n.questions, alternatives.per.
 #
 #' @importFrom nnet which.is.max
 shortcut3Design <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
-                            none.alternatives = 0, labeled.alternatives = FALSE) {
+                            labeled.alternatives = FALSE) {
 
     set.seed(12345)
 

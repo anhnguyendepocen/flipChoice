@@ -110,7 +110,6 @@ ChoiceModelDesign <- function(
             warning(gettextf("Prior data can only be used with algorithm %s and will be ignored.",
                     sQuote("Efficient")))
     }
-
     else  # attribute levels input with prior
         levels.per.attribute <- NULL
 
@@ -150,7 +149,6 @@ ChoiceModelDesign <- function(
                        n.questions = n.questions * n.versions,
                        alternatives.per.question = alternatives.per.question,
                        prohibitions = integer.prohibitions,
-                       none.alternatives = none.alternatives,
                        labeled.alternatives = labeled.alternatives,
                        seed = seed)
 
@@ -175,8 +173,9 @@ ChoiceModelDesign <- function(
         result$model.matrix <- design$model.matrix
         result$Derror <- design$error
     }
-    result$design.with.none <- addNoneAlternatives(result$design,
-                                                   none.alternatives, alternatives.per.question)
+    result$design <- addVersions(result$design, n.versions)
+    result$design.with.none <- addNoneAlternatives(result$design, none.alternatives,
+                                                   alternatives.per.question)
 
     class(result) <- "ChoiceModelDesign"
     return(result)
@@ -227,12 +226,12 @@ encodeProhibitions <- function(prohibitions, attribute.levels) {
 # Convert an unlabeled design into a labeled design
 labelDesign <- function(unlabeled.design, attribute.levels) {
     labeled.design <- lapply(seq_along(attribute.levels),
-                             function(i) factor(unlabeled.design[, i + 2],
+                             function(i) factor(unlabeled.design[, i + 3],
                                                 levels = seq(length(attribute.levels[[i]])),
                                                 labels = attribute.levels[[i]]))
     labeled.design <- as.data.frame(labeled.design)
-    labeled.design <- cbind(unlabeled.design[, 1:2], labeled.design)
-    colnames(labeled.design) = c("Question", "Alternative", names(attribute.levels))
+    labeled.design <- cbind(unlabeled.design[, 1:3], labeled.design)
+    colnames(labeled.design) = c("Version", "Question", "Alternative", names(attribute.levels))
     return(labeled.design)
 }
 
@@ -259,19 +258,19 @@ balancesAndOverlaps <- function(cmd) {
 
 
 singleLevelBalances <- function(design) {
-    singles <- apply(design[, 3:ncol(design)], 2, table)
+    singles <- apply(design[, 4:ncol(design)], 2, table)
     if (!is.list(singles))
         singles <- split(singles, rep(1:ncol(singles), each = nrow(singles)))
     return(singles)
 }
 
 pairLevelBalances <- function(design) {
-    n.attributes <- ncol(design) - 2
+    n.attributes <- ncol(design) - 3
     pairs <- replicate(n.attributes, rep(list(NA), n.attributes), simplify = FALSE)
     for (i in 1:(n.attributes - 1))
         for (j in (i + 1):n.attributes) {
-            pairs[[i]][[j]] <- table(design[, i + 2], design[, j + 2])
-            names(pairs[[i]])[[j]] <- paste0(colnames(design)[i + 2], "/", colnames(design)[j + 2])
+            pairs[[i]][[j]] <- table(design[, i + 3], design[, j + 3])
+            names(pairs[[i]])[[j]] <- paste0(colnames(design)[i + 3], "/", colnames(design)[j + 3])
         }
     return(pairs)
 }
@@ -292,7 +291,7 @@ labelPairBalanceLevels <- function(pairs, attribute.levels) {
 
 countOverlaps <- function(design) {
     # table of counts for each level by question, listed for each attribute
-    design <- design[, c(-1, -2)]
+    design <- design[, c(-1, -2, -3)]
     columns <- split(design, seq(NCOL(design)))
     overlaps <- lapply(columns, table, design[, 1])
     # duplicated levels
@@ -319,6 +318,7 @@ addNoneAlternatives <- function(design, none.alternatives, alternatives.per.ques
 
     if (is.data.frame(design))
     {
+        stop("what is this")
         n.questions <- design[[1]][nrow(design)]
         new.rows <- matrix(nrow = n.questions*none.alternatives, ncol = ncol(design))
         new.rows[, 1] <- rep(seq_len(n.questions), each = none.alternatives)
@@ -338,10 +338,20 @@ addNoneAlternatives <- function(design, none.alternatives, alternatives.per.ques
     design.with.none[new.row.indices, ] <- design
 
     colnames(design.with.none) <- colnames(design)
-    design.with.none[, 1] <- rep(seq(n / alternatives.per.question), each = alternatives.per.question + none.alternatives)
-    design.with.none[, 2] <- rep(seq(alternatives.per.question + none.alternatives), n / alternatives.per.question)
+    n.versions < - design[NROW(design), 1]
+    design.with.none[, 1] <- rep(seq(n.versions), each = NROW(design.with.none) / n.versions)
+    design.with.none[, 2] <- rep(seq(n / alternatives.per.question), each = alternatives.per.question + none.alternatives)
+    design.with.none[, 3] <- rep(seq(alternatives.per.question + none.alternatives), n / alternatives.per.question)
     return(design.with.none)
 }
+
+addVersions <- function(design, n.versions) {
+    rows.per.version <- NROW(design) / n.versions
+    version.design <- cbind(version = rep(seq(n.versions), each = rows.per.version), design)
+    version.design[, 2] <- rep(design[1:rows.per.version, 1], n.versions)
+    return(version.design)
+}
+
 
 # randomly choose responses to a ChoiceModelDesign
 randomChoices <- function(cmd, respondents = 300) {
@@ -366,7 +376,7 @@ mlogitModel <- function(cmd, choices = NULL) {
     labeled <- as.data.frame(labelDesign(cmd$design, cmd$attribute.levels))
 
     copies <- length(choices) / nrow(labeled)
-    labeled <- labeled[rep(seq_len(nrow(labeled)), copies), ]
+    labeled <- labeled[rep(seq_len(nrow(labeled)), copies), -1]
     labeled$Choice <- choices
     mlogit.df <- mlogit.data(labeled, choice = "Choice", shape = "long", varying = 3:ncol(labeled),
                      alt.var = "Alternative", id.var = "Question", drop.index = TRUE)
