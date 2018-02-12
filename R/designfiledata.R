@@ -27,10 +27,10 @@ processDesignFile <- function(design.file, attribute.levels.file,
     none.of.these.included <- any(rowSums(design[-1:-3]) == 0)
     has.none.of.these <- add.none.of.these || none.of.these.included
 
-    n.attribute.variables <- unlist(lapply(attribute.levels, length))
+    n.attribute.variables <- unlist(lapply(attribute.levels, length)) - 1
     n.variables <-  sum(n.attribute.variables)
-    n.raw.variables <- n.variables - n.attributes
     var.names <- variableNamesFromAttributes(attribute.levels)
+    all.names <- allNamesFromAttributes(attribute.levels)
     variable.scales <- rep(1, n.variables)
 
     checkPriorParameters(input.prior.mean, input.prior.sd, n.attributes)
@@ -82,13 +82,12 @@ processDesignFile <- function(design.file, attribute.levels.file,
     if (include.choice.parameters)
     {
         output <- addChoiceParameters(X, n.attributes, n.variables,
-                                      n.raw.variables, n.attribute.variables,
-                                      n.choices, var.names, input.prior.mean,
+                                      n.attribute.variables, n.choices,
+                                      var.names, input.prior.mean,
                                       input.prior.sd)
         X <- output$X
         n.attributes <- output$n.attributes
         n.variables <- output$n.variables
-        n.raw.variables <- output$n.raw.variables
         n.attribute.variables <- output$n.attribute.variables
         var.names <- output$var.names
         input.prior.mean <- output$input.prior.mean
@@ -103,10 +102,10 @@ processDesignFile <- function(design.file, attribute.levels.file,
 
     split.data <- crossValidationSplit(X, Y, n.questions.left.out, seed)
 
-    prior.mean <- processInputPrior(input.prior.mean, n.raw.variables,
+    prior.mean <- processInputPrior(input.prior.mean, n.variables,
                                     n.attributes, n.attribute.variables,
                                     variable.scales)
-    prior.sd <- processInputPrior(input.prior.sd, n.raw.variables,
+    prior.sd <- processInputPrior(input.prior.sd, n.variables,
                                   n.attributes, n.attribute.variables,
                                   variable.scales)
 
@@ -117,9 +116,9 @@ processDesignFile <- function(design.file, attribute.levels.file,
                    n.attributes = n.attributes,
                    n.respondents = n.respondents,
                    n.variables = n.variables,
-                   n.raw.variables = n.raw.variables,
                    n.attribute.variables = n.attribute.variables,
                    var.names = var.names,
+                   all.names = all.names,
                    X.in = split.data$X.in,
                    Y.in = split.data$Y.in,
                    X.out = split.data$X.out,

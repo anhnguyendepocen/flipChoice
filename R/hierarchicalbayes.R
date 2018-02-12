@@ -43,9 +43,15 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     class.match.fail <- matched$match.fail
 
     result <- list()
-    result$respondent.parameters <- ComputeRespPars(stan.fit, dat$var.names,
-                                                    dat$subset,
-                                                    dat$variable.scales)
+    result$reduced.respondent.parameters <- ComputeRespPars(stan.fit,
+                                                        dat$var.names,
+                                                        dat$subset,
+                                                        dat$variable.scales)
+    result$respondent.parameters <- computeAllRespPars(stan.fit,
+                                                       dat$var.names,
+                                                       dat$all.names,
+                                                       dat$subset,
+                                                       dat$variable.scales)
     result$class.match.fail <- class.match.fail
     if (!class.match.fail)
         result$parameter.statistics <- GetParameterStatistics(stan.fit,
@@ -162,7 +168,6 @@ createStanData <- function(dat, n.classes, normal.covariance)
                      S = dat$n.questions.left.in,
                      A = dat$n.attributes,
                      V = dat$n.variables,
-                     V_raw = dat$n.raw.variables,
                      V_attribute = dat$n.attribute.variables,
                      Y = dat$Y.in,
                      X = dat$X.in,
@@ -216,6 +221,7 @@ ReduceStanFitSize <- function(stan.fit)
 ComputeRespPars <- function(stan.fit, var.names, subset,
                             variable.scales = NULL)
 {
+    # Move this function to flipMaxDiff
     beta <- extract(stan.fit, pars=c("beta"))$beta
     resp.pars.subset <- colMeans(beta, dims = 1)
 
@@ -225,6 +231,27 @@ ComputeRespPars <- function(stan.fit, var.names, subset,
     result <- matrix(NA, nrow = length(subset), ncol = ncol(resp.pars.subset))
     result[subset, ] <- resp.pars.subset
     colnames(result) <- var.names
+    result
+}
+
+computeAllRespPars <- function(stan.fit, var.names, all.names, subset,
+                               variable.scales = NULL)
+{
+    beta <- extract(stan.fit, pars=c("beta"))$beta
+    resp.pars.subset <- colMeans(beta, dims = 1)
+
+    if (!is.null(variable.scales))
+        resp.pars.subset <- t(t(resp.pars.subset) / variable.scales)
+
+    result <- matrix(NA, nrow = length(subset), ncol = length(all.names))
+    for (i in 1:length(all.names))
+    {
+        if (all.names[i] %in% var.names)
+            result[subset, i] <-  resp.pars.subset[, all.names[i] == var.names]
+        else
+            result[subset, i] <- 0
+    }
+    colnames(result) <- all.names
     result
 }
 

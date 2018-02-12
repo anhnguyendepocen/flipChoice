@@ -1,36 +1,3 @@
-functions {
-    vector completeTheta(vector theta_raw, int A, int V, int[] V_attribute, vector prior_mean)
-    {
-        vector[V] theta;
-        int variable_i = 1;
-        int raw_variable_i = 1;
-        for (i in 1:A)
-        {
-            if (V_attribute[i] > 1)
-            {
-                int v = V_attribute[i];
-                for (j in 2:v)
-                    theta[variable_i + j - 1] = theta_raw[raw_variable_i + j - 2];
-
-                if (prior_mean[raw_variable_i] == 0)
-                    theta[variable_i] = -sum(theta_raw[raw_variable_i:(raw_variable_i + v - 2)]);
-                else
-                    theta[variable_i] = 0;
-
-                variable_i = variable_i + v;
-                raw_variable_i = raw_variable_i + v - 1;
-            }
-            else
-            {
-                theta[variable_i] = theta_raw[raw_variable_i];
-                variable_i = variable_i + 1;
-                raw_variable_i = raw_variable_i + 1;
-            }
-        }
-        return theta;
-    }
-}
-
 data {
     int<lower=2> C; // Number of alternatives (choices) in each question
     int<lower=1> R; // Number of respondents
@@ -38,17 +5,16 @@ data {
     int<lower=1> P; // Number of classes
     int<lower=1> A; // Number of attributes
     int<lower=1> V; // Number of variables
-    int<lower=1> V_raw; // Number of raw variables
     int<lower=1> V_attribute[A]; // Number of variables in each attribute
     int<lower=1,upper=C> Y[R, S]; // choices
     matrix[C, V] X[R, S]; // matrix of attributes for each obs
-    vector[V_raw] prior_mean; // Prior mean for theta_raw
-    vector[V_raw] prior_sd; // Prior sd for theta_raw
+    vector[V] prior_mean; // Prior mean for theta
+    vector[V] prior_sd; // Prior sd for theta
 }
 
 parameters {
     vector<lower=0>[V] sigma[P];
-    vector[V_raw] theta_raw[P];
+    vector[V] theta[P];
     cholesky_factor_corr[V] L_omega[P];
     vector[V] standard_normal[R, P];
     simplex[P] class_weights;
@@ -56,15 +22,12 @@ parameters {
 
 transformed parameters {
     matrix[V, V] L_sigma[P];
-    vector[V] theta[P]; // sums to zero
     vector[V] class_beta[R, P];
     vector[P] posterior_prob[R];
 
     for (p in 1:P)
     {
         L_sigma[p] = diag_pre_multiply(sigma[p], L_omega[p]);
-
-        theta[p] = completeTheta(theta_raw[p], A, V, V_attribute, prior_mean);
 
         for (r in 1:R)
             class_beta[r, p] = theta[p] + L_sigma[p] * standard_normal[r, p];
@@ -88,8 +51,8 @@ model {
         // gamma distribution with mode = 1 and p(x < 20) = 0.999
         sigma[p] ~ gamma(1.39435729464721, 0.39435729464721);
 
-        for (v in 1:V_raw)
-            theta_raw[p, v] ~ normal(prior_mean[v], prior_sd[v]);
+        for (v in 1:V)
+            theta[p, v] ~ normal(prior_mean[v], prior_sd[v]);
         L_omega[p] ~ lkj_corr_cholesky(4);
         for (r in 1:R)
             standard_normal[r, p] ~ normal(0, 1);
