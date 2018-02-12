@@ -16,8 +16,8 @@ LeftOutQuestions(n.respondents, n.questions, n.questions.left.out, seed)
 \item{seed}{Random seed.}
 }
 \value{
-A logical matrix (\code{n.questions} by \code{n.respondents}) indicating
-which questions are left out.
+A logical matrix (\code{n.questions} by \code{n.respondents})
+indicating which questions are left out.
 }
 \description{
 Randomly select questions to leave out for each respondent.
