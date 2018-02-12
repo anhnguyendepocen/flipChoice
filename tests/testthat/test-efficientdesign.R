@@ -20,9 +20,9 @@ test_that("3*3*2/4/10 dummy coding; old interface",
     expect_identical(out, out2)
     expect_equal(out$Derror, .52, tolerance = .0015)
     expect_true(all(out$model.matrix %in% c(0, 1)))
-    expect_equal(colnames(out$design)[-2:-1], pa[1, ])
-    expect_equal(unique(out$design[, 1]), 1:n.q)
-    expect_equal(unique(out$design[, 2]), 1:apq)
+    expect_equal(colnames(out$design)[-3:-1], pa[1, ])
+    expect_equal(unique(out$design[, 2]), 1:n.q)
+    expect_equal(unique(out$design[, 3]), 1:apq)
 
     ## expect_true(all(grepl("^set[0-9]{1,2}[.]alt[1-4]", rownames(out$design))))
 })
@@ -47,9 +47,9 @@ test_that("Some prior inputs missing",
 
     expect_equal(out$Derror, .945, tolerance = .01)
     expect_true(all(out$model.matrix %in% c(0, 1)))
-    expect_equal(colnames(out$design)[-2:-1], vnames)
-    expect_equal(unique(out$design[, 1]), 1:n.q)
-    expect_equal(unique(out$design[, 2]), 1:apq)
+    expect_equal(colnames(out$design)[-3:-1], vnames)
+    expect_equal(unique(out$design[, 2]), 1:n.q)
+    expect_equal(unique(out$design[, 3]), 1:apq)
 
      ## expect_true(all(grepl("^set[0-9]{1,2}[.]alt[1-4]", rownames(out$design))))
 })
@@ -60,10 +60,10 @@ test_that("ChoiceModelDesign: print labels working",
     tfile <- tempfile()
     withr::with_output_sink(tfile, {
         expect_is(print(out), "data.frame")
-        expect_equal(levels(print(out)[[3]]), pd[-1, 1])
-        expect_equal(levels(print(out)[[4]]),
-                     pd[-1, pd[1,] == colnames(print(out))[4]])
-        expect_named(print(out), c("Question", "Alternative", "price", "time", "type"))
+        expect_equal(levels(print(out)[[4]]), pd[-1, 1])
+        expect_equal(levels(print(out)[[5]]),
+                     pd[-1, pd[1,] == colnames(print(out))[5]])
+        expect_named(print(out), c("Version", "Question", "Alternative", "price", "time", "type"))
     })
     unlink(tfile)
 })
@@ -144,8 +144,8 @@ test_that("Efficient: none alternatives",
                              attribute.levels = pa, prior = NULL, n.questions = n.q,
                              alternatives.per.question = apq, seed = seed,
                              none.alternatives = 2)
-    expect_equal(sum(is.na(out$design.with.none[, 3L])), n.q*n.a)
-    expect_equal(max(out$design.with.none[, 2L]), n.a + apq)
+    expect_equal(sum(is.na(out$design.with.none[, 4L])), n.q*n.a)
+    expect_equal(max(out$design.with.none[, 3L]), n.a + apq)
 })
 
 test_that("Efficient: labeled alternatives",
@@ -185,9 +185,9 @@ test_that("Efficient: labeled alternatives",
                              labeled.alternatives = TRUE)
     n.coef <- sum(pa[-1, ] != "") - ncol(pa)
     apq <- sum(pa[-1, 1] != "")
-    expect_equal(dim(out2$design), c(apq*n.q, 1+ ncol(pa)),
+    expect_equal(dim(out2$design), c(apq*n.q, 2 + ncol(pa)),
                  check.attributes = FALSE)
-    expect_equal(colnames(out2$design), c("question", pa[1, ]))
+    expect_equal(colnames(out2$design), c("version", "question", pa[1, ]))
     expect_equal(dim(out2$model.matrix), c(apq*n.q,
                                           n.coef),
                  check.attributes = FALSE)

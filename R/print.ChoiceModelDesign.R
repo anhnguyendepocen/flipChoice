@@ -26,13 +26,11 @@ print.ChoiceModelDesign <- function(x, ...) {
     else if (x$output == "Balances and overlaps")
         print(balancesAndOverlaps(x))
 
-    # TODO OUTPUT STANDARD ERRORS AND D-EFFICIENCY
     else if (x$output == "Standard errors")
     {
-
         ml.model <- mlogitModel(x)
         print(list(d.score = dScore(x$design),
-                    d.error = DerrorHZ(x$design, sapply(x$attribute.levels, length), effects = FALSE)))
+                    d.error = DerrorHZ(x$design, sapply(x$attribute.levels, length), effects = TRUE)))
         print(summary(ml.model))
     }
     else
