@@ -25,24 +25,20 @@ labeled.test.cases <- c(FALSE, TRUE, FALSE)
 tfile <- tempfile()
 withr::with_output_sink(tfile, {
     for (model in c("Random", "Complete enumeration", "Balanced overlap", "Shortcut")) {  # can't handle prohibitions with "Shortcut"
-        for (output in c("Attributes and levels", "Prohibitions", "Unlabeled design", "Labeled design",
-                         "Balances and overlaps", "Standard errors")) {
-            for (i in seq(length(levels.test.cases))) {
-                test_that(paste(model, output, "Test case", i), {
-                    prohibitions <- if(model == "Shortcut") NULL else prohibitions.test.cases[[i]]
-                    cmd <- ChoiceModelDesign(design.algorithm = model,
-                                                 attribute.levels = levels.test.cases[[i]],
-                                                 prior = NULL,
-                                                 n.questions = questions.test.cases[i],
-                                                 n.versions = versions.test.cases[i],
-                                                 alternatives.per.question = alternatives.test.cases[i],
-                                                 prohibitions = prohibitions,
-                                                 none.alternatives = none.test.cases[i],
-                                                 labeled.alternatives = labeled.test.cases[i],
-                                                 output = output)
-                    expect_error(print(cmd), NA)
-                })
-            }
+        for (i in seq(length(levels.test.cases))) {
+            test_that(paste(model, "Test case", i), {
+                prohibitions <- if(model == "Shortcut") NULL else prohibitions.test.cases[[i]]
+                cmd <- ChoiceModelDesign(design.algorithm = model,
+                                             attribute.levels = levels.test.cases[[i]],
+                                             prior = NULL,
+                                             n.questions = questions.test.cases[i],
+                                             n.versions = versions.test.cases[i],
+                                             alternatives.per.question = alternatives.test.cases[i],
+                                             prohibitions = prohibitions,
+                                             none.alternatives = none.test.cases[i],
+                                             labeled.alternatives = labeled.test.cases[i])
+                expect_error(print(cmd), NA)
+            })
         }
     }
 })

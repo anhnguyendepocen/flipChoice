@@ -111,7 +111,7 @@ efficientDesign <- function(
     out$model.matrix <- out$design
 
     out$design <- modelMatrixToUnlabeledDesign(out$design, levels.per.attribute,
-                                                alternatives.per.question, labeled.alternatives)
+                                                alternatives.per.question, FALSE) # TODO remove last arg from this function
     out
 }
 
