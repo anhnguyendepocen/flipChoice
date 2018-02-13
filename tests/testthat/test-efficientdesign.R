@@ -167,9 +167,9 @@ test_that("Efficient: labeled alternatives",
                                    dummy.coding = TRUE,
                                    seed = seed,
                                    n.sim = 10)
-    expect_equal(dim(out$design), c(lpa2[1]*n.q, 1+ length(lpa2)),
+    expect_equal(dim(out$design), c(lpa2[1]*n.q, 2 + length(lpa2)),
                  check.attributes = FALSE)
-    expect_equal(colnames(out$design), c("question", names(lpa2)))
+    expect_equal(colnames(out$design), c("question", "alternative", names(lpa2)))
     expect_equal(dim(out$model.matrix), c(lpa2[1]*n.q,
                                           sum(lpa2) - length(lpa2)),
                  check.attributes = FALSE)
@@ -185,9 +185,9 @@ test_that("Efficient: labeled alternatives",
                              labeled.alternatives = TRUE)
     n.coef <- sum(pa[-1, ] != "") - ncol(pa)
     apq <- sum(pa[-1, 1] != "")
-    expect_equal(dim(out2$design), c(apq*n.q, 2 + ncol(pa)),
+    expect_equal(dim(out2$design), c(apq*n.q, 3 + ncol(pa)),
                  check.attributes = FALSE)
-    expect_equal(colnames(out2$design), c("version", "question", pa[1, ]))
+    expect_equal(colnames(out2$design), c("version", "question", "alternative", pa[1, ]))
     expect_equal(dim(out2$model.matrix), c(apq*n.q,
                                           n.coef),
                  check.attributes = FALSE)
