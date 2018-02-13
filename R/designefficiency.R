@@ -41,9 +41,9 @@ DerrorHZ <- function(design.matrix, attribute.levels, effects = TRUE, prior = NU
     des.att <- design.matrix[, 3:ncol(design.matrix)] # Part of the design matrix containing the attributes
 
     if (effects) {
-        coded.design = effectsMatrix(des.att)
+        coded.design <- encode.design(des.att, effects = TRUE)
     } else {
-        coded.design = dummyMatrix(des.att)
+        coded.design <- encode.design(des.att, effects = FALSE)
     }
 
     # Generate choice probabilities of each alternative
@@ -67,59 +67,6 @@ DerrorHZ <- function(design.matrix, attribute.levels, effects = TRUE, prior = NU
 
 
 
-dummyVector <-  function(n, k)
-{
-    # Create a dummy vector for the nth level of an attribute with k levels
-    dummy <- numeric(k-1)
-    if (n > 1)
-        dummy[n-1] <- 1
-    return(dummy)
-}
-
-effectsVector = function(n,k)
-{
-    # Create an effects-coded vector for the nth level of an attribute with k
-    # levels
-    if (n == k)
-        effects <- rep(-1,k-1)
-    else
-    {
-        effects <- numeric(k-1)
-        effects[n] <- 1
-    }
-    return(effects)
-}
-
-
-
-dummyMatrix <- function(design.matrix) {
-    coded.design = mapply(dummyVector, as.numeric(design.matrix[,1]),
-                          k = max(as.numeric(design.matrix[,1])), SIMPLIFY = TRUE)
-    for (j in 2:ncol(design.matrix)) {
-        coded.design = rbind(coded.design, mapply(dummyVector,
-                                                  as.numeric(design.matrix[,j]),
-                                                  k = max(as.numeric(design.matrix[,j])), SIMPLIFY = TRUE))
-    }
-    coded.design = t(coded.design)
-    colnames(coded.design) = 1:ncol(coded.design)
-    return(coded.design)
-}
-
-
-effectsMatrix <- function(design.matrix)
-{
-    coded.design <- mapply(effectsVector, as.numeric(design.matrix[,1]),
-                           k = max(as.numeric(design.matrix[,1])), SIMPLIFY = TRUE)
-    for (j in 2:ncol(design.matrix))
-    {
-        coded.design <- rbind(coded.design, mapply(effectsVector,
-                                                  as.numeric(design.matrix[,j]),
-                                                  k = max(as.numeric(design.matrix[,j])), SIMPLIFY = TRUE))
-    }
-    coded.design <- t(coded.design)
-    colnames(coded.design) <- 1:ncol(coded.design)
-    return(coded.design)
-}
 
 
 logitChoiceProbs = function(coded.matrix, prior, number.alternatives, number.tasks) {
@@ -149,4 +96,24 @@ logitChoiceProbs = function(coded.matrix, prior, number.alternatives, number.tas
 rep.row = function(x, n) {
     # Returns a matrix with n rows where each row is a copy of x
     matrix(rep(x, each = n), nrow = n)
+}
+
+# Profuce and encoded matrix without intercept
+encode.design <- function(design, effects = TRUE) {
+
+    old.contrasts <- options("contrasts")
+
+    if (!"data.frame" %in% class(design))
+    {
+        design <- data.frame(design)
+        design[colnames(design)] <- lapply(design[colnames(design)], factor)
+    }
+
+    if (effects)
+        options(contrasts = c("contr.sum", "contr.poly"))
+    else
+        options(contrasts = c("contr.treatment", "contr.poly"))
+    dummy.matrix <- model.matrix( ~ ., data = design)
+    options(contrasts = old.contrasts[[1]])
+    return(dummy.matrix[, -1])
 }

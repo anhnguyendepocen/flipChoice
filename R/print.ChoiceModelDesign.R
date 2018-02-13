@@ -30,7 +30,7 @@ print.ChoiceModelDesign <- function(x, ...) {
     {
         ml.model <- mlogitModel(x)
         print(list(d.score = dScore(x$design),
-                    d.error = DerrorHZ(x$design, sapply(x$attribute.levels, length), effects = TRUE)))
+                    d.error = DerrorHZ(x$design, sapply(x$attribute.levels, length), effects = FALSE)))
         print(summary(ml.model))
     }
     else
