@@ -136,7 +136,7 @@ initialParameterValues <- function(stan.dat)
     if (full.covariance)
     {
         n.pars <- if (!is.null(stan.dat$K))
-            stan.dat$K
+            stan.dat$K - 1
         else
             stan.dat$V
 
@@ -151,12 +151,7 @@ initialParameterValues <- function(stan.dat)
             }
         }
         else
-        {
-            if (!is.null(stan.dat$K))
-                init <- function () list(L_omega = diag(n.pars - 1))
-            else
-                init <- function () list(L_omega = diag(n.pars))
-        }
+            init <- function () list(L_omega = diag(n.pars))
     }
     init
 }
