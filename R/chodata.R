@@ -59,13 +59,14 @@ processChoFile <- function(cho.file, attribute.levels.file,
     {
         output <- addChoiceParameters(X, n.attributes, n.variables,
                                       n.attribute.variables, n.choices,
-                                      var.names, input.prior.mean,
+                                      var.names, all.names, input.prior.mean,
                                       input.prior.sd)
         X <- output$X
         n.attributes <- output$n.attributes
         n.variables <- output$n.variables
         n.attribute.variables <- output$n.attribute.variables
         var.names <- output$var.names
+        all.names <- output$all.names
         input.prior.mean <- output$input.prior.mean
         input.prior.sd <- output$input.prior.sd
     }
@@ -175,20 +176,22 @@ addChoiceParametersX <- function(X)
 
 addChoiceParameters <- function(X, n.attributes, n.variables,
                                 n.attribute.variables, n.choices, var.names,
-                                input.prior.mean, input.prior.sd)
+                                all.names, input.prior.mean, input.prior.sd)
 {
     X <- addChoiceParametersX(X)
     n.attributes <- n.attributes + 1
     n.variables <- n.variables + n.choices - 1
     n.attribute.variables <- c(n.choices, n.attribute.variables)
     var.names <- c(paste0("Alternative: ", 2:n.choices), var.names)
+    all.names <- c(paste0("Alternative: ", 1:n.choices), all.names)
     if (length(input.prior.mean) > 1)
         input.prior.mean <- c(0, input.prior.mean)
     if (length(input.prior.sd) > 1)
         input.prior.sd <- c(5, input.prior.sd)
     list(X = X, n.attributes = n.attributes, n.variables = n.variables,
          n.attribute.variables = n.attribute.variables,
-         var.names = var.names, input.prior.mean = input.prior.mean,
+         var.names = var.names, all.names = all.names,
+         input.prior.mean = input.prior.mean,
          input.prior.sd = input.prior.sd)
 }
 
