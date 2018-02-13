@@ -66,7 +66,7 @@
 #' @importFrom utils getFromNamespace modifyList
 #' @export
 ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanced overlap", "Complete enumeration",
-                                                   "Shortcut2", "Shortcut3", "Efficient"),
+                                                    "Efficient"),
                               attribute.levels = NULL,
                               prior = NULL,
                               n.questions,
