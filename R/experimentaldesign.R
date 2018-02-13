@@ -30,10 +30,7 @@
 #'     questions.
 #' @param labeled.alternatives Logical; whether the first attribute
 #'     labels the alternatives.
-#' @param output One of \code{"Attributes and levels"},
-#'     \code{"Prohibitions"}, \code{"Unlabeled design"},
-#'     \code{"Labeled design"}, \code{"Balances and overlaps"}, or
-#'     \code{"Standard errors"}.
+#' @param output One of \code{"Labeled design"} or \code{"Inputs"}.
 #' @param seed Integer; random seed to be used by the algorithms.
 #' @return A list with components
 #' \itemize{
@@ -61,8 +58,7 @@
 #' @examples
 #' x <- CreateExperiment(c(3, 5, 7, 10), 20)
 #' ChoiceModelDesign("Random", x$attribute.levels, n.questions = 30,
-#'     alternatives.per.question = 4, prohibitions = x$prohibitions,
-#'     output = "Unlabeled design")
+#'     alternatives.per.question = 4, prohibitions = x$prohibitions)
 #' @importFrom utils getFromNamespace modifyList
 #' @export
 ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanced overlap", "Complete enumeration",
@@ -75,7 +71,7 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
                               prohibitions = NULL,
                               none.alternatives = 0,
                               labeled.alternatives = FALSE,
-                              output = "Unlabeled design",
+                              output = "Labeled design",
                               seed = 54123) {
 
 
@@ -86,9 +82,10 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
     design.function <- getFromNamespace(paste0(function.name, "Design"),
                                         ns = "flipChoice")
 
-    ## If labeled.alternatives then alternatives.per.question is calculated and not supplied
-    if (labeled.alternatives)
-        alternatives.per.question <- length(attribute.levels[[1]])
+    if (!is.null(prior) && design.algorithm != "Efficient")
+        warning(gettextf("Prior data can only be used with algorithm %s and will be ignored.",
+                         sQuote("Efficient")))
+
 
     if (is.list(attribute.levels))
     {
@@ -96,7 +93,8 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
             names(attribute.levels) <- paste("Attribute", seq(length(attribute.levels)))
         levels.per.attribute <- sapply(attribute.levels, length)
         names(levels.per.attribute) <- names(attribute.levels)
-    }else if (is.character(attribute.levels))
+    }
+    else if (is.character(attribute.levels))
     {
         parsed.data <- parsePastedData(attribute.levels, n.sim = 10, coding = "D",
                                        labeled.alternatives)
@@ -104,38 +102,24 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
         attribute.levels <- parsed.data[["attribute.list"]]
         if (is.null(prior))
             prior <- parsed.data[["prior"]]
-
-        if (!is.null(prior) && design.algorithm != "Efficient")
-            warning(gettextf("Prior data can only be used with algorithm %s and will be ignored.",
-                    sQuote("Efficient")))
     }
     else  # attribute levels input with prior
-        levels.per.attribute <- NULL
+        stop("Input must be either a list of vectors containing the labels of levels for each",
+             " attribute, with names corresponding to the attribute labels; or a character",
+             "matrix with first row containing attribute names and subsequent rows containing attribute levels.")
+        #levels.per.attribute <- NULL
 
-    if (is.null(alternatives.per.question))
+    # If labeled.alternatives then alternatives.per.question is calculated and not supplied
+    if (labeled.alternatives)
         alternatives.per.question <- length(attribute.levels[[1]])
 
-    ## Convert from labels to numeric and factors
+    # Convert prohibitions from labels to numeric and factors
     if (!is.null(prohibitions) && length(prohibitions) > 0 && design.algorithm %in% c("Efficient", "Shortcut"))
         warning(gettextf("Prohibitions are not yet implemented for algorithm %s and will be ignored.",
                     sQuote(design.algorithm)))
 
     prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
     integer.prohibitions <- data.frame(lapply(prohibitions, as.integer))
-
-    # WHILE TESTING THIS FUNCTION I AM RETURNING THE FOLLOWING TWO OUTPUTS WITHOUT
-    # CALCULATING THE ChoiceModelDesign OBJECT (WHICH MAY TAKE A LONG TIME)
-    if (output == "Attributes and levels")
-    {
-        max.levels <- max(sapply(attribute.levels, length))
-        levels.table <- sapply(attribute.levels, function (x) c(x,
-                                                                character(max.levels - length(x))))
-        rownames(levels.table) <- paste("Level", seq(max.levels))
-        return(levels.table)
-    }
-    if (output == "Prohibitions")
-        return(prohibitions)
-
 
     # Call the algorithm to create the design
     # Design algorithms     - use only unlabeled levels (i.e. integer level indices)
@@ -154,8 +138,7 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
 
     design <- do.call(design.function, args)
 
-    result <- list(design = design,
-                   design.algorithm = design.algorithm,
+    result <- list(design.algorithm = design.algorithm,
                    attribute.levels = attribute.levels,
                    prohibitions = prohibitions,
                    n.questions = n.questions,
@@ -166,16 +149,44 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
 
     if (design.algorithm == "Efficient")
     {
-        result$design <- design$design
         result$model.matrix <- design$model.matrix
         result$Derror <- design$error
+        design <- design$design
     }
-    result$design <- addVersions(result$design, n.versions)
+
+    # Add designs and diagnostics
+    result$design <- addVersions(design, n.versions)
     result$design.with.none <- addNoneAlternatives(result$design, none.alternatives,
                                                    alternatives.per.question)
+    result$labeled.design <- labelDesign(result$design.with.none, attribute.levels)
+    result$balances.and.overlaps <- balancesAndOverlaps(result)
+
+    # TODO incorporate None with d.error and standard.errors
+    result$d.error <- DerrorHZ(result$design, sapply(result$attribute.levels, length), effects = FALSE)
+    ml.model <- mlogitModel(result)
+    result$standard.errors <- summary(ml.model)$CoefTable[, 1:2]
 
     class(result) <- "ChoiceModelDesign"
     return(result)
+}
+
+
+#' @export
+#' @method print ChoiceModelDesign
+#' @noRd
+print.ChoiceModelDesign <- function(x, ...) {
+
+    # Output a table with attributes along the columns and levels along the rows
+    if (x$output == "Inputs")
+    {
+        max.levels <- max(sapply(x$attribute.levels, length))
+        levels.table <- sapply(x$attribute.levels, function (z) c(z, rep("", max.levels - length(z))))
+        rownames(levels.table) <- paste("Level", seq.int(max.levels))
+        print(list(levels.table = levels.table, prohibitions = x$prohibitions))
+        return()
+    }
+
+    print(x$labeled.design)
 }
 
 ######################### HELPER FUNCTIONS ###########################

@@ -1,3 +1,4 @@
+# Simple method as produced by AlgDesign package
 #' @importFrom stats model.matrix
 dScore <- function(design)
 {
@@ -65,10 +66,6 @@ DerrorHZ <- function(design.matrix, attribute.levels, effects = TRUE, prior = NU
 }
 
 
-
-
-
-
 logitChoiceProbs = function(coded.matrix, prior, number.alternatives, number.tasks) {
     if (ncol(coded.matrix) != length(prior)) {
         stop("Number of columns in coded.matrix does not match the number of prior parameters")
@@ -98,7 +95,7 @@ rep.row = function(x, n) {
     matrix(rep(x, each = n), nrow = n)
 }
 
-# Profuce and encoded matrix without intercept
+# Produce an encoded matrix without intercept
 encode.design <- function(design, effects = TRUE) {
 
     old.contrasts <- options("contrasts")

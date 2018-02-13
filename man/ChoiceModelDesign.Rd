@@ -8,7 +8,7 @@ ChoiceModelDesign(design.algorithm = c("Random", "Shortcut",
   "Balanced overlap", "Complete enumeration", "Efficient"),
   attribute.levels = NULL, prior = NULL, n.questions, n.versions = 1,
   alternatives.per.question, prohibitions = NULL, none.alternatives = 0,
-  labeled.alternatives = FALSE, output = "Unlabeled design", seed = 54123)
+  labeled.alternatives = FALSE, output = "Labeled design", seed = 54123)
 }
 \arguments{
 \item{design.algorithm}{The algorithm used to create the
@@ -48,10 +48,7 @@ questions.}
 \item{labeled.alternatives}{Logical; whether the first attribute
 labels the alternatives.}
 
-\item{output}{One of \code{"Attributes and levels"},
-\code{"Prohibitions"}, \code{"Unlabeled design"},
-\code{"Labeled design"}, \code{"Balances and overlaps"}, or
-\code{"Standard errors"}.}
+\item{output}{One of \code{"Labeled design"} or \code{"Inputs"}.}
 
 \item{seed}{Integer; random seed to be used by the algorithms.}
 }
@@ -86,6 +83,5 @@ If \code{prior} is supplied and \code{design.algorithm ==
 \examples{
 x <- CreateExperiment(c(3, 5, 7, 10), 20)
 ChoiceModelDesign("Random", x$attribute.levels, n.questions = 30,
-    alternatives.per.question = 4, prohibitions = x$prohibitions,
-    output = "Unlabeled design")
+    alternatives.per.question = 4, prohibitions = x$prohibitions)
 }
