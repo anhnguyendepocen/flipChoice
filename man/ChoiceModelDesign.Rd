@@ -5,11 +5,10 @@
 \title{Choice modeling experimental design}
 \usage{
 ChoiceModelDesign(design.algorithm = c("Random", "Shortcut",
-  "Balanced overlap", "Complete enumeration", "Shortcut2", "Shortcut3",
-  "Efficient"), attribute.levels = NULL, prior = NULL, n.questions,
-  n.versions = 1, alternatives.per.question, prohibitions = NULL,
-  none.alternatives = 0, labeled.alternatives = FALSE,
-  output = "Unlabeled design", seed = 54123)
+  "Balanced overlap", "Complete enumeration", "Efficient"),
+  attribute.levels = NULL, prior = NULL, n.questions, n.versions = 1,
+  alternatives.per.question, prohibitions = NULL, none.alternatives = 0,
+  labeled.alternatives = FALSE, output = "Unlabeled design", seed = 54123)
 }
 \arguments{
 \item{design.algorithm}{The algorithm used to create the
