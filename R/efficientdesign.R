@@ -111,7 +111,7 @@ efficientDesign <- function(
     out$model.matrix <- out$design
 
     out$design <- modelMatrixToUnlabeledDesign(out$design, levels.per.attribute,
-                                                alternatives.per.question, FALSE) # TODO remove last arg from this function
+                                                alternatives.per.question)
     out
 }
 
@@ -129,25 +129,20 @@ pastedAttributesToVector <- function(attributes)
 modelMatrixToUnlabeledDesign <- function(
                                    model,
                                    lvls,
-                                   alternatives.per.question,
-                                   labeled.alternatives)
+                                   alternatives.per.question)
 {
     attr.list <- lapply(lvls, seq.int)
     code <- ifelse(any(model == -1), "E", "D")
-    alt.specific.const <- labeled.alternatives + integer(alternatives.per.question)
+    alt.specific.const <- integer(alternatives.per.question)
     alt.specific.const[1] <- 0
-    idx <- if(labeled.alternatives)
-                 -1
-              else
-                 1:length(attr.list)
+    idx <- 1:length(attr.list)
     out <- decode(model, attr.list[idx], coding = rep(code, length(lvls[idx])),
                   alt.cte = alt.specific.const)
     ## out <- as.data.frame(out)
     question <- as.numeric(sub("set([0-9]+)[.]alt[0-9]+", "\\1", rownames(model)))
     alternative <- as.numeric(sub("set[0-9]+[.]alt([0-9]+)", "\\1", rownames(model)))
     out <- cbind(question, alternative, out)
-    colnames(out) <- c("question", if (!labeled.alternatives) "alternative",
-                       names(lvls))
+    colnames(out) <- c("question", "alternative", names(lvls))
     ## rownames(out) <- rownames(model)
     out
 }
