@@ -65,8 +65,7 @@
 #'     output = "Unlabeled design")
 #' @importFrom utils getFromNamespace modifyList
 #' @export
-ChoiceModelDesign <- function(
-                              design.algorithm = c("Random", "Shortcut", "Balanced overlap", "Complete enumeration",
+ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanced overlap", "Complete enumeration",
                                                    "Shortcut2", "Shortcut3", "Efficient"),
                               attribute.levels = NULL,
                               prior = NULL,
@@ -115,11 +114,9 @@ ChoiceModelDesign <- function(
 
     if (is.null(alternatives.per.question))
         alternatives.per.question <- length(attribute.levels[[1]])
-    if (!is.null(prohibitions) && sum(dim(prohibitions)) == 0)
-        prohibitions <- NULL
 
     ## Convert from labels to numeric and factors
-    if (!is.null(prohibitions) && design.algorithm %in% c("Efficient", "Shortcut"))
+    if (!is.null(prohibitions) && length(prohibitions) > 0 && design.algorithm %in% c("Efficient", "Shortcut"))
         warning(gettextf("Prohibitions are not yet implemented for algorithm %s and will be ignored.",
                     sQuote(design.algorithm)))
 
@@ -187,7 +184,7 @@ ChoiceModelDesign <- function(
 # and expand "" or "All" to all levels of the attribute.
 encodeProhibitions <- function(prohibitions, attribute.levels) {
 
-    if (is.null(prohibitions))
+    if (is.null(prohibitions) || length(prohibitions) == 0)
         return(data.frame())
 
     prohibitions[prohibitions == ""] <- "All"
@@ -338,7 +335,7 @@ addNoneAlternatives <- function(design, none.alternatives, alternatives.per.ques
     design.with.none[new.row.indices, ] <- design
 
     colnames(design.with.none) <- colnames(design)
-    n.versions < - design[NROW(design), 1]
+    n.versions <- design[NROW(design), 1]
     design.with.none[, 1] <- rep(seq(n.versions), each = NROW(design.with.none) / n.versions)
     design.with.none[, 2] <- rep(seq(n / alternatives.per.question), each = alternatives.per.question + none.alternatives)
     design.with.none[, 3] <- rep(seq(alternatives.per.question + none.alternatives), n / alternatives.per.question)

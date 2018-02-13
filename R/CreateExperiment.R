@@ -23,7 +23,10 @@ CreateExperiment <- function(levels.per.attribute, n.prohibitions = 0, seed = 12
     names(attribute.levels) <- attributes
 
     # may produce duplicate prohibitions
-    prohibitions <- t(replicate(n.prohibitions, sapply(attribute.levels, sample, 1)))
+    if (n.prohibitions <= 0)
+        prohibitions <- data.frame()
+    else
+        prohibitions <- t(replicate(n.prohibitions, sapply(attribute.levels, sample, 1)))
 
     experiment <- list(attribute.levels = attribute.levels, prohibitions = prohibitions)
 }
