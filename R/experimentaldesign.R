@@ -259,7 +259,7 @@ balancesAndOverlaps <- function(cmd) {
     pairs <- unlist(pairs, recursive = FALSE)
     pairs <- pairs[!is.na(pairs)]
 
-    overlaps = countOverlaps(cmd$design)
+    overlaps = countOverlaps(cmd$design, cmd$alternatives.per.question)
 
     return(list(singles = singles, pairs = pairs, overlaps = overlaps))
 }
@@ -297,17 +297,21 @@ labelPairBalanceLevels <- function(pairs, attribute.levels) {
     return(pairs)
 }
 
-countOverlaps <- function(design) {
+countOverlaps <- function(design, alternatives.per.question) {
     # table of counts for each level by question, listed for each attribute
     design <- design[, c(-1, -2, -3)]
-    columns <- split(design, seq(NCOL(design)))
-    overlaps <- lapply(columns, table, design[, 1])
+    columns <- split(design, col(design))
+    question <- rep(seq(NROW(design) / alternatives.per.question), each = alternatives.per.question)
+    overlaps <- lapply(columns, table, question)
+
     # duplicated levels
     overlaps <- lapply(overlaps, ">=", 2)
     # overlaps for questions (rows) by attribute (cols)
     overlaps <- sapply(overlaps, function(x) apply(x, 2, any))
+    prop.qn.overlap.by.attr <- colSums(overlaps) / nrow(overlaps)
+    names(prop.qn.overlap.by.attr) <- colnames(design)
 
-    return(colSums(overlaps) / nrow(overlaps))
+    return(prop.qn.overlap.by.attr)
 }
 
 flattenDesign <- function(design) {
