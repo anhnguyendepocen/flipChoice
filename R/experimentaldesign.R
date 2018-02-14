@@ -389,7 +389,7 @@ mlogitModel <- function(cmd, choices = NULL) {
     mlogit.df <- mlogit.data(labeled, choice = "Choice", shape = "long", varying = 3:ncol(labeled),
                      alt.var = "Alternative", id.var = "Question", drop.index = TRUE)
 
-    form <- paste("Choice ~ ", paste(colnames(mlogit.df)[1:ncol(mlogit.df) - 1], collapse = "+"), "| -1")
+    form <- paste("Choice ~ ", paste0("`", colnames(mlogit.df)[1:ncol(mlogit.df) - 1], "`", collapse = "+"), "| -1")
     ml.model <- mlogit(as.formula(form), data = mlogit.df)
     return(ml.model)
 }

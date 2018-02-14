@@ -5,7 +5,7 @@ manual.attribute.levels <- list(c("yamaha", "honda", "ducati", "triumph", "bmw",
                          c("125cc", "250cc", "500cc"),
                          c("manual", "automatic"),
                          c("red", "green", "blue", "yellow", "black", "white", "silver"))
-names(manual.attribute.levels) <- c("brand", "engine", "transmission", "colour")
+names(manual.attribute.levels) <- c("brand", "engine size", "transmission", "colour")
 manual.prohibitions <- matrix(c("ducati", "125cc", "manual", "red", "ducati", "", "manual", "red", "honda", "All", "", "yellow"),
                        ncol = 4, byrow = TRUE)
 
