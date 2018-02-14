@@ -318,9 +318,10 @@ print.FitChoice <- function(x, ...)
 
     subtitle <- if (!is.na(x$out.sample.accuracy))
         paste0("Prediction accuracy (leave-", x$n.questions.left.out , "-out cross-validation): ",
-               FormatAsPercent(x$out.sample.accuracy, 3))
+               FormatAsPercent(x$out.sample.accuracy, decimals = 1))
     else
-        paste0("Prediction accuracy (in-sample): ", FormatAsPercent(x$in.sample.accuracy, 3))
+        paste0("Prediction accuracy (in-sample): ",
+               FormatAsPercent(x$in.sample.accuracy, decimals = 1))
 
     RespondentParametersTable(x$respondent.parameters, title, subtitle, footer)
 }
