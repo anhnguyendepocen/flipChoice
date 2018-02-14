@@ -3,13 +3,13 @@
 completeEnumerationDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
                                       labeled.alternatives) {
     return(enumeratedDesign(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
-                            labeled.alternatives, cost.weightings = c(2, 4, 1)))
+                            labeled.alternatives, cost.weightings = c(1, 1, 1)))
 }
 
 balancedOverlapDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
                                       labeled.alternatives) {
     return(enumeratedDesign(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
-                            labeled.alternatives, cost.weightings = c(2, 4, 1)))
+                            labeled.alternatives, cost.weightings = c(4, 4, 1)))
 }
 
 
