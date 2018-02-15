@@ -35,14 +35,32 @@
 #' @return A list with components
 #' \itemize{
 #' \item \code{design} - a numeric array of dimensions (number of questions by alternatives per
-#' question by number of attributes) where each value is the index of a level.
+#' question by number of attributes) where each value is the index of a level. Ignoring any none
+#' alternatives.
+#' \item \code{design.with.none} - as per \code{design} except one additional row per none alternative
+#' is added to each question with \code{NA} for all attribute levels.
+#' \item \code{labeled.design} - as per \code{design.with.none} except indices of levels are
+#' replaced by their labels.
 #' \item \code{design.algorithm} - as per input.
 #' \item \code{attribute.levels} - as per input.
 #' \item \code{prohibitions} - as per input.
+#' \item \code{n.questions} - as per input.
+#' \item \code{n.versions} - as per input.
+#' \item \code{alternatives.per.question} - as per input.
+#' \item \code{none.alternatives} - as per input.
 #' \item \code{output} - as per input.
-#' \item \code{Derror} - The D-error of \code{design}.
-#' \item \code{model.matrix} - The model matrix of dummy coded variables for each alternative
+#' \item \code{db.error} - the Db-error of \code{design}.
+#' \item \code{d.error} - the D-error of \code{design}.
+#' \item \code{model.matrix} - the model matrix of dummy coded variables for each alternative
 #' in every choice set.
+#' \item \code{balances.and.overlaps} a list with components
+#'     \itemize{
+#'     \item\code{singles} a \code{list} of the counts of each level per attribute.
+#'     \item\code{pairs} a \code{list} of the counts of pairwise occurences of levels
+#'     for each pair of attributes.
+#'     \item\code{overlaps} a \code{vector} of the percentage of questions that include
+#'     one or more duplicated level per attribute.
+#'     }
 #' }
 #'
 #' @details If \code{prior} is supplied and \code{design.algorithm ==
@@ -150,7 +168,7 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
     if (design.algorithm == "Efficient")
     {
         result$model.matrix <- design$model.matrix
-        result$Derror <- design$error
+        result$db.error <- design$error
         design <- design$design
     }
 
@@ -259,7 +277,8 @@ balancesAndOverlaps <- function(cmd) {
     pairs <- unlist(pairs, recursive = FALSE)
     pairs <- pairs[!is.na(pairs)]
 
-    overlaps = countOverlaps(cmd$design, cmd$alternatives.per.question)
+    overlaps <- countOverlaps(cmd$design, cmd$alternatives.per.question,
+                             sapply(cmd$attribute.levels, length))
 
     return(list(singles = singles, pairs = pairs, overlaps = overlaps))
 }
@@ -268,7 +287,10 @@ balancesAndOverlaps <- function(cmd) {
 singleLevelBalances <- function(design) {
     singles <- apply(design[, 4:ncol(design)], 2, table)
     if (!is.list(singles))
+    {
         singles <- split(singles, rep(1:ncol(singles), each = nrow(singles)))
+        names(singles) <- colnames(design)[4:ncol(design)]
+    }
     return(singles)
 }
 
@@ -297,7 +319,8 @@ labelPairBalanceLevels <- function(pairs, attribute.levels) {
     return(pairs)
 }
 
-countOverlaps <- function(design, alternatives.per.question) {
+#' @importFrom flipFormat FormatAsPercent
+countOverlaps <- function(design, alternatives.per.question, levels.per.attribute) {
     # table of counts for each level by question, listed for each attribute
     design <- design[, c(-1, -2, -3)]
     columns <- split(design, col(design))
@@ -308,8 +331,8 @@ countOverlaps <- function(design, alternatives.per.question) {
     overlaps <- lapply(overlaps, ">=", 2)
     # overlaps for questions (rows) by attribute (cols)
     overlaps <- sapply(overlaps, function(x) apply(x, 2, any))
-    prop.qn.overlap.by.attr <- colSums(overlaps) / nrow(overlaps)
-    names(prop.qn.overlap.by.attr) <- colnames(design)
+    prop.qn.overlap.by.attr <- FormatAsPercent(colSums(overlaps) / nrow(overlaps), decimals = 2)
+    names(prop.qn.overlap.by.attr) <- paste0(colnames(design), " (", levels.per.attribute, ")")
 
     return(prop.qn.overlap.by.attr)
 }
@@ -359,7 +382,7 @@ addNoneAlternatives <- function(design, none.alternatives, alternatives.per.ques
 
 addVersions <- function(design, n.versions) {
     rows.per.version <- NROW(design) / n.versions
-    version.design <- cbind(version = rep(seq(n.versions), each = rows.per.version), design)
+    version.design <- cbind(Version = rep(seq(n.versions), each = rows.per.version), design)
     version.design[, 2] <- rep(design[1:rows.per.version, 1], n.versions)
     return(version.design)
 }
