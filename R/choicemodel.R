@@ -301,8 +301,7 @@ print.FitChoice <- function(x, ...)
     footer <- paste0(footer, "Choices per question: ", x$n.choices, "; ")
     footer <- paste0(footer, "Number of attributes: ", x$n.attributes, "; ")
     footer <- paste0(footer, "Number of variables: ", x$n.variables, "; ")
-    footer <- paste0(footer, "Blue and red bars indicate positive and ",
-                     "negative parameters respectively; ")
+    footer <- paste0(footer, "Number of classes: ", x$n.classes, "; ")
     if (x$class.match.fail)
         footer <- paste0(footer, "Parameter statistics not available; ")
     else
