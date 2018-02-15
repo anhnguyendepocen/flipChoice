@@ -142,7 +142,7 @@ modelMatrixToUnlabeledDesign <- function(
     question <- as.numeric(sub("set([0-9]+)[.]alt[0-9]+", "\\1", rownames(model)))
     alternative <- as.numeric(sub("set[0-9]+[.]alt([0-9]+)", "\\1", rownames(model)))
     out <- cbind(question, alternative, out)
-    colnames(out) <- c("question", "alternative", names(lvls))
+    colnames(out) <- c("Question", "Alternative", names(lvls))
     ## rownames(out) <- rownames(model)
     out
 }
