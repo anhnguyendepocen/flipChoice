@@ -79,7 +79,8 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                            hb.keep.samples = FALSE, hb.stanfit = TRUE,
                            hb.prior.mean = 0, hb.prior.sd = 5,
                            hb.warnings = TRUE, hb.max.draws = 100,
-                           include.choice.parameters = TRUE, ...)
+                           include.choice.parameters = TRUE,
+                           reduced = FALSE, ...)
 {
     if (!is.null(weights))
         stop("Weights are not able to be applied for Hierarchical Bayes.")
@@ -88,7 +89,7 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
 
     dat <- if (!is.null(experiment.data))
         processExperimentData(experiment.data, subset, weights,
-                              tasks.left.out, seed, hb.prior.mean, hb.prior.sd)
+                              tasks.left.out, seed, hb.prior.mean, hb.prior.sd, reduced)
     else if (!is.null(cho.file) && !is.null(attribute.levels.file))
         processChoFile(cho.file, attribute.levels.file,
                        subset, weights, tasks.left.out, seed,
@@ -106,7 +107,7 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                                            hb.max.tree.depth, hb.adapt.delta,
                                            seed, hb.keep.samples, n.classes,
                                            hb.stanfit, normal.covariance,
-                                           hb.warnings, hb.max.draws, ...)
+                                           hb.warnings, hb.max.draws, reduced, ...)
 
     end.time <- proc.time()
 

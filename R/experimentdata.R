@@ -2,7 +2,7 @@
 processExperimentData <- function(experiment.data, subset, weights,
                                   n.questions.left.out, seed,
                                   input.prior.mean,
-                                  input.prior.sd)
+                                  input.prior.sd, reduced = FALSE)
 {
     non.missing <- !is.na(rowSums(sapply(experiment.data, as.numeric)))
 
@@ -33,8 +33,18 @@ processExperimentData <- function(experiment.data, subset, weights,
 
     checkPriorParameters(input.prior.mean, input.prior.sd, n.attributes)
 
-    X.list <- createDesignMatrix(attribute.data, n.attributes, n.questions,
-                                 n.choices, n.variables, input.prior.mean)
+    if (!reduced)
+        X.list <- createDesignMatrix(attribute.data, n.attributes, n.questions,
+                                     n.choices, n.variables, input.prior.mean)
+    else
+         X.list <- createReducedDesignMatrix(experiment.data, n.attributes, n.questions,
+                                                 n.choices, n.variables, input.prior.mean)
+    if (reduced)
+    {
+        n.variables <- dim(X.list$X)[4]
+        n.raw.variables <- dim(X.list$X)[4]
+        var.names <- dimnames(X.list$X)[[4]]
+    }
     variable.scales <- X.list$variable.scales
     prior.mean <- processInputPrior(input.prior.mean, n.raw.variables,
                                     n.attributes, n.attribute.variables,
@@ -146,6 +156,58 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions,
         else
             c <- c + 1
     }
+    list(X = X, variable.scales = variable.scales)
+}
+
+createReducedDesignMatrix <- function(data, n.attributes, n.questions,
+                               n.choices, n.variables, input.prior.mean)
+{
+    ## n.qc <- n.questions * n.choices
+    attr.idx <- !colnames(data) %in% c("Choices", "Alternative")
+    alts.per.q <- length(unique(apply(data[,
+                                                colnames(data) %in% "Alternative"], 2, unique)))
+    # alts.per.q <- n.choices
+    n.q <- sum(colnames(data) %in% "Alternative") / alts.per.q
+    ## n.q <- n.questions
+    n.versions <- nrow(data)
+    n.r <- nrow(data)
+    var.names <- unique(colnames(data)[attr.idx])
+    variable.scales <- rep(1, length(var.names))
+
+    oX <- data.frame(respondent = rep(1:n.r, each = n.q*alts.per.q),
+                     version = rep(1:n.r, each = n.q*alts.per.q),
+                     question = rep(1:8, each = alts.per.q, times = n.versions),
+                     alternative = rep(1:alts.per.q, times = n.q*n.versions))
+    scale.vals <- NULL
+    for (i in var.names)
+    {
+        tmat <- data[, colnames(data) %in% i]
+        if (!is.numeric(tmat[, 1]))
+        {
+            tmat <- as.matrix(tmat)
+            labs <- unique(c(unclass(tmat)))
+            oX <- cbind(oX, factor(as.vector(t(tmat)), labels = labs))
+        }else
+        {
+            sv <- 0.5 * scale(as.vector(t(tmat)))
+            scale.vals <- c(scale.vals, 2 * attr(sv, "scaled:scale"))
+            names(scale.vals)[length(scale.vals)] <- i
+            oX <- cbind(oX, sv)
+        }
+    }
+    colnames(oX)[-(1:4)] <- var.names
+    frml <- as.formula(paste0("~-1 + alternative +", paste(var.names, collapse = "+")))
+    mm <- model.matrix(frml, oX)
+    ## convert to array for Justin's stan code
+    X <- array(dim = c(n.r, n.q, alts.per.q, ncol(mm)))
+    for (i in 1:n.r)
+        for (j in 1:n.q)
+            for (k in 1:alts.per.q)
+                X[i, j, k, ] <- mm[(i-1)*n.q*alts.per.q + (j-1)*alts.per.q + k, ]
+    dimnames(X)[[4]] <- colnames(mm)
+    variable.scales <- rep.int(1, ncol(mm))
+    names(variable.scales) <- colnames(mm)
+    variable.scales[names(scale.vals)] <- scale.vals
     list(X = X, variable.scales = variable.scales)
 }
 

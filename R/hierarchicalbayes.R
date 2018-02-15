@@ -7,7 +7,8 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                          include.stanfit = TRUE,
                                          normal.covariance = "Full",
                                          show.stan.warnings = TRUE,
-                                         max.draws = 100, ...)
+                                         max.draws = 100,
+                                         reduced = FALSE, ...)
 {
     # We want to replace this call with a proper integration of rstan into this package
     require(rstan)
@@ -25,7 +26,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     else
     {
         stan.model <- NULL
-        stan.file <- stanFileName(n.classes, normal.covariance)
+        stan.file <- stanFileName(n.classes, normal.covariance, reduced)
     }
 
     on.warnings <- GetStanWarningHandler(show.stan.warnings)
@@ -98,11 +99,15 @@ RunStanSampling <- function(stan.dat, n.iterations, n.chains,
     }
     else # Not R servers
     {
+        ##:ess-bp-start::browser@nil:##
+browser(expr=is.null(.ESSBP.[["@6@"]]));##:ess-bp-end:##
         result <- stan(file = stan.file, data = stan.dat, iter = n.iterations,
                        chains = n.chains, seed = seed, pars = pars,
                        control = list(max_treedepth = max.tree.depth,
                                       adapt_delta = adapt.delta),
                        init = init, ...)
+    ##:ess-bp-start::browser@nil:##
+browser(expr=is.null(.ESSBP.[["@7@"]]));##:ess-bp-end:##
     }
     result
 }
@@ -228,12 +233,14 @@ ComputeRespPars <- function(stan.fit, var.names, subset,
     result
 }
 
-stanFileName <- function(n.classes, normal.covariance)
+stanFileName <- function(n.classes, normal.covariance, reduced = FALSE)
 {
     if (n.classes == 1)
     {
-        if (normal.covariance == "Full")
+        if (normal.covariance == "Full" && !reduced)
             result <- "choicemodel.stan"
+        else if (normal.covariance == "Full" && reduced)
+            result <- "choicemodel3r.stan"
         else
             result <- "diagonal.stan"
     }
