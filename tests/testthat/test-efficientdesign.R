@@ -18,7 +18,7 @@ test_that("3*3*2/4/10 dummy coding; old interface",
                              attribute.levels = pa, prior = prior, n.questions = n.q,
                              alternatives.per.question = apq, seed = seed)
     expect_identical(out, out2)
-    expect_equal(out$Derror, .52, tolerance = .0015)
+    expect_equal(out$db.error, .52, tolerance = .0015)
     expect_true(all(out$model.matrix %in% c(0, 1)))
     expect_equal(colnames(out$design)[-3:-1], pa[1, ])
     expect_equal(unique(out$design[, 2]), 1:n.q)
@@ -45,7 +45,7 @@ out <- ChoiceModelDesign(design.algorithm = "Efficient",
 test_that("Some prior inputs missing",
 {
 
-    expect_equal(out$Derror, .945, tolerance = .01)
+    expect_equal(out$db.error, .945, tolerance = .01)
     expect_true(all(out$model.matrix %in% c(0, 1)))
     expect_equal(colnames(out$design)[-3:-1], vnames)
     expect_equal(unique(out$design[, 2]), 1:n.q)
@@ -126,7 +126,7 @@ test_that("Efficient: prior means and variances old interface",
     out <- ChoiceModelDesign(design.algorithm = "Efficient", attribute.levels = pa,
                              prior = prior, n.questions = 8, alternatives.per.question = 3,
                                        seed = seed)
-    expect_equal(out$Derror, 2.43, tolerance = 1e-3)
+    expect_equal(out$db.error, 2.43, tolerance = 1e-3)
 })
 
 test_that("Efficient: none alternatives",
@@ -169,7 +169,7 @@ test_that("Efficient: labeled alternatives",
                                    n.sim = 10)
     expect_equal(dim(out$design), c(lpa2[1]*n.q, 2 + length(lpa2)),
                  check.attributes = FALSE)
-    expect_equal(colnames(out$design), c("question", "alternative", names(lpa2)))
+    expect_equal(colnames(out$design), c("Question", "Alternative", names(lpa2)))
     expect_equal(dim(out$model.matrix), c(lpa2[1]*n.q,
                                           sum(lpa2) - length(lpa2)),
                  check.attributes = FALSE)
@@ -187,7 +187,7 @@ test_that("Efficient: labeled alternatives",
     apq <- sum(pa[-1, 1] != "")
     expect_equal(dim(out2$design), c(apq*n.q, 3 + ncol(pa)),
                  check.attributes = FALSE)
-    expect_equal(colnames(out2$design), c("version", "question", "alternative", pa[1, ]))
+    expect_equal(colnames(out2$design), c("Version", "Question", "Alternative", pa[1, ]))
     expect_equal(dim(out2$model.matrix), c(apq*n.q,
                                           n.coef),
                  check.attributes = FALSE)
