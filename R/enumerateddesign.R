@@ -27,7 +27,7 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
     n.attributes <- length(levels.per.attribute)
     level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
     design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
-    dimnames(design)[[3]] <- names(levels.per.attribute)
+    dimnames(design)[[3]] <- if (n.attributes == 1) list(names(levels.per.attribute)) else names(levels.per.attribute)
 
     # enumerate all alternatives
     enumeration <- as.matrix(expand.grid(level.sequences))
@@ -49,12 +49,15 @@ enumeratedDesign <- function(levels.per.attribute, n.questions, alternatives.per
     # pairs[[i]][[j]]] contains the counts of attribute i and attribute j
     # if i <= j then pairs[[i]][[j]] == NA and not used
     pairs <- replicate(n.attributes, rep(list(NA), n.attributes), simplify = FALSE)
-    for (i in 1:(n.attributes - 1))
-        for (j in (i + 1):n.attributes) {
-            pairs[[i]][[j]] <- matrix(0, nrow = levels.per.attribute[i], ncol = levels.per.attribute[j])
-            names(pairs[[i]])[[j]] <- paste0(names(levels.per.attribute)[i], "/", names(levels.per.attribute)[j])
-        }
-    pairs.singles.ratio <- (n.attributes - 1) / 2
+    if (n.attributes > 1)
+    {
+        for (i in 1:(n.attributes - 1))
+            for (j in (i + 1):n.attributes) {
+                pairs[[i]][[j]] <- matrix(0, nrow = levels.per.attribute[i], ncol = levels.per.attribute[j])
+                names(pairs[[i]])[[j]] <- paste0(names(levels.per.attribute)[i], "/", names(levels.per.attribute)[j])
+            }
+    }
+    pairs.singles.ratio <- if (n.attributes > 1) (n.attributes - 1) / 2 else 1
 
     for (question in seq(n.questions)) {
 
@@ -110,10 +113,13 @@ addSingles <- function(alternative, singles) {
 
 # Increment the pairwise counts of levels after adding a new alternative to the design
 addPairs <- function(alternative, pairs) {
-    for (i in 1:(length(alternative) - 1))
-        for (j in (i + 1):length(alternative))
-            pairs[[i]][[j]][alternative[i], alternative[j]] <- pairs[[i]][[j]][alternative[i], alternative[j]] + 1
+    if (length(alternative) > 1)
+    {
+        for (i in 1:(length(alternative) - 1))
+            for (j in (i + 1):length(alternative))
+                pairs[[i]][[j]][alternative[i], alternative[j]] <- pairs[[i]][[j]][alternative[i], alternative[j]] + 1
         return(pairs)
+    }
 }
 
 
@@ -190,9 +196,12 @@ singlePrecomputed <- function(alternative, precomputed) {
 
 pairPrecomputed <- function(alternative, precomputed) {
     cost <- 0
-    for (i in 1:(length(alternative) - 1)) {
-        for (j in (i + 1):length(alternative)) {
-            cost <- cost + precomputed[[i]][[j]][alternative[i], alternative[j]]
+    if (length(alternative) > 1)
+    {
+        for (i in 1:(length(alternative) - 1)) {
+            for (j in (i + 1):length(alternative)) {
+                cost <- cost + precomputed[[i]][[j]][alternative[i], alternative[j]]
+            }
         }
     }
     return(cost)

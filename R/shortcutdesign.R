@@ -11,7 +11,7 @@ shortcutDesign <- function(levels.per.attribute, n.questions, alternatives.per.q
     level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
 
     design <- array(0, dim = c(n.questions, alternatives.per.question, n.attributes))
-    dimnames(design)[[3]] <- names(levels.per.attribute)
+    dimnames(design)[[3]] <- if (n.attributes == 1) list(names(levels.per.attribute)) else names(levels.per.attribute)
     design.counts <- sapply(levels.per.attribute, function(x) rep(0, x), simplify = FALSE) # number of times each level shown in design
 
     for (question in seq(n.questions)) {
