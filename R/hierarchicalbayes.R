@@ -1,4 +1,3 @@
-#' @importFrom rstan rstan_options stan extract sampling
 #' @importFrom flipU InterceptExceptions
 hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                          max.tree.depth = 10,
@@ -85,6 +84,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
 #' @param ... Additional parameters to pass on to \code{rstan::stan} and
 #' \code{rstan::sampling}.
 #' @return A stanfit object.
+#' @importFrom rstan stan sampling
 #' @export
 RunStanSampling <- function(stan.dat, n.iterations, n.chains,
                             max.tree.depth, adapt.delta,
@@ -123,10 +123,9 @@ stanParameters <- function(stan.dat, keep.beta)
     full.covariance <- is.null(stan.dat$U)
     multiple.classes <- !is.null(stan.dat$P)
 
-    pars <- c("theta", "sigma", "beta")
-    # pars <- c("theta", "sigma")
-    # if (keep.beta)
-    #     pars <- c(pars, "beta")
+    pars <- c("theta", "sigma")
+    if (keep.beta)
+        pars <- c(pars, "beta")
     if (full.covariance)
         pars <- c(pars, "L_omega")
     if (multiple.classes)
@@ -222,6 +221,7 @@ ReduceStanFitSize <- function(stan.fit)
 #' @param all.names All variable names, including those set to zero (excluded
 #' from beta) due to dummy coding.
 #' @return A matrix of respondent parameters
+#' @importFrom rstan get_posterior_mean
 #' @export
 ComputeRespPars <- function(stan.fit, var.names, subset,
                             variable.scales = NULL, all.names = NULL)
@@ -308,6 +308,7 @@ stanModel <- function(n.classes, normal.covariance)
 #' @param stan.fit A stanfit object.
 #' @param beta.draws.to.keep Maximum draws per respondent per parameter.
 #' @return A 3D array of beta draws.
+#' @importFrom rstan extract
 #' @export
 ExtractBetaDraws <- function(stan.fit, beta.draws.to.keep = 100)
 {
@@ -315,8 +316,7 @@ ExtractBetaDraws <- function(stan.fit, beta.draws.to.keep = 100)
     n.draws <- dim(raw.betas)[1]
     if (n.draws > beta.draws.to.keep)
     {
-        fact <- floor(n.draws / beta.draws.to.keep)
-        ind <- fact * (1:beta.draws.to.keep)
+        ind <- round(seq.int(1L, n.draws, length = beta.draws.to.keep))
         raw.betas[ind, , ]
     }
     else
@@ -419,15 +419,15 @@ onStanWarning <- function(warn)
 #' @param parameter.names Names of the parameters.
 #' @param n.classes The number of classes.
 #' @return A matrix containing parameter summary statistics.
-#' @importFrom rstan summary
+#' @importFrom rstan extract monitor
 #' @export
 GetParameterStatistics <- function(stan.fit, parameter.names, n.classes)
 {
     pars <- c('theta', 'sigma')
 
-    ex <- rstan::extract(stan.fit, pars = pars, permuted = FALSE,
+    ex <- extract(stan.fit, pars = pars, permuted = FALSE,
                          inc_warmup = TRUE)
-    result <- suppressWarnings(rstan::monitor(ex, probs = c(), print = FALSE))
+    result <- suppressWarnings(monitor(ex, probs = c(), print = FALSE))
     lbls <- c(rep(paste0('Mean (', parameter.names, ')'), each = n.classes),
               rep(paste0('St. Dev. (', parameter.names, ')'),
                   each = n.classes))
