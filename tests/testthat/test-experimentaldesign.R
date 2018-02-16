@@ -12,16 +12,21 @@ manual.prohibitions <- matrix(c("ducati", "125cc", "manual", "red", "ducati", ""
 # Automated test cases
 experiment <- CreateExperiment(c(3, 5, 7, 10), 20)
 experiment2 <- CreateExperiment(c(4, 4, 4, 4), 0)
+experiment3 <- CreateExperiment(c(8), 0)
 
-levels.test.cases <- list(manual.attribute.levels, experiment$attribute.levels, experiment2$attribute.levels)
-prohibitions.test.cases <- list(manual.prohibitions, experiment$prohibitions, experiment2$prohibitions)
-questions.test.cases <- c(10, 12, 6)
-versions.test.cases <- c(2, 1, 6)
-alternatives.test.cases <- c(3, 3, 6)
-none.test.cases <- c(0, 2, 0)
-labeled.test.cases <- c(FALSE, TRUE, FALSE)
+levels.test.cases <- list(manual.attribute.levels, experiment$attribute.levels, experiment2$attribute.levels, experiment3$attribute.levels)
+prohibitions.test.cases <- list(manual.prohibitions, experiment$prohibitions, experiment2$prohibitions, experiment3$prohibitions)
+questions.test.cases <- c(10, 12, 6, 10)
+versions.test.cases <- c(2, 1, 6, 1)
+alternatives.test.cases <- c(3, 3, 6, 4)
+none.test.cases <- c(0, 2, 0, 1)
+labeled.test.cases <- c(FALSE, TRUE, FALSE, FALSE)
 
 # TODO add tests for equality with specific designs
+# test for insufficient levels
+# test for insufficient attributes
+# warning if product of levels is above some threshold?
+
 tfile <- tempfile()
 withr::with_output_sink(tfile, {
     for (model in c("Random", "Complete enumeration", "Balanced overlap", "Shortcut")) {  # can't handle prohibitions with "Shortcut"

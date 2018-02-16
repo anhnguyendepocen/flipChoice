@@ -121,11 +121,13 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
         if (is.null(prior))
             prior <- parsed.data[["prior"]]
     }
-    else  # attribute levels input with prior
+    else
         stop("Input must be either a list of vectors containing the labels of levels for each",
              " attribute, with names corresponding to the attribute labels; or a character",
              "matrix with first row containing attribute names and subsequent rows containing attribute levels.")
-        #levels.per.attribute <- NULL
+
+    if(any(sapply(attribute.levels, length) < 2))
+        stop("All attributes must have at least 2 levels.")
 
     # If labeled.alternatives then alternatives.per.question is calculated and not supplied
     if (labeled.alternatives)
@@ -184,7 +186,7 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
     ml.model <- mlogitModel(result)
     result$standard.errors <- summary(ml.model)$CoefTable[, 1:2]
 
-    class(result) <- "ChoiceModelDesign"
+    class(result) <- c(class(result), "ChoiceModelDesign")
     return(result)
 }
 
@@ -275,7 +277,8 @@ balancesAndOverlaps <- function(cmd) {
 
     # flatten pairwise list of list and remove unused
     pairs <- unlist(pairs, recursive = FALSE)
-    pairs <- pairs[!is.na(pairs)]
+    if (!is.null(pairs))
+        pairs <- pairs[!is.na(pairs)]
 
     overlaps <- countOverlaps(cmd$design, cmd$alternatives.per.question,
                              sapply(cmd$attribute.levels, length))
@@ -285,7 +288,7 @@ balancesAndOverlaps <- function(cmd) {
 
 
 singleLevelBalances <- function(design) {
-    singles <- apply(design[, 4:ncol(design)], 2, table)
+    singles <- apply(design[, 4:ncol(design), drop = FALSE], 2, table)
     if (!is.list(singles))
     {
         singles <- split(singles, rep(1:ncol(singles), each = nrow(singles)))
@@ -296,6 +299,8 @@ singleLevelBalances <- function(design) {
 
 pairLevelBalances <- function(design) {
     n.attributes <- ncol(design) - 3
+    if (n.attributes == 1)
+        return(NULL)
     pairs <- replicate(n.attributes, rep(list(NA), n.attributes), simplify = FALSE)
     for (i in 1:(n.attributes - 1))
         for (j in (i + 1):n.attributes) {
@@ -310,6 +315,8 @@ labelSingleBalanceLevels <- function(singles, attribute.levels) {
 }
 
 labelPairBalanceLevels <- function(pairs, attribute.levels) {
+    if (is.null(pairs))
+        return(NULL)
     n.attributes <- length(attribute.levels)
     for (i in 1:(n.attributes - 1))
         for (j in (i + 1):n.attributes) {
@@ -322,7 +329,7 @@ labelPairBalanceLevels <- function(pairs, attribute.levels) {
 #' @importFrom flipFormat FormatAsPercent
 countOverlaps <- function(design, alternatives.per.question, levels.per.attribute) {
     # table of counts for each level by question, listed for each attribute
-    design <- design[, c(-1, -2, -3)]
+    design <- design[, c(-1, -2, -3), drop = FALSE]
     columns <- split(design, col(design))
     question <- rep(seq(NROW(design) / alternatives.per.question), each = alternatives.per.question)
     overlaps <- lapply(columns, table, question)
