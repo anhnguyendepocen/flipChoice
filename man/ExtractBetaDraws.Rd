@@ -4,12 +4,12 @@
 \alias{ExtractBetaDraws}
 \title{ExtractBetaDraws}
 \usage{
-ExtractBetaDraws(stan.fit, max.draws = 100)
+ExtractBetaDraws(stan.fit, beta.draws.to.keep = 100)
 }
 \arguments{
 \item{stan.fit}{A stanfit object.}
 
-\item{max.draws}{Maximum draws per respondent per parameter.}
+\item{beta.draws.to.keep}{Maximum draws per respondent per parameter.}
 }
 \value{
 A 3D array of beta draws.

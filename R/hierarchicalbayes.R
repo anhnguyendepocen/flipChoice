@@ -7,7 +7,7 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                          include.stanfit = TRUE,
                                          normal.covariance = "Full",
                                          show.stan.warnings = TRUE,
-                                         max.draws = 100, ...)
+                                         beta.draws.to.keep = 0, ...)
 {
     # We want to replace this call with a proper integration of rstan into this package
     require(rstan)
@@ -31,10 +31,12 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     on.warnings <- GetStanWarningHandler(show.stan.warnings)
     on.error <- GetStanErrorHandler()
 
+    keep.beta <- beta.draws.to.keep > 0
+
     InterceptExceptions({
         stan.fit <- RunStanSampling(stan.dat, n.iterations, n.chains,
                                     max.tree.depth, adapt.delta, seed,
-                                    stan.model, stan.file, ...)},
+                                    stan.model, stan.file, keep.beta, ...)},
                                     warning.handler = on.warnings,
                                     error.handler = on.error)
 
@@ -47,11 +49,11 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
                                                         dat$var.names,
                                                         dat$subset,
                                                         dat$variable.scales)
-    result$respondent.parameters <- computeAllRespPars(stan.fit,
-                                                       dat$var.names,
-                                                       dat$all.names,
-                                                       dat$subset,
-                                                       dat$variable.scales)
+    result$respondent.parameters <- ComputeRespPars(stan.fit,
+                                                    dat$var.names,
+                                                    dat$subset,
+                                                    dat$variable.scales,
+                                                    dat$all.names)
     result$class.match.fail <- class.match.fail
     if (!class.match.fail)
         result$parameter.statistics <- GetParameterStatistics(stan.fit,
@@ -60,7 +62,9 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
     if (include.stanfit)
     {
         result$stan.fit <- if (keep.samples) stan.fit else ReduceStanFitSize(stan.fit)
-        result$beta.draws <- ExtractBetaDraws(stan.fit, max.draws)
+        if (keep.beta)
+            result$beta.draws <- ExtractBetaDraws(stan.fit,
+                                                  beta.draws.to.keep)
     }
     class(result) <- "FitChoice"
     result
@@ -77,15 +81,16 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
 #' @param seed Random seed.
 #' @param stan.model Complied Stan model (if running on the R server).
 #' @param stan.file Path to Stan file (if not running on the R server).
+#' @param keep.beta Whether retain the beta draws in the output.
 #' @param ... Additional parameters to pass on to \code{rstan::stan} and
 #' \code{rstan::sampling}.
 #' @return A stanfit object.
 #' @export
 RunStanSampling <- function(stan.dat, n.iterations, n.chains,
                             max.tree.depth, adapt.delta,
-                            seed, stan.model, stan.file, ...)
+                            seed, stan.model, stan.file, keep.beta, ...)
 {
-    pars <- stanParameters(stan.dat)
+    pars <- stanParameters(stan.dat, keep.beta)
     init <- initialParameterValues(stan.dat)
 
     if (IsRServer()) # R servers
@@ -113,12 +118,15 @@ RunStanSampling <- function(stan.dat, n.iterations, n.chains,
     result
 }
 
-stanParameters <- function(stan.dat)
+stanParameters <- function(stan.dat, keep.beta)
 {
     full.covariance <- is.null(stan.dat$U)
     multiple.classes <- !is.null(stan.dat$P)
 
     pars <- c("theta", "sigma", "beta")
+    # pars <- c("theta", "sigma")
+    # if (keep.beta)
+    #     pars <- c(pars, "beta")
     if (full.covariance)
         pars <- c(pars, "L_omega")
     if (multiple.classes)
@@ -211,42 +219,46 @@ ReduceStanFitSize <- function(stan.fit)
 #' @param var.names Variable names
 #' @param subset Subset vector
 #' @param variable.scales Scale factors for numeric parameters.
+#' @param all.names All variable names, including those set to zero (excluded
+#' from beta) due to dummy coding.
 #' @return A matrix of respondent parameters
 #' @export
 ComputeRespPars <- function(stan.fit, var.names, subset,
-                            variable.scales = NULL)
+                            variable.scales = NULL, all.names = NULL)
 {
-    # Move this function to flipMaxDiff
-    beta <- extract(stan.fit, pars=c("beta"))$beta
-    resp.pars.subset <- colMeans(beta, dims = 1)
-
-    if (!is.null(variable.scales))
-        resp.pars.subset <- t(t(resp.pars.subset) / variable.scales)
-
-    result <- matrix(NA, nrow = length(subset), ncol = ncol(resp.pars.subset))
-    result[subset, ] <- resp.pars.subset
-    colnames(result) <- var.names
-    result
-}
-
-computeAllRespPars <- function(stan.fit, var.names, all.names, subset,
-                               variable.scales = NULL)
-{
-    beta <- extract(stan.fit, pars=c("beta"))$beta
-    resp.pars.subset <- colMeans(beta, dims = 1)
-
-    if (!is.null(variable.scales))
-        resp.pars.subset <- t(t(resp.pars.subset) / variable.scales)
-
-    result <- matrix(NA, nrow = length(subset), ncol = length(all.names))
-    for (i in 1:length(all.names))
+    n.chains <- stan.fit@sim$chains
+    n.respondents <- sum(subset)
+    resp.pars <- t(matrix(get_posterior_mean(stan.fit, pars = "beta"),
+                          nrow = length(var.names)))
+    if (n.chains > 1)
     {
-        if (all.names[i] %in% var.names)
-            result[subset, i] <-  resp.pars.subset[, all.names[i] == var.names]
-        else
-            result[subset, i] <- 0
+        ind.start <- n.respondents * n.chains + 1
+        ind.end <- n.respondents * (n.chains + 1)
+        resp.pars <- resp.pars[ind.start:ind.end, ]
     }
-    colnames(result) <- all.names
+
+    if (!is.null(variable.scales))
+        resp.pars <- t(t(resp.pars) / variable.scales)
+
+    if (!is.null(all.names))
+    {
+        n.all.names <- length(all.names)
+        result <- matrix(NA, nrow = length(subset), ncol = n.all.names)
+        for (i in 1:n.all.names)
+        {
+            if (all.names[i] %in% var.names)
+                result[subset, i] <- resp.pars[, all.names[i] == var.names]
+            else
+                result[subset, i] <- 0
+        }
+        colnames(result) <- all.names
+    }
+    else
+    {
+        result <- matrix(NA, nrow = length(subset), ncol = length(var.names))
+        result[subset, ] <- resp.pars
+        colnames(result) <- var.names
+    }
     result
 }
 
@@ -294,17 +306,17 @@ stanModel <- function(n.classes, normal.covariance)
 #' @title ExtractBetaDraws
 #' @description This function extracts beta draws from a stanfit object.
 #' @param stan.fit A stanfit object.
-#' @param max.draws Maximum draws per respondent per parameter.
+#' @param beta.draws.to.keep Maximum draws per respondent per parameter.
 #' @return A 3D array of beta draws.
 #' @export
-ExtractBetaDraws <- function(stan.fit, max.draws = 100)
+ExtractBetaDraws <- function(stan.fit, beta.draws.to.keep = 100)
 {
     raw.betas <- extract(stan.fit, pars=c("beta"))$beta
     n.draws <- dim(raw.betas)[1]
-    if (n.draws > max.draws)
+    if (n.draws > beta.draws.to.keep)
     {
-        fact <- floor(n.draws / max.draws)
-        ind <- fact * (1:max.draws)
+        fact <- floor(n.draws / beta.draws.to.keep)
+        ind <- fact * (1:beta.draws.to.keep)
         raw.betas[ind, , ]
     }
     else

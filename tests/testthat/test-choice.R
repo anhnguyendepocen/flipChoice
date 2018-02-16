@@ -5,7 +5,7 @@ data(eggs, package = "flipChoice")
 test_that("HB", {
     result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
                              hb.chains = 1, hb.warnings = FALSE,
-                             hb.max.draws = 2)
+                             hb.beta.draws.to.keep = 2)
     expect_error(print(result), NA)
     expect_equal(dim(result$beta.draws), c(2L, 380L, 13L))
 })
