@@ -399,14 +399,14 @@ onStanWarning <- function(warn)
 {
     msg <- warn$message
     if (grepl("Increasing adapt_delta above", msg))
-        warning("Results may be due inaccurate due to insufficient",
+        warning("Results may be inaccurate due to insufficient",
                 " iteratations. Rerun the analysis with more",
                 " iterations.", call. = FALSE)
     else if (grepl("Examine the pairs\\(\\) plot", msg))
         warning("Examine the Diagnostic plots to diagnose sampling problems",
                 call. = FALSE)
     else if (grepl("exceeded the maximum treedepth", msg))
-        warning("Results may be due inaccurate as the maximum tree depth",
+        warning("Results may be inaccurate as the maximum tree depth",
                 " is too low. Rerun the analysis with a higher",
                 " maximum tree depth.")
     else
