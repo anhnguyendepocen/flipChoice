@@ -11,7 +11,7 @@ FitChoiceModel(experiment.data = NULL, cho.file = NULL,
   hb.iterations = 500, hb.chains = 8, hb.max.tree.depth = 10,
   hb.adapt.delta = 0.8, hb.keep.samples = FALSE, hb.stanfit = TRUE,
   hb.prior.mean = 0, hb.prior.sd = 5, hb.warnings = TRUE,
-  hb.max.draws = 100, include.choice.parameters = TRUE, ...)
+  hb.beta.draws.to.keep = 0, include.choice.parameters = TRUE, ...)
 }
 \arguments{
 \item{experiment.data}{A data.frame from an Experiment question}
@@ -71,8 +71,8 @@ attribute.}
 
 \item{hb.warnings}{Whether to show warnings from Stan.}
 
-\item{hb.max.draws}{Maximum number of beta draws per respondent to return in
-beta.draws.}
+\item{hb.beta.draws.to.keep}{Maximum number of beta draws per respondent to
+return in beta.draws.}
 
 \item{include.choice.parameters}{Whether to include alternative-specific
 parameters.}

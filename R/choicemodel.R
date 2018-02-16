@@ -37,8 +37,8 @@
 #' hb.prior.sd controls the standard deviations of the offsets from the base
 #' attribute.
 #' @param hb.warnings Whether to show warnings from Stan.
-#' @param hb.max.draws Maximum number of beta draws per respondent to return in
-#' beta.draws.
+#' @param hb.beta.draws.to.keep Maximum number of beta draws per respondent to
+#' return in beta.draws.
 #' @param include.choice.parameters Whether to include alternative-specific
 #' parameters.
 #' @param ... Additional parameters to pass on to \code{rstan::stan} and
@@ -78,7 +78,7 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                            hb.max.tree.depth = 10, hb.adapt.delta = 0.8,
                            hb.keep.samples = FALSE, hb.stanfit = TRUE,
                            hb.prior.mean = 0, hb.prior.sd = 5,
-                           hb.warnings = TRUE, hb.max.draws = 100,
+                           hb.warnings = TRUE, hb.beta.draws.to.keep = 0,
                            include.choice.parameters = TRUE, ...)
 {
     if (!is.null(weights))
@@ -106,7 +106,7 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                                            hb.max.tree.depth, hb.adapt.delta,
                                            seed, hb.keep.samples, n.classes,
                                            hb.stanfit, normal.covariance,
-                                           hb.warnings, hb.max.draws, ...)
+                                           hb.warnings, hb.beta.draws.to.keep, ...)
 
     end.time <- proc.time()
 
