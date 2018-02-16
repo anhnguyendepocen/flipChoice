@@ -4,7 +4,8 @@
 \alias{ComputeRespPars}
 \title{ComputeRespPars}
 \usage{
-ComputeRespPars(stan.fit, var.names, subset, variable.scales = NULL)
+ComputeRespPars(stan.fit, var.names, subset, variable.scales = NULL,
+  all.names = NULL)
 }
 \arguments{
 \item{stan.fit}{A stanfit object.}
@@ -14,6 +15,9 @@ ComputeRespPars(stan.fit, var.names, subset, variable.scales = NULL)
 \item{subset}{Subset vector}
 
 \item{variable.scales}{Scale factors for numeric parameters.}
+
+\item{all.names}{All variable names, including those set to zero (excluded
+from beta) due to dummy coding.}
 }
 \value{
 A matrix of respondent parameters
