@@ -398,17 +398,22 @@ GetStanErrorHandler <- function()
 onStanWarning <- function(warn)
 {
     msg <- warn$message
-    if (grepl("Increasing adapt_delta above", msg))
-        warning("Results may be inaccurate due to insufficient",
-                " iteratations. Rerun the analysis with more",
-                " iterations.", call. = FALSE)
+    support.msg <-
+    if (grepl("divergent transitions after warmup", msg) ||
+        grepl("Bayesian Fraction of Missing Information was low", msg))
+        warning("Results may be inaccurate due to insufficient iteratations. ",
+                "Rerun the analysis with more iterations. Please contact ",
+                "support@q-researchsoftware.com if increasing iterations ",
+                "does not resolve this warning.", call. = FALSE)
     else if (grepl("Examine the pairs\\(\\) plot", msg))
         warning("Examine the Diagnostic plots to diagnose sampling problems",
                 call. = FALSE)
     else if (grepl("exceeded the maximum treedepth", msg))
         warning("Results may be inaccurate as the maximum tree depth",
                 " is too low. Rerun the analysis with a higher",
-                " maximum tree depth.")
+                " maximum tree depth. Please contact ",
+                "support@q-researchsoftware.com if increasing maximum tree ",
+                "depth does not resolve this warning.")
     else
         warning(warn)
 }
