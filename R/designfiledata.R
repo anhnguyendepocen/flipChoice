@@ -139,9 +139,11 @@ readDesignFile <- function(design.file, attribute.levels.file)
     design.is.numeric <- all(sapply(design[4:length(design)], function(x) {
             is.numeric(x) || !any(is.na(suppressWarnings(as.numeric(x))))
         }))
-    if (design.is.numeric && is.null(attribute.levels.file))
+    if (design.is.numeric && (is.null(attribute.levels.file) ||
+                              attribute.levels.file == ""))
         stop("A file containing attribute levels is required.")
-    else if (!design.is.numeric && !is.null(attribute.levels.file))
+    else if (!design.is.numeric && !is.null(attribute.levels.file &&
+                                    attribute.levels.file != ""))
         warning("The supplied attribute levels will be ignored as levels",
             " are present in the design file.")
 
