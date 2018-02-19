@@ -431,7 +431,7 @@ GetParameterStatistics <- function(stan.fit, parameter.names, n.classes)
     pars <- c('theta', 'sigma')
 
     ex <- extract(stan.fit, pars = pars, permuted = FALSE,
-                         inc_warmup = TRUE)
+                         inc_warmup = FALSE)
     result <- suppressWarnings(monitor(ex, probs = c(), print = FALSE))
     lbls <- c(rep(paste0('Mean (', parameter.names, ')'), each = n.classes),
               rep(paste0('St. Dev. (', parameter.names, ')'),
