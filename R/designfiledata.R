@@ -84,7 +84,7 @@ processDesignFile <- function(design.file, attribute.levels.file,
         output <- addChoiceParameters(X, n.attributes, n.variables,
                                       n.attribute.variables, n.choices,
                                       var.names, all.names, input.prior.mean,
-                                      input.prior.sd)
+                                      input.prior.sd, has.none.of.these)
         X <- output$X
         n.attributes <- output$n.attributes
         n.variables <- output$n.variables
