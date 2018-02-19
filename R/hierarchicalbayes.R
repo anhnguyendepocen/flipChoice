@@ -403,8 +403,8 @@ onStanWarning <- function(warn)
         grepl("Bayesian Fraction of Missing Information was low", msg))
         warning("Results may be inaccurate due to insufficient iteratations. ",
                 "Rerun the analysis with more iterations. Please contact ",
-                "support@q-researchsoftware.com if increasing iterations ",
-                "does not resolve this warning.", call. = FALSE)
+                "support@q-researchsoftware.com if increasing the number of ",
+                "iterations does not resolve this warning.", call. = FALSE)
     else if (grepl("Examine the pairs\\(\\) plot", msg))
         warning("Examine the Diagnostic plots to diagnose sampling problems",
                 call. = FALSE)
@@ -412,8 +412,8 @@ onStanWarning <- function(warn)
         warning("Results may be inaccurate as the maximum tree depth",
                 " is too low. Rerun the analysis with a higher",
                 " maximum tree depth. Please contact ",
-                "support@q-researchsoftware.com if increasing maximum tree ",
-                "depth does not resolve this warning.")
+                "support@q-researchsoftware.com if increasing the maximum ",
+                "tree depth does not resolve this warning.")
     else
         warning(warn)
 }
