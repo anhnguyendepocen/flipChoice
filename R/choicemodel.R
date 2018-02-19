@@ -307,8 +307,8 @@ print.FitChoice <- function(x, ...)
     else
         footer <- paste0(footer,
                          ParameterStatisticsInfo(x$parameter.statistics,
-                            colnames(x$respondent.parameters),
-                            x$n.classes))
+                                     colnames(x$reduced.respondent.parameters),
+                                     x$n.classes))
     if (IsTestRServer())
         footer <- paste0(footer, "Time taken to run analysis: [hidden for tests]; ")
     else
