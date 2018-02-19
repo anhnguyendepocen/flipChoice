@@ -9,8 +9,14 @@ processChoFile <- function(cho.file, attribute.levels.file,
     raw.num <- lapply(strsplit(raw.lines, " "), as.numeric)
     n.attributes <- raw.num[[1]][3]
     n.questions <- raw.num[[1]][4]
+    has.none.of.these <- raw.num[[1]][5] == 1
     n.choices <- raw.num[[3]][1]
-    n.respondents <- length(raw.num) / (n.questions * (n.choices + 2) + 2)
+    if (has.none.of.these)
+        n.choices <- n.choices + 1
+
+    n.raw <- length(raw.num)
+    n.respondents <- n.raw / (n.questions * (raw.num[[3]][1] + 2) + 2)
+
     if (floor(n.respondents) != n.respondents)
         stop("There is a problem with the .CHO file. Ensure each respondent ",
              "has the same number of questions and choices per question.")
@@ -44,11 +50,19 @@ processChoFile <- function(cho.file, attribute.levels.file,
             ind <- ind + 1 # question format row
             for (k in 1:n.choices)
             {
-                ind <- ind + 1 # attributes row
-                X[i, j, k, ] <- fillXAttributes(n.variables, n.attributes,
-                                               n.attribute.variables,
-                                               ordered.attributes,
-                                               raw.num[[ind]])
+                if (has.none.of.these && k == n.choices)
+                    X[i, j, k, ] <- fillXNoneOfThese(n.variables,
+                                                     n.attributes,
+                                                     n.attribute.variables)
+                else
+                {
+                    ind <- ind + 1 # attributes row
+                    X[i, j, k, ] <- fillXAttributes(n.variables,
+                                                    n.attributes,
+                                                    n.attribute.variables,
+                                                    ordered.attributes,
+                                                    raw.num[[ind]])
+                }
             }
             ind <- ind + 1 # choice row
             Y[i, j] <- raw.num[[ind]][1]
@@ -60,7 +74,7 @@ processChoFile <- function(cho.file, attribute.levels.file,
         output <- addChoiceParameters(X, n.attributes, n.variables,
                                       n.attribute.variables, n.choices,
                                       var.names, all.names, input.prior.mean,
-                                      input.prior.sd)
+                                      input.prior.sd, has.none.of.these)
         X <- output$X
         n.attributes <- output$n.attributes
         n.variables <- output$n.variables
@@ -176,14 +190,16 @@ addChoiceParametersX <- function(X)
 
 addChoiceParameters <- function(X, n.attributes, n.variables,
                                 n.attribute.variables, n.choices, var.names,
-                                all.names, input.prior.mean, input.prior.sd)
+                                all.names, input.prior.mean, input.prior.sd,
+                                has.none.of.these)
 {
     X <- addChoiceParametersX(X)
     n.attributes <- n.attributes + 1
     n.variables <- n.variables + n.choices - 1
     n.attribute.variables <- c(n.choices, n.attribute.variables)
-    var.names <- c(paste0("Alternative: ", 2:n.choices), var.names)
-    all.names <- c(paste0("Alternative: ", 1:n.choices), all.names)
+    alt.labels <- createAlternativeLabels(n.choices, has.none.of.these)
+    var.names <- c(alt.labels[-1], var.names)
+    all.names <- c(alt.labels, all.names)
     if (length(input.prior.mean) > 1)
         input.prior.mean <- c(0, input.prior.mean)
     if (length(input.prior.sd) > 1)
@@ -193,6 +209,14 @@ addChoiceParameters <- function(X, n.attributes, n.variables,
          var.names = var.names, all.names = all.names,
          input.prior.mean = input.prior.mean,
          input.prior.sd = input.prior.sd)
+}
+
+createAlternativeLabels <- function(n.choices, has.none.of.these)
+{
+    result <- paste0("Alternative: ", 1:n.choices)
+    if (has.none.of.these)
+        result[n.choices] <- "Alternative: none of these"
+    result
 }
 
 fillXAttributes <- function(n.variables, n.attributes, n.attribute.variables,
