@@ -316,7 +316,7 @@ ExtractBetaDraws <- function(stan.fit, beta.draws.to.keep = 100)
     n.draws <- dim(raw.betas)[1]
     if (n.draws > beta.draws.to.keep)
     {
-        ind <- round(seq.int(1L, n.draws, length = beta.draws.to.keep))
+        ind <- round(seq.int(1L, n.draws, length.out = beta.draws.to.keep))
         raw.betas[ind, , ]
     }
     else
