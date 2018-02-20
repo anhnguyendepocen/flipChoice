@@ -267,30 +267,34 @@ parsePastedData <- function(paste.data, n.sim = 10, coding = "D", labeled.alts =
     if (n.means)
     {
         means.list <- vector("list", n.means)
-        names(means.list) <- cnames[mean.idx - 1]
+        mean.attr.names <- cnames[vapply(mean.idx,
+                                                    function(i) lvls.idx[max(which(lvls.idx < i))], 1L)]
+        names(means.list) <- mean.attr.names
         for (i in seq_len(n.means))
         {
             idx <- mean.idx[i]
-            n.lvl <- n.lvls[cnames[idx - 1]]
+            n.lvl <- n.lvls[mean.attr.names[i]]
             tmean <- suppressWarnings(as.numeric(paste.data[2:(n.lvl + 1), idx]))
             if (any(is.na(tmean)))
                 stop(gettextf("Invalid or incorrect number of prior means specified for %s, %d%s.",
-                              cnames[idx - 1], n.lvl, " are required."))
+                              mean.attr.names[i], n.lvl, " are required."))
             means.list[[i]] <- tmean
         }
     }
     if (n.sd)
     {
         sd.list <- vector("list", n.sd)
-        names(sd.list) <- cnames[sd.idx - 2]
+        sd.attr.names <- cnames[vapply(sd.idx,
+                                                    function(i) lvls.idx[max(which(lvls.idx < i))], 1L)]
+        names(sd.list) <- sd.attr.names
         for (i in seq_len(n.sd))
         {
             idx <- sd.idx[i]
-            n.lvl <- n.lvls[cnames[idx - 2]]
+            n.lvl <- n.lvls[sd.attr.names[i]]
             tsd <- suppressWarnings(as.numeric(paste.data[2:(n.lvl + 1), idx]))
             if (any(is.na(tsd)) || any(tsd <= 0))
                 stop(gettextf("Invalid or incorrect number of prior standard deviations specified for %s, %d%s",
-                     cnames[idx - 2], n.lvl, " are required."))
+                     sd.attr.names[i], n.lvl, " are required."))
             sd.list[[i]] <- tsd
         }
     }else

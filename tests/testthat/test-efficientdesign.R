@@ -192,3 +192,25 @@ test_that("Efficient: labeled alternatives",
                                           n.coef),
                  check.attributes = FALSE)
 })
+
+
+test_that("Parsing of pasted prior with some means and sd's missing",
+{
+    pd <- cbind(c("price", "200", "250", "300"), c("Mean", 0, 1, 1),
+                c("time", "morn", "aft", "eve"), c("Mean", 0, 0, 2),
+                c("SD", 1, 3, 1),
+                c("type", "train", "bus", ""), c("SD", 1, 2, ""))
+    vnames <- pd[1, !pd[1,] %in% c("SD", "Mean")]
+    n.q <- 10
+    apq <- 4
+
+    ## out <- ChoiceModelDesign(design.algorithm = "Efficient",
+    ##                          attribute.levels = pd, prior = NULL, n.questions = n.q,
+    ##                          alternatives.per.question = apq, seed = seed,
+    ##                          output = "Labeled design")
+    parsed <- parsePastedData(pd)
+    expect_equal(names(parsed$lvls), vnames)
+    expect_equal(parsed$lvls, c(3, 3, 2), check.attributes = FALSE)
+    expect_equal(parsed$prior[, 1], c(1, 1, 0, 2, 0), check.attributes = FALSE)
+    expect_equal(parsed$prior[, 2], c(1, 1, 3, 1, 2), check.attributes = FALSE)
+})
