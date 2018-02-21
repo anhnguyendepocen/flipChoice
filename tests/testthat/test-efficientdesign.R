@@ -214,3 +214,45 @@ test_that("Parsing of pasted prior with some means and sd's missing",
     expect_equal(parsed$prior[, 1], c(1, 1, 0, 2, 0), check.attributes = FALSE)
     expect_equal(parsed$prior[, 2], c(1, 1, 3, 1, 2), check.attributes = FALSE)
 })
+
+
+test_that("Correct prior specification improves fit on sim data",
+{
+    seed <- 300
+    seed.resp.sim <- 20
+    price.mean <- c(0, 0, 5)
+    pd <- cbind(c("price", "200", "250", "300"),
+                c("Mean", price.mean),
+                c("SD", c(1, 1, 1)),
+                c("time", "morn", "aft", "eve"),
+                c("type", "train", "bus", ""))
+    vnames <- pd[1, !pd[1,] %in% c("SD", "Mean")]
+    n.q <- 10
+    apq <- 4
+
+    out <- ChoiceModelDesign(design.algorithm = "Efficient",
+                             attribute.levels = pd, prior = NULL, n.questions = n.q,
+                             alternatives.per.question = apq, seed = seed,
+                             output = "Labeled design")
+    set.seed(seed.resp.sim)
+    y <- as.vector(replicate(15, idefix::RespondMNL(c(price.mean[-1], 0, 0, 0), out$model.matrix,
+                                                    n.alts = apq)))
+    ml.model <- mlogitModel(out, as.logical(y))
+    sd.good <- summary(ml.model)$CoefTable[, 2]
+    pval.good <- summary(ml.model)$CoefTable[, 4]
+
+    pd.bad.prior <- cbind(c("price", "200", "250", "300"),
+                c("Mean", rev(price.mean)),
+                c("SD", c(1, 1, 1)),
+                c("time", "morn", "aft", "eve"),
+                c("type", "train", "bus", ""))
+
+    out.bad.prior <- ChoiceModelDesign(design.algorithm = "Efficient",
+                             attribute.levels = pd.bad.prior, prior = NULL, n.questions = n.q,
+                             alternatives.per.question = apq, seed = seed,
+                             output = "Labeled design")
+    ml.model.bad <- mlogitModel(out.bad.prior, y)
+    sd.bad <- summary(ml.model.bad)$CoefTable[, 2]
+    pval.bad <- summary(ml.model.bad)$CoefTable[, 4]
+    expect_true(pval.good["price300"] < pval.bad["price300"])
+})
