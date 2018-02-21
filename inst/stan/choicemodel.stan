@@ -29,7 +29,7 @@ transformed parameters {
     {
        beta[r] += theta;
         for (s in 1:S)
-	XB[r, s] = X[r, s] * to_vector(beta[r]);
+            XB[r, s] = X[r, s] * to_vector(beta[r]);
     }
 }
 
