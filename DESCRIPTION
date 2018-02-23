@@ -19,7 +19,8 @@ Imports: flipData,
          rstan,
          readxl,
          stats,
-         utils
+         utils,
+         ggplot2
 Suggests: testthat,
          withr
 Remotes: Displayr/flipData,

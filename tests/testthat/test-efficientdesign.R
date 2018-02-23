@@ -218,14 +218,18 @@ test_that("Parsing of pasted prior with some means and sd's missing",
 
 test_that("Correct prior specification improves fit on sim data",
 {
-    seed <- 300
-    seed.resp.sim <- 20
-    price.mean <- c(0, 0, 5)
+    seed <- 378
+    seed.resp.sim <- 202
+    price.mean <- c(-2, 0, 2)
+    time.mean <- 0:2
+    type.mean <- 0:1
     pd <- cbind(c("price", "200", "250", "300"),
                 c("Mean", price.mean),
                 c("SD", c(1, 1, 1)),
                 c("time", "morn", "aft", "eve"),
-                c("type", "train", "bus", ""))
+                c("Mean", time.mean),
+                c("type", "train", "bus", ""),
+                c("Mean", type.mean, ""))
     vnames <- pd[1, !pd[1,] %in% c("SD", "Mean")]
     n.q <- 10
     apq <- 4
@@ -235,17 +239,26 @@ test_that("Correct prior specification improves fit on sim data",
                              alternatives.per.question = apq, seed = seed,
                              output = "Labeled design")
     set.seed(seed.resp.sim)
-    y <- as.vector(replicate(15, idefix::RespondMNL(c(price.mean[-1], 0, 0, 0), out$model.matrix,
+
+    true.coef <- c(price.mean[-1], time.mean[-1], type.mean[-1])
+    y <- as.vector(replicate(15, idefix::RespondMNL(true.coef,
+                                                     out$model.matrix,
                                                     n.alts = apq)))
     ml.model <- mlogitModel(out, as.logical(y))
+    res.good <- summary(ml.model)$CoefTable
     sd.good <- summary(ml.model)$CoefTable[, 2]
     pval.good <- summary(ml.model)$CoefTable[, 4]
+
 
     pd.bad.prior <- cbind(c("price", "200", "250", "300"),
                 c("Mean", rev(price.mean)),
                 c("SD", c(1, 1, 1)),
                 c("time", "morn", "aft", "eve"),
-                c("type", "train", "bus", ""))
+                c("Mean", time.mean),
+                c("SD", c(1, 1, 1)),
+                c("type", "train", "bus", ""),
+                c("Mean", type.mean, ""),
+                c("SD", c(1, 1, "")))
 
     out.bad.prior <- ChoiceModelDesign(design.algorithm = "Efficient",
                              attribute.levels = pd.bad.prior, prior = NULL, n.questions = n.q,
@@ -254,5 +267,6 @@ test_that("Correct prior specification improves fit on sim data",
     ml.model.bad <- mlogitModel(out.bad.prior, y)
     sd.bad <- summary(ml.model.bad)$CoefTable[, 2]
     pval.bad <- summary(ml.model.bad)$CoefTable[, 4]
+    summary(ml.model.bad)$CoefTable
     expect_true(pval.good["price300"] < pval.bad["price300"])
 })

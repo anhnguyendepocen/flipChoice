@@ -37,6 +37,10 @@ test_that("HB 2 classes", {
     result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
                              hb.chains = 1, n.classes = 2, hb.warnings = FALSE)
     expect_error(print(result), NA)
+
+    ExtractParameterStats(result)
+    PlotPosteriorIntervals(result)
+    TracePlots(result)
 })
 
 test_that("HB diagonal", {
