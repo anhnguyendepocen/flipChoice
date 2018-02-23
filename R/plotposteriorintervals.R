@@ -8,8 +8,10 @@
 #'     to \code{FitChoiceModel} with \code{algorithm = "HB-Stan"}.
 #' @return A \code{ggplot} object that can be further customized using the
 #' \code{ggplot2} package.
+#' @family HB diagnostics
 #' @seealso \url{https://www.displayr.com/convergence-hb-maxdiff/},
-#' \code{\link{FitChoiceModel}} for an example.
+#' \code{\link{FitChoiceModel}} for an example, \code{\link{ExtractParameterStats}},
+#' \code{\link{TracePlots}}
 #' @importFrom rstan plot
 #' @importFrom ggplot2 scale_y_discrete
 #' @export

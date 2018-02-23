@@ -22,5 +22,9 @@ sampled.
 }
 \seealso{
 \url{https://www.displayr.com/convergence-hb-maxdiff/},
-\code{\link{FitChoiceModel}} for an example.
+\code{\link{FitChoiceModel}} for an example, \code{\link{ExtractParameterStats}},
+\code{\link{TracePlots}}
+
+Other HB diagnostics: \code{\link{ExtractParameterStats}},
+  \code{\link{TracePlots}}
 }

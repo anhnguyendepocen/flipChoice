@@ -10,7 +10,10 @@
 #'     error, effective sample size, and rhat for each mean and
 #'     standard deviation parameter.
 #' @importFrom rstan extract monitor
-#' @seealso \code{\link[rstan]{monitor}}
+#' @family HB diagnostics
+#' @seealso \code{\link[rstan]{monitor}}, \url{https://www.displayr.com/convergence-hb-maxdiff/},
+#'     \code{\link{FitChoiceModel}} for an example, \code{\link{TracePlots}},
+#' \code{\link{PlotPosteriorIntervals}}
 #' @export
 ExtractParameterStats <- function(fit)
 {
