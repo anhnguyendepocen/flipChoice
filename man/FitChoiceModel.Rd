@@ -110,3 +110,13 @@ out-of-sample testing.
 Fit a choice-based conjoint model using methods such as
 Hierarchical Bayes
 }
+\examples{
+\dontrun{
+data(eggs, package = "flipChoice")
+fit <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 100,
+                                              hb.chains = 1, tasks.left.out = 2)
+ExtractParameterStats(fit)
+PlotPosteriorIntervals(fit)
+TracePlots(fit)
+}
+}
