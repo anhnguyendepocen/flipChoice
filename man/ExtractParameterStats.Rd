@@ -22,5 +22,10 @@ statistics of the mean and standard deviation parameters for the
 distribution from which individual coefficients are sampled.
 }
 \seealso{
-\code{\link[rstan]{monitor}}
+\code{\link[rstan]{monitor}}, \url{https://www.displayr.com/convergence-hb-maxdiff/},
+    \code{\link{FitChoiceModel}} for an example, \code{\link{TracePlots}},
+\code{\link{PlotPosteriorIntervals}}
+
+Other HB diagnostics: \code{\link{PlotPosteriorIntervals}},
+  \code{\link{TracePlots}}
 }

@@ -6,8 +6,10 @@
 #' @param fit An object of class \code{"FitChoice"} produced by a call
 #'     to \code{FitChoiceModel} with \code{algorithm = "HB-Stan"}.
 #' @seealso \url{https://www.displayr.com/convergence-hb-maxdiff/},
-#'     \code{\link{FitChoiceModel}} for an example, \code{\link[rstan]{traceplot}}
+#'     \code{\link{FitChoiceModel}} for an example, \code{\link[rstan]{traceplot}},
+#' \code{\link{ExtractParameterStats}}, \code{\link{PlotPosteriorIntervals}}
 #' @importFrom rstan traceplot
+#' @family HB diagnostics
 #' @return A \code{ggplot} object that can be further customized using the
 #' \code{ggplot2} package.
 #' @export
