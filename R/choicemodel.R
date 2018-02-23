@@ -67,7 +67,17 @@
 #' \item \code{n.variables} The number of variables in the analysis.
 #' \item \code{time.taken} The time taken to run the analysis.
 #' }
+#' @examples
+#' \dontrun{
+#' data(eggs, package = "flipChoice")
+#' fit <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 100,
+#'                                               hb.chains = 1, tasks.left.out = 2)
+#' ExtractParameterStats(fit)
+#' PlotPosteriorIntervals(fit)
+#' TracePlots(fit)
+#' }
 #' @export
+#'
 FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
                            design.file = NULL,
                            attribute.levels.file = NULL,
