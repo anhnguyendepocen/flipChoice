@@ -2,7 +2,7 @@
 % Please edit documentation in R/traceplots.R
 \name{TracePlots}
 \alias{TracePlots}
-\title{Trace Plots For HB Parameter Estimates of a Choice Model}
+\title{Trace Plots For Hierarchical Bayes Samples}
 \usage{
 TracePlots(fit)
 }
