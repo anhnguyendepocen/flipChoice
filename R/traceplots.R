@@ -1,4 +1,4 @@
-#' Trace Plots For HB Parameter Estimates of a Choice Model
+#' Trace Plots For Hierarchical Bayes Samples
 #'
 #' Takes a Hierarchical Bayes (Stan) output and produces trace plots
 #' of the mean and standard deviation parameters for the distribution
@@ -22,3 +22,4 @@ TracePlots <- function(fit)
     trace.plot$plot_env <- new.env()
     trace.plot
 }
+
