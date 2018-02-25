@@ -5,8 +5,9 @@
 # Does not handle (i.e. ignores) prohibitions.
 #' @importFrom nnet which.is.max
 shortcutDesign <- function(levels.per.attribute, n.questions, alternatives.per.question, prohibitions,
-                           labeled.alternatives) {
+                           labeled.alternatives, seed = 12345) {
 
+    set.seed(seed)
     n.attributes <- length(levels.per.attribute)
     level.sequences <- sapply(levels.per.attribute, seq, simplify = FALSE) # list of vectors of numeric levels per attribute
 
