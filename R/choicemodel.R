@@ -212,7 +212,7 @@ RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
 
     bin.size <- (bin.max - bin.min) / 50
 
-    footer <- paste0(footer, "Bar width: ", FormatAsReal(bin.size, decimals = 2), "; ")
+    footer <- paste0(footer, "Column width: ", FormatAsReal(bin.size, decimals = 2), "; ")
 
     HistTable(resp.pars, title = title, subtitle = subtitle, footer = footer,
               bin.size = bin.size, bin.min = bin.min, bin.max = bin.max, hist.width = 300,
