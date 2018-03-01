@@ -11,7 +11,7 @@ cho.none.file <- findInstDirFile("none_option.cho")
 jmp.design.file <- findInstDirFile("eggs_design.xlsx")
 jmp.design.with.levels.file <- findInstDirFile("eggs_design_with_levels.xlsx")
 
-# attribute.levels.file.cho <- findInstDirFile("Attribute_labels_-_Training.xlsx")
+attribute.levels.file.cho <- findInstDirFile("Attribute_labels_-_Training.xlsx")
 attribute.levels.file.jmp <- findInstDirFile("eggs_labels.xlsx")
 
 data(eggs, package = "flipChoice")
@@ -19,21 +19,21 @@ data(eggs, package = "flipChoice")
 choices.jmp <- eggs.data[, 1:8]
 tasks.jmp <- data.frame(t(matrix(1:3040, nrow = 8)))
 
-# test_that("cho file", {
-#     result <- FitChoiceModel(cho.file = cho.file,
-#                              attribute.levels.file = attribute.levels.file.cho,
-#                              hb.iterations = 10, hb.chains = 1,
-#                              hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
-#
-# test_that("cho none file", {
-#     result <- FitChoiceModel(cho.file = cho.none.file,
-#                              attribute.levels.file = attribute.levels.file.cho,
-#                              hb.iterations = 10, hb.chains = 1,
-#                              hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
+test_that("cho file", {
+    result <- FitChoiceModel(cho.file = cho.file,
+                             attribute.levels.file = attribute.levels.file.cho,
+                             hb.iterations = 10, hb.chains = 1,
+                             hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
+
+test_that("cho none file", {
+    result <- FitChoiceModel(cho.file = cho.none.file,
+                             attribute.levels.file = attribute.levels.file.cho,
+                             hb.iterations = 10, hb.chains = 1,
+                             hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
 
 test_that("jmp format", {
     result <- FitChoiceModel(design.file = jmp.design.file,
