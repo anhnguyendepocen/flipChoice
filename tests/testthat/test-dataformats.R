@@ -8,17 +8,17 @@ findInstDirFile <- function(file)
 
 cho.file <- findInstDirFile("Training.cho")
 cho.none.file <- findInstDirFile("none_option.cho")
-# sawtooth.design.file <- findInstDirFile("Education_Design_(Sawtooth_format).xlsx")
-# jmp.design.file <- findInstDirFile("Choice_Profiles_(JMP).xlsx")
-# jmp.levels.design.file <- findInstDirFile("Psuedo-JMP_Design_3.xlsx")
+jmp.design.file <- findInstDirFile("eggs_design.xlsx")
+jmp.design.with.levels.file <- findInstDirFile("eggs_design_with_levels.xlsx")
+
 attribute.levels.file.cho <- findInstDirFile("Attribute_labels_-_Training.xlsx")
-# attribute.levels.file.dual <- findInstDirFile("Education_Design_Labels.xlsx")
-# attribute.levels.file.jmp <- findInstDirFile("Labels_for_Choice_Profiles.xlsx")
+attribute.levels.file.jmp <- findInstDirFile("eggs_labels.xlsx")
 
 data(sawtooth, package = "flipChoice")
-# data(jmp, package = "flipChoice")
-# data(jmplevels, package = "flipChoice")
 data(eggs, package = "flipChoice")
+
+choices.jmp <- eggs.data[, 1:8]
+tasks.jmp <- data.frame(t(matrix(1:3040, nrow = 8)))
 
 test_that("cho file", {
     result <- FitChoiceModel(cho.file = cho.file,
@@ -36,33 +36,22 @@ test_that("cho none file", {
     expect_error(print(result), NA)
 })
 
-# test_that("dual file format", {
-#     result <- FitChoiceModel(design.file = sawtooth.design.file,
-#                              attribute.levels.file = attribute.levels.file.dual,
-#                              choices = choices, questions = tasks,
-#                              hb.iterations = 10, hb.chains = 1,
-#                              hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
-#
-# test_that("jmp format", {
-#     result <- FitChoiceModel(design.file = jmp.design.file,
-#                              attribute.levels.file = attribute.levels.file.jmp,
-#                              choices = choices.jmp, questions = tasks.jmp,
-#                              hb.iterations = 10, hb.chains = 1,
-#                              hb.warnings = FALSE)
-#     expect_error(print(result), NA)
-# })
-#
-# test_that("jmp labels format", {
-#     expect_warning(result <- FitChoiceModel(design.file = jmp.levels.design.file,
-#                              choices = choices.jmp.levels,
-#                              questions = tasks.jmp.levels,
-#                              hb.iterations = 10, hb.chains = 1,
-#                              hb.warnings = FALSE),
-#         "9 respondents with missing data were omitted from the analysis")
-#     expect_error(print(result), NA)
-# })
+test_that("jmp format", {
+    result <- FitChoiceModel(design.file = jmp.design.file,
+                             attribute.levels.file = attribute.levels.file.jmp,
+                             choices = choices.jmp, questions = tasks.jmp,
+                             hb.iterations = 10, hb.chains = 1,
+                             hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
+
+test_that("jmp format with labels", {
+    result <- FitChoiceModel(design.file = jmp.design.with.levels.file,
+                             choices = choices.jmp, questions = tasks.jmp,
+                             hb.iterations = 10, hb.chains = 1,
+                             hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
 
 test_that("Missing data", {
     eggs.data.missing <- eggs.data
