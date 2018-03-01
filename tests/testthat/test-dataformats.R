@@ -17,6 +17,14 @@ attribute.levels.file.jmp <- findInstDirFile("eggs_labels.xlsx")
 data(eggs, package = "flipChoice")
 
 choices.jmp <- eggs.data[, 1:8]
+choices.jmp.none.of.these <- choices.jmp
+for (i in 1:8)
+{
+    v <- as.numeric(choices.jmp.none.of.these[[i]])
+    v[1] <- 4
+    choices.jmp.none.of.these[[i]] <- as.factor(v)
+    levels(choices.jmp.none.of.these[[i]]) <- LETTERS[1:4]
+}
 tasks.jmp <- data.frame(t(matrix(1:3040, nrow = 8)))
 
 test_that("cho file", {
@@ -39,6 +47,16 @@ test_that("jmp format", {
     result <- FitChoiceModel(design.file = jmp.design.file,
                              attribute.levels.file = attribute.levels.file.jmp,
                              choices = choices.jmp, questions = tasks.jmp,
+                             hb.iterations = 10, hb.chains = 1,
+                             hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
+
+test_that("jmp format none of these", {
+    result <- FitChoiceModel(design.file = jmp.design.file,
+                             attribute.levels.file = attribute.levels.file.jmp,
+                             choices = choices.jmp.none.of.these,
+                             questions = tasks.jmp,
                              hb.iterations = 10, hb.chains = 1,
                              hb.warnings = FALSE)
     expect_error(print(result), NA)
