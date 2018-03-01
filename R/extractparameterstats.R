@@ -51,8 +51,8 @@ makeLabels <- function(fit, add.weight.labels = FALSE)
                     colnames(fit$reduced.respondent.parameters)
                  else
                     colnames(fit$respondent.parameters)
-    lbls <- c(rep(paste0('Mean (', nms, ')'), each = n.classes),
-              rep(paste0('St. Dev. (', nms, ')'), each = n.classes))
+    lbls <- c(rep(paste0(nms, ' (Mean)'), each = n.classes),
+              rep(paste0(nms, ' (St. Dev.)'), each = n.classes))
 
     if (n.classes > 1L)
         lbls <- paste0(lbls, rep(paste0(', Class ', 1:n.classes), 2 * length(nms)))
