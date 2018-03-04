@@ -8,6 +8,27 @@ findInstDirFile <- function(file)
 
 cho.file <- findInstDirFile("Training.cho")
 cho.none.file <- findInstDirFile("none_option.cho")
+jmp.design.file <- findInstDirFile("eggs_design.xlsx")
+jmp.design.with.levels.file <- findInstDirFile("eggs_design_with_levels.xlsx")
+
+attribute.levels.file.cho <- findInstDirFile("Attribute_labels_-_Training.xlsx")
+attribute.levels.file.jmp <- findInstDirFile("eggs_labels.xlsx")
+
+data(eggs, package = "flipChoice")
+
+choices.jmp <- eggs.data[, 1:8]
+choices.jmp.none.of.these <- choices.jmp
+for (i in 1:8)
+{
+    v <- as.numeric(choices.jmp.none.of.these[[i]])
+    v[1] <- 4
+    choices.jmp.none.of.these[[i]] <- as.factor(v)
+    levels(choices.jmp.none.of.these[[i]]) <- LETTERS[1:4]
+}
+tasks.jmp <- data.frame(t(matrix(1:3040, nrow = 8)))
+
+cho.file <- findInstDirFile("Training.cho")
+cho.none.file <- findInstDirFile("none_option.cho")
 sawtooth.design.file <- findInstDirFile("Education_Design_(Sawtooth_format).xlsx")
 jmp.design.file <- findInstDirFile("Choice_Profiles_(JMP).xlsx")
 jmp.levels.design.file <- findInstDirFile("Psuedo-JMP_Design_3.xlsx")
@@ -36,15 +57,6 @@ test_that("cho none file", {
     expect_error(print(result), NA)
 })
 
-test_that("dual file format", {
-    result <- FitChoiceModel(design.file = sawtooth.design.file,
-                             attribute.levels.file = attribute.levels.file.dual,
-                             choices = choices, questions = tasks,
-                             hb.iterations = 10, hb.chains = 1,
-                             hb.warnings = FALSE)
-    expect_error(print(result), NA)
-})
-
 test_that("jmp format", {
     result <- FitChoiceModel(design.file = jmp.design.file,
                              attribute.levels.file = attribute.levels.file.jmp,
@@ -54,13 +66,21 @@ test_that("jmp format", {
     expect_error(print(result), NA)
 })
 
-test_that("jmp labels format", {
-    expect_warning(result <- FitChoiceModel(design.file = jmp.levels.design.file,
-                             choices = choices.jmp.levels,
-                             questions = tasks.jmp.levels,
+test_that("jmp format none of these", {
+    result <- FitChoiceModel(design.file = jmp.design.file,
+                             attribute.levels.file = attribute.levels.file.jmp,
+                             choices = choices.jmp.none.of.these,
+                             questions = tasks.jmp,
                              hb.iterations = 10, hb.chains = 1,
-                             hb.warnings = FALSE),
-        "9 respondents with missing data were omitted from the analysis")
+                             hb.warnings = FALSE)
+    expect_error(print(result), NA)
+})
+
+test_that("jmp format with labels", {
+    result <- FitChoiceModel(design.file = jmp.design.with.levels.file,
+                             choices = choices.jmp, questions = tasks.jmp,
+                             hb.iterations = 10, hb.chains = 1,
+                             hb.warnings = FALSE)
     expect_error(print(result), NA)
 })
 

@@ -76,6 +76,7 @@
 #' PlotPosteriorIntervals(fit)
 #' TracePlots(fit)
 #' }
+#' @importFrom flipFormat Labels
 #' @export
 #'
 FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
@@ -125,7 +126,9 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
     result$n.questions.left.out <- tasks.left.out
     result$n.classes <- n.classes
     result$subset <- subset
+    result$subset.description <- if (is.null(subset)) NULL else Labels(subset)
     result$weights <- weights
+    result$weights.description <- if (is.null(weights)) NULL else Labels(weights)
     result$n.respondents <- dat$n.respondents
     result$n.questions <- dat$n.questions
     result$n.choices <- dat$n.choices
@@ -212,7 +215,7 @@ RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
 
     bin.size <- (bin.max - bin.min) / 50
 
-    footer <- paste0(footer, "Bar width: ", FormatAsReal(bin.size, decimals = 2), "; ")
+    footer <- paste0(footer, "Column width: ", FormatAsReal(bin.size, decimals = 2), "; ")
 
     HistTable(resp.pars, title = title, subtitle = subtitle, footer = footer,
               bin.size = bin.size, bin.min = bin.min, bin.max = bin.max, hist.width = 300,
@@ -292,16 +295,23 @@ ParameterStatisticsInfo <- function(parameter.statistics, parameter.names,
 #' @description Print a FitChoice object
 #' @param x FitMaxDiff object.
 #' @param ... further arguments passed to or from other methods.
-#' @importFrom flipFormat HistTable FormatAsPercent
+#' @importFrom flipFormat HistTable FormatAsPercent SampleDescription
 #' @importFrom flipTime FormatPeriod
 #' @export
 #' @method print FitChoice
 print.FitChoice <- function(x, ...)
 {
     title <- "Choice Model: Hierarchical Bayes"
-    footer <- paste0("n = ", x$n.respondents, "; ")
-    if (!is.null(x$subset) && !all(x$subset))
-        footer <- paste0(footer, "Filters have been applied; ")
+
+    n.subset <- if (is.null(x$subset)) x$n.respondents else length(x$subset)
+    footer <- SampleDescription(n.total = x$n.respondents, n.subset = n.subset,
+                                n.estimation = n.subset,
+                                subset.label = x$subset.description,
+                                weighted = !is.null(x$weights),
+                                weight.label = x$weights.description,
+                                missing = FALSE)
+    footer <- paste0(footer, " ")
+
     footer <- paste0(footer, "Number of questions: ", x$n.questions, "; ")
     if (x$n.questions.left.out > 0)
     {

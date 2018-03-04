@@ -9,7 +9,7 @@ License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports: flipData,
-         flipFormat (>= 1.0.0),
+         flipFormat (>= 1.0.1),
          flipTime (>= 2.7.3),
          flipU (>= 1.2.2),
          httr,
