@@ -57,10 +57,25 @@ test_that("HB diagonal 2 classes", {
     expect_error(print(result), NA)
 })
 
-test_that("HB constraints", {
+test_that("HB prior attributes", {
     result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
                              hb.chains = 1,
-                             hb.prior.mean = c(0, 1, 0, 0, 1, 0, 0, -2),
-                             hb.prior.sd = rep(3, 8), hb.warnings = FALSE)
+                             hb.prior.mean = c(0, -10, 0, 0, 0, 0, 0, 20),
+                             hb.prior.sd = rep(0.1, 8), hb.warnings = FALSE)
     expect_error(print(result), NA)
+    # Weight variable prior forced to be negative
+    expect_equal(all(result$parameter.statistics[3:5, 1] < 0), TRUE)
+    # Price variable prior forced to be positive
+    expect_equal(result$parameter.statistics[13, 1] > 0, TRUE)
+})
+
+test_that("HB prior variables", {
+    result <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 10,
+                             hb.chains = 1,
+                             hb.prior.mean = c(0, 0, 0, 0, 0, 0, 0, 0, -10, 0,
+                                               0, 0, 0),
+                             hb.prior.sd = rep(0.1, 8), hb.warnings = FALSE)
+    expect_error(print(result), NA)
+    # Free range variable prior force to be negative
+    expect_equal(result$parameter.statistics[9, 1] < 0, TRUE)
 })

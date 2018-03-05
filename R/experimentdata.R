@@ -31,7 +31,8 @@ processExperimentData <- function(experiment.data, subset, weights,
     var.names <- variableNames(attribute.data, n.attributes, n.questions, n.choices, n.variables)
     all.names <- allNames(attribute.data, n.attributes, n.questions, n.choices, n.variables)
 
-    checkPriorParameters(input.prior.mean, input.prior.sd, n.attributes)
+    checkPriorParameters(input.prior.mean, input.prior.sd, n.choices,
+                         n.attributes, n.variables)
 
     X.list <- createDesignMatrix(attribute.data, n.attributes, n.questions,
                                  n.choices, n.variables, n.attribute.variables,
@@ -117,10 +118,8 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions,
                 v <- attribute.data[[n.qc * (i - 1) + n.choices * (q - 1) + j]]
                 if (is.factor(v))
                 {
-                    is.ordered <- (length(input.prior.mean) == 1 &&
-                                   input.prior.mean != 0) ||
-                                  (length(input.prior.mean) > 1 &&
-                                   input.prior.mean[i] != 0)
+                    is.ordered <- length(input.prior.mean) == n.attributes &&
+                                  input.prior.mean[i] != 0
                     if (is.ordered)
                     {
                         n.v <- length(levels(v)) - 1
@@ -251,13 +250,14 @@ LeftOutQuestions <- function(n.respondents, n.questions, n.questions.left.out,
 }
 
 processInputPrior <- function(prior.par, n.variables, n.attributes,
-                              n.attribute.variables, variable.scales)
+                              n.attribute.variables, variable.scales = NULL)
 {
+    if (is.null(variable.scales))
+        variable.scales <- rep(1, n.variables)
     result <- rep(NA, n.variables)
-
     if (length(prior.par) == 1)
         result <- rep(prior.par, n.variables)
-    else
+    else if (length(prior.par) == n.attributes)
     {
         result <- rep(NA, n.variables)
         for (i in 1:n.attributes)
@@ -276,6 +276,9 @@ processInputPrior <- function(prior.par, n.variables, n.attributes,
             }
         }
     }
+    else # length(prior.par) == n.variables
+        result <- prior.par * variable.scales
+
     result
 }
 
@@ -311,14 +314,24 @@ crossValidationSplit <- function(X, Y, n.questions.left.out, seed)
     list(X.in = X.in, X.out = X.out, Y.in = Y.in, Y.out = Y.out)
 }
 
-checkPriorParameters <- function(input.prior.mean, input.prior.sd,
-                                 n.attributes)
+checkPriorParameters <- function(input.prior.mean, input.prior.sd, n.choices,
+                                 n.attributes, n.variables,
+                                 include.choice.parameters = FALSE)
 {
+    if (include.choice.parameters)
+    {
+        n.attributes <- n.attributes + 1
+        n.variables <- n.variables + n.choices - 1
+    }
     if (!is.numeric(input.prior.mean) ||
-        (length(input.prior.mean) != n.attributes && length(input.prior.mean) != 1))
+        (length(input.prior.mean) != n.variables &&
+         length(input.prior.mean) != n.attributes &&
+         length(input.prior.mean) != 1))
         stop(paste0("The supplied parameter hb.prior.mean is inappropriate."))
     if (!is.numeric(input.prior.sd) ||
-        (length(input.prior.sd) != n.attributes && length(input.prior.sd) != 1))
+        (length(input.prior.sd) != n.variables &&
+         length(input.prior.sd) != n.attributes &&
+         length(input.prior.sd) != 1))
         stop(paste0("The supplied parameter hb.prior.sd is inappropriate."))
 }
 

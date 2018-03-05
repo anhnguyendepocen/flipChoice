@@ -31,14 +31,12 @@ processDesignFile <- function(design.file, attribute.levels.file,
     n.variables <-  sum(n.attribute.variables)
     var.names <- variableNamesFromAttributes(attribute.levels)
     all.names <- allNamesFromAttributes(attribute.levels)
-    variable.scales <- rep(1, n.variables)
 
-    checkPriorParameters(input.prior.mean, input.prior.sd, n.attributes)
+    checkPriorParameters(input.prior.mean, input.prior.sd, n.choices,
+                         n.attributes, n.variables, include.choice.parameters)
 
-    ordered.attributes <- if (length(input.prior.mean) == 1)
-        rep(FALSE, n.attributes)
-    else
-        input.prior.mean != 0
+    ordered.attributes <- orderedAttributes(input.prior.mean, n.attributes,
+                                            n.variables)
 
     if (any(ordered.attributes) && has.none.of.these)
         stop('Ordered attributes cannot be specified when the "None of these"',
@@ -83,16 +81,13 @@ processDesignFile <- function(design.file, attribute.levels.file,
     {
         output <- addChoiceParameters(X, n.attributes, n.variables,
                                       n.attribute.variables, n.choices,
-                                      var.names, all.names, input.prior.mean,
-                                      input.prior.sd, has.none.of.these)
+                                      var.names, all.names, has.none.of.these)
         X <- output$X
         n.attributes <- output$n.attributes
         n.variables <- output$n.variables
         n.attribute.variables <- output$n.attribute.variables
         var.names <- output$var.names
         all.names <- output$all.names
-        input.prior.mean <- output$input.prior.mean
-        input.prior.sd <- output$input.prior.sd
     }
 
     subset <- CleanSubset(subset, n.respondents)
@@ -104,11 +99,9 @@ processDesignFile <- function(design.file, attribute.levels.file,
     split.data <- crossValidationSplit(X, Y, n.questions.left.out, seed)
 
     prior.mean <- processInputPrior(input.prior.mean, n.variables,
-                                    n.attributes, n.attribute.variables,
-                                    variable.scales)
+                                    n.attributes, n.attribute.variables)
     prior.sd <- processInputPrior(input.prior.sd, n.variables,
-                                  n.attributes, n.attribute.variables,
-                                  variable.scales)
+                                  n.attributes, n.attribute.variables)
 
     result <- list(n.questions = n.questions,
                    n.questions.left.in = n.questions.left.in,
@@ -214,4 +207,13 @@ readExcelFile <- function(file.path)
         GET(file.path, write_disk(temp.file <- tempfile(fileext = ext)))
         read_excel(temp.file)
     }
+}
+
+orderedAttributes <- function(input.prior.mean, n.attributes, n.variables)
+{
+    if (length(input.prior.mean) == 1 ||
+        length(input.prior.mean) == n.variables)
+        rep(FALSE, n.attributes)
+    else
+        input.prior.mean != 0
 }

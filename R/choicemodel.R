@@ -26,10 +26,11 @@
 #' the output.
 #' @param hb.stanfit Whether to include the stanfit property.
 #' @param hb.prior.mean The mean for the priors of the mean parameters
-#' theta_raw. This is passed as a numeric vector with each element
-#' corresponding to an attribute, or a scalar. If hb.prior.mean is nonzero for
-#' a categorical attribute, the attribute is treated as ordered categorical and
-#' hb.prior.mean controls the offsets from the base attribute.
+#' theta_raw. This is either passed as a scalar which applies to all
+#' parameters or a numeric vector with each element corresponding to a variable
+#' or attribute. If hb.prior.mean is nonzero for a categorical attribute, the
+#' attribute is treated as ordered categorical and hb.prior.mean controls the
+#' offsets from the base attribute.
 #' @param hb.prior.sd The standard deviations for the priors of the mean
 #' parameters theta_raw. This is passed as a numeric vector with each element
 #' corresponding to an attribute, or a scalar. If hb.prior.mean is nonzero for
@@ -71,10 +72,21 @@
 #' \dontrun{
 #' data(eggs, package = "flipChoice")
 #' fit <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 100,
-#'                                               hb.chains = 1, tasks.left.out = 2)
+#'                       hb.chains = 1, tasks.left.out = 2)
+#' print(fit)
 #' ExtractParameterStats(fit)
 #' PlotPosteriorIntervals(fit)
 #' TracePlots(fit)
+#'
+#' choices <- eggs.data[, 1:8]
+#' questions <- data.frame(t(matrix(1:3040, nrow = 8)))
+#' hb.prior.mean <- c(0, 0, 1, 1, 2, 1, 1, 2, 4, 0, 0, 0, -1, -3, -5, -9)
+#' fit.with.prior <- FitChoiceModel(
+#'     design.file = "http://wiki.q-researchsoftware.com/images/3/35/Eggs_design_with_levels.xlsx",
+#'     choices = choices, questions = questions,
+#'     hb.iterations = 100, hb.chains = 1,
+#'     tasks.left.out = 2, hb.prior.mean = hb.prior.mean)
+#' print(fit.with.prior)
 #' }
 #' @importFrom flipFormat Labels
 #' @export
@@ -215,7 +227,7 @@ RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
 
     bin.size <- (bin.max - bin.min) / 50
 
-    footer <- paste0(footer, "Column width: ", FormatAsReal(bin.size, decimals = 2), "; ")
+    footer <- paste0(footer, "column width: ", FormatAsReal(bin.size, decimals = 2), "; ")
 
     HistTable(resp.pars, title = title, subtitle = subtitle, footer = footer,
               bin.size = bin.size, bin.min = bin.min, bin.max = bin.max, hist.width = 300,
@@ -260,33 +272,33 @@ ParameterStatisticsInfo <- function(parameter.statistics, parameter.names,
 
     result <- ""
     if (length(theta.rhat.ind) == 0)
-        result <- paste0(result, "Lowest effective sample size (Mean): ",
+        result <- paste0(result, "lowest effective sample size (Mean): ",
                          theta.n.eff, " at ", nms[theta.n.eff.ind],
                          "; Rhat (Mean) not available; ")
     else if (theta.n.eff.ind == theta.rhat.ind)
-        result <- paste0(result, "Lowest effective sample size (Mean): ",
-                         theta.n.eff, " and Highest Rhat (Mean): ",
+        result <- paste0(result, "lowest effective sample size (Mean): ",
+                         theta.n.eff, " and highest Rhat (Mean): ",
                          theta.rhat, " at ", nms[theta.n.eff.ind],
                          "; ")
     else
-        result <- paste0(result, "Lowest effective sample size (Mean): ",
+        result <- paste0(result, "lowest effective sample size (Mean): ",
                          theta.n.eff, " at ", nms[theta.n.eff.ind],
-                         "; ", "Highest Rhat (Mean): ", theta.rhat, " at ",
+                         "; ", "highest Rhat (Mean): ", theta.rhat, " at ",
                          nms[theta.rhat.ind], "; ")
 
     if (length(sigma.rhat.ind) == 0)
-        result <- paste0(result, "Lowest effective sample size (St. Dev.): ",
+        result <- paste0(result, "lowest effective sample size (St. Dev.): ",
                          sigma.n.eff, " at ", nms[sigma.n.eff.ind],
                          "; Rhat (St. Dev.) not available; ")
     else if (sigma.n.eff.ind == sigma.rhat.ind)
-        result <- paste0(result, "Lowest effective sample size (St. Dev.): ",
-                         sigma.n.eff, " and Highest Rhat (St. Dev.): ",
+        result <- paste0(result, "lowest effective sample size (St. Dev.): ",
+                         sigma.n.eff, " and highest Rhat (St. Dev.): ",
                          sigma.rhat, " at ", nms[sigma.n.eff.ind],
                          "; ")
     else
-        result <- paste0(result, "Lowest effective sample size (St. Dev.): ",
+        result <- paste0(result, "lowest effective sample size (St. Dev.): ",
                          sigma.n.eff, " at ", nms[sigma.n.eff.ind],
-                         "; ", "Highest Rhat (St. Dev.): ", sigma.rhat, " at ",
+                         "; ", "highest Rhat (St. Dev.): ", sigma.rhat, " at ",
                          nms[sigma.rhat.ind], "; ")
     result
 }
@@ -303,7 +315,7 @@ print.FitChoice <- function(x, ...)
 {
     title <- "Choice Model: Hierarchical Bayes"
 
-    n.subset <- if (is.null(x$subset)) x$n.respondents else length(x$subset)
+    n.subset <- if (is.null(x$subset)) x$n.respondents else sum(x$subset)
     footer <- SampleDescription(n.total = x$n.respondents, n.subset = n.subset,
                                 n.estimation = n.subset,
                                 subset.label = x$subset.description,
@@ -312,34 +324,34 @@ print.FitChoice <- function(x, ...)
                                 missing = FALSE)
     footer <- paste0(footer, " ")
 
-    footer <- paste0(footer, "Number of questions: ", x$n.questions, "; ")
+    footer <- paste0(footer, "number of questions: ", x$n.questions, "; ")
     if (x$n.questions.left.out > 0)
     {
-        footer <- paste0(footer, "Questions used in estimation: ", x$n.questions - x$n.questions.left.out, "; ")
-        footer <- paste0(footer, "Questions left out: ", x$n.questions.left.out, "; ")
+        footer <- paste0(footer, "questions used in estimation: ", x$n.questions - x$n.questions.left.out, "; ")
+        footer <- paste0(footer, "questions left out: ", x$n.questions.left.out, "; ")
     }
-    footer <- paste0(footer, "Choices per question: ", x$n.choices, "; ")
-    footer <- paste0(footer, "Number of attributes: ", x$n.attributes, "; ")
-    footer <- paste0(footer, "Number of variables: ", x$n.variables, "; ")
-    footer <- paste0(footer, "Number of classes: ", x$n.classes, "; ")
+    footer <- paste0(footer, "choices per question: ", x$n.choices, "; ")
+    footer <- paste0(footer, "number of attributes: ", x$n.attributes, "; ")
+    footer <- paste0(footer, "number of variables: ", x$n.variables, "; ")
+    footer <- paste0(footer, "number of classes: ", x$n.classes, "; ")
     if (x$class.match.fail)
-        footer <- paste0(footer, "Parameter statistics not available; ")
+        footer <- paste0(footer, "parameter statistics not available; ")
     else
         footer <- paste0(footer,
                          ParameterStatisticsInfo(x$parameter.statistics,
                                      colnames(x$reduced.respondent.parameters),
                                      x$n.classes))
     if (IsTestRServer())
-        footer <- paste0(footer, "Time taken to run analysis: [hidden for tests]; ")
+        footer <- paste0(footer, "time taken to run analysis: [hidden for tests]; ")
     else
-        footer <- paste0(footer, "Time taken to run analysis: ",
+        footer <- paste0(footer, "time taken to run analysis: ",
                          FormatPeriod(x$time.taken), "; ")
 
     subtitle <- if (!is.na(x$out.sample.accuracy))
-        paste0("Prediction accuracy (leave-", x$n.questions.left.out , "-out cross-validation): ",
+        paste0("prediction accuracy (leave-", x$n.questions.left.out , "-out cross-validation): ",
                FormatAsPercent(x$out.sample.accuracy, decimals = 1))
     else
-        paste0("Prediction accuracy (in-sample): ",
+        paste0("prediction accuracy (in-sample): ",
                FormatAsPercent(x$in.sample.accuracy, decimals = 1))
 
     RespondentParametersTable(x$respondent.parameters, title, subtitle, footer)

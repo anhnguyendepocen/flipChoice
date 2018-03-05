@@ -26,14 +26,12 @@ processChoFile <- function(cho.file, attribute.levels.file,
     n.variables <-  sum(n.attribute.variables)
     var.names <- variableNamesFromAttributes(attribute.levels)
     all.names <- allNamesFromAttributes(attribute.levels)
-    variable.scales <- rep(1, n.variables)
 
-    checkPriorParameters(input.prior.mean, input.prior.sd, n.attributes)
+    checkPriorParameters(input.prior.mean, input.prior.sd, n.choices,
+                         n.attributes, n.variables, include.choice.parameters)
 
-    ordered.attributes <- if (length(input.prior.mean) == 1)
-        rep(FALSE, n.attributes)
-    else
-        input.prior.mean != 0
+    ordered.attributes <- orderedAttributes(input.prior.mean, n.attributes,
+                                            n.variables)
 
     n.questions.left.in <- n.questions - n.questions.left.out
     left.out <- LeftOutQuestions(n.respondents, n.questions, n.questions.left.out, seed)
@@ -73,16 +71,13 @@ processChoFile <- function(cho.file, attribute.levels.file,
     {
         output <- addChoiceParameters(X, n.attributes, n.variables,
                                       n.attribute.variables, n.choices,
-                                      var.names, all.names, input.prior.mean,
-                                      input.prior.sd, has.none.of.these)
+                                      var.names, all.names, has.none.of.these)
         X <- output$X
         n.attributes <- output$n.attributes
         n.variables <- output$n.variables
         n.attribute.variables <- output$n.attribute.variables
         var.names <- output$var.names
         all.names <- output$all.names
-        input.prior.mean <- output$input.prior.mean
-        input.prior.sd <- output$input.prior.sd
     }
 
     subset <- CleanSubset(subset, n.respondents)
@@ -94,10 +89,9 @@ processChoFile <- function(cho.file, attribute.levels.file,
     split.data <- crossValidationSplit(X, Y, n.questions.left.out, seed)
 
     prior.mean <- processInputPrior(input.prior.mean, n.variables,
-                                    n.attributes, n.attribute.variables,
-                                    variable.scales)
+                                    n.attributes, n.attribute.variables)
     prior.sd <- processInputPrior(input.prior.sd, n.variables, n.attributes,
-                                  n.attribute.variables, variable.scales)
+                                  n.attribute.variables)
 
     result <- list(n.questions = n.questions,
                    n.questions.left.in = n.questions.left.in,
@@ -175,6 +169,22 @@ allNamesFromAttributes <- function(attribute.levels)
     result
 }
 
+addChoiceParameters <- function(X, n.attributes, n.variables,
+                                n.attribute.variables, n.choices, var.names,
+                                all.names, has.none.of.these)
+{
+    X <- addChoiceParametersX(X)
+    n.attributes <- n.attributes + 1
+    n.variables <- n.variables + n.choices - 1
+    n.attribute.variables <- c(n.choices, n.attribute.variables)
+    alt.labels <- createAlternativeLabels(n.choices, has.none.of.these)
+    var.names <- c(alt.labels[-1], var.names)
+    all.names <- c(alt.labels, all.names)
+    list(X = X, n.attributes = n.attributes, n.variables = n.variables,
+         n.attribute.variables = n.attribute.variables,
+         var.names = var.names, all.names = all.names)
+}
+
 addChoiceParametersX <- function(X)
 {
     dim.X <- dim(X)
@@ -186,29 +196,6 @@ addChoiceParametersX <- function(X)
     for (i in 1:(n.choices - 1))
         new.X[, , i + 1, i] <- 1
     new.X
-}
-
-addChoiceParameters <- function(X, n.attributes, n.variables,
-                                n.attribute.variables, n.choices, var.names,
-                                all.names, input.prior.mean, input.prior.sd,
-                                has.none.of.these)
-{
-    X <- addChoiceParametersX(X)
-    n.attributes <- n.attributes + 1
-    n.variables <- n.variables + n.choices - 1
-    n.attribute.variables <- c(n.choices, n.attribute.variables)
-    alt.labels <- createAlternativeLabels(n.choices, has.none.of.these)
-    var.names <- c(alt.labels[-1], var.names)
-    all.names <- c(alt.labels, all.names)
-    if (length(input.prior.mean) > 1)
-        input.prior.mean <- c(0, input.prior.mean)
-    if (length(input.prior.sd) > 1)
-        input.prior.sd <- c(5, input.prior.sd)
-    list(X = X, n.attributes = n.attributes, n.variables = n.variables,
-         n.attribute.variables = n.attribute.variables,
-         var.names = var.names, all.names = all.names,
-         input.prior.mean = input.prior.mean,
-         input.prior.sd = input.prior.sd)
 }
 
 createAlternativeLabels <- function(n.choices, has.none.of.these)

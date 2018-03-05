@@ -57,10 +57,11 @@ the output.}
 \item{hb.stanfit}{Whether to include the stanfit property.}
 
 \item{hb.prior.mean}{The mean for the priors of the mean parameters
-theta_raw. This is passed as a numeric vector with each element
-corresponding to an attribute, or a scalar. If hb.prior.mean is nonzero for
-a categorical attribute, the attribute is treated as ordered categorical and
-hb.prior.mean controls the offsets from the base attribute.}
+theta_raw. This is either passed as a scalar which applies to all
+parameters or a numeric vector with each element corresponding to a variable
+or attribute. If hb.prior.mean is nonzero for a categorical attribute, the
+attribute is treated as ordered categorical and hb.prior.mean controls the
+offsets from the base attribute.}
 
 \item{hb.prior.sd}{The standard deviations for the priors of the mean
 parameters theta_raw. This is passed as a numeric vector with each element
@@ -114,9 +115,20 @@ Hierarchical Bayes
 \dontrun{
 data(eggs, package = "flipChoice")
 fit <- FitChoiceModel(experiment.data = eggs.data, hb.iterations = 100,
-                                              hb.chains = 1, tasks.left.out = 2)
+                      hb.chains = 1, tasks.left.out = 2)
+print(fit)
 ExtractParameterStats(fit)
 PlotPosteriorIntervals(fit)
 TracePlots(fit)
+
+choices <- eggs.data[, 1:8]
+questions <- data.frame(t(matrix(1:3040, nrow = 8)))
+hb.prior.mean <- c(0, 0, 1, 1, 2, 1, 1, 2, 4, 0, 0, 0, -1, -3, -5, -9)
+fit.with.prior <- FitChoiceModel(
+    design.file = "http://wiki.q-researchsoftware.com/images/3/35/Eggs_design_with_levels.xlsx",
+    choices = choices, questions = questions,
+    hb.iterations = 100, hb.chains = 1,
+    tasks.left.out = 2, hb.prior.mean = hb.prior.mean)
+print(fit.with.prior)
 }
 }
