@@ -27,16 +27,16 @@ processDesignFile <- function(design.file, attribute.levels.file,
     none.of.these.included <- any(rowSums(design[-1:-3]) == 0)
     has.none.of.these <- add.none.of.these || none.of.these.included
 
-    n.attribute.variables <- unlist(lapply(attribute.levels, length)) - 1
-    n.variables <-  sum(n.attribute.variables)
-    var.names <- variableNamesFromAttributes(attribute.levels)
+    n.attribute.parameters <- unlist(lapply(attribute.levels, length)) - 1
+    n.parameters <-  sum(n.attribute.parameters)
+    par.names <- parameterNamesFromAttributes(attribute.levels)
     all.names <- allNamesFromAttributes(attribute.levels)
 
     checkPriorParameters(input.prior.mean, input.prior.sd, n.choices,
-                         n.attributes, n.variables, include.choice.parameters)
+                         n.attributes, n.parameters, include.choice.parameters)
 
     ordered.attributes <- orderedAttributes(input.prior.mean, n.attributes,
-                                            n.variables)
+                                            n.parameters)
 
     if (any(ordered.attributes) && has.none.of.these)
         stop('Ordered attributes cannot be specified when the "None of these"',
@@ -47,7 +47,7 @@ processDesignFile <- function(design.file, attribute.levels.file,
                                  n.questions.left.out, seed)
 
     X <- array(data = 0, dim = c(n.respondents, n.questions, n.choices,
-                                 n.variables))
+                                 n.parameters))
 
     ind.columns <- (1:n.attributes) + 3
     for (i in 1:n.respondents)
@@ -59,14 +59,14 @@ processDesignFile <- function(design.file, attribute.levels.file,
             for (k in 1:n.choices)
             {
                 if (has.none.of.these && k == n.choices)
-                    X[i, j, k, ] <- fillXNoneOfThese(n.variables, n.attributes,
-                                                     n.attribute.variables)
+                    X[i, j, k, ] <- fillXNoneOfThese(n.parameters, n.attributes,
+                                                     n.attribute.parameters)
                 else
                 {
                     question.design <- as.vector(t(design[ind, ind.columns]))
-                    X[i, j, k, ] <- fillXAttributes(n.variables,
+                    X[i, j, k, ] <- fillXAttributes(n.parameters,
                                                     n.attributes,
-                                                    n.attribute.variables,
+                                                    n.attribute.parameters,
                                                     ordered.attributes,
                                                     question.design)
                     ind <- ind + 1
@@ -79,14 +79,14 @@ processDesignFile <- function(design.file, attribute.levels.file,
 
     if (include.choice.parameters)
     {
-        output <- addChoiceParameters(X, n.attributes, n.variables,
-                                      n.attribute.variables, n.choices,
-                                      var.names, all.names, has.none.of.these)
+        output <- addChoiceParameters(X, n.attributes, n.parameters,
+                                      n.attribute.parameters, n.choices,
+                                      par.names, all.names, has.none.of.these)
         X <- output$X
         n.attributes <- output$n.attributes
-        n.variables <- output$n.variables
-        n.attribute.variables <- output$n.attribute.variables
-        var.names <- output$var.names
+        n.parameters <- output$n.parameters
+        n.attribute.parameters <- output$n.attribute.parameters
+        par.names <- output$par.names
         all.names <- output$all.names
     }
 
@@ -98,10 +98,10 @@ processDesignFile <- function(design.file, attribute.levels.file,
 
     split.data <- crossValidationSplit(X, Y, n.questions.left.out, seed)
 
-    prior.mean <- processInputPrior(input.prior.mean, n.variables,
-                                    n.attributes, n.attribute.variables)
-    prior.sd <- processInputPrior(input.prior.sd, n.variables,
-                                  n.attributes, n.attribute.variables)
+    prior.mean <- processInputPrior(input.prior.mean, n.parameters,
+                                    n.attributes, n.attribute.parameters)
+    prior.sd <- processInputPrior(input.prior.sd, n.parameters,
+                                  n.attributes, n.attribute.parameters)
 
     result <- list(n.questions = n.questions,
                    n.questions.left.in = n.questions.left.in,
@@ -109,9 +109,9 @@ processDesignFile <- function(design.file, attribute.levels.file,
                    n.choices = n.choices,
                    n.attributes = n.attributes,
                    n.respondents = n.respondents,
-                   n.variables = n.variables,
-                   n.attribute.variables = n.attribute.variables,
-                   var.names = var.names,
+                   n.parameters = n.parameters,
+                   n.attribute.parameters = n.attribute.parameters,
+                   par.names = par.names,
                    all.names = all.names,
                    X.in = split.data$X.in,
                    Y.in = split.data$Y.in,
@@ -119,7 +119,7 @@ processDesignFile <- function(design.file, attribute.levels.file,
                    Y.out = split.data$Y.out,
                    subset = subset,
                    weights = weights,
-                   variable.scales = rep(1, n.variables),
+                   parameter.scales = rep(1, n.parameters),
                    prior.mean = prior.mean,
                    prior.sd = prior.sd)
     result
@@ -173,10 +173,10 @@ processRespondentData <- function(choices, questions)
     list(choices = choices[ind, ], questions = questions[ind, ])
 }
 
-# Variable values for the "None of these" choice
-fillXNoneOfThese <- function(n.variables, n.attributes, n.attribute.variables)
+# Values for the "None of these" choice
+fillXNoneOfThese <- function(n.parameters, n.attributes, n.attribute.parameters)
 {
-    rep(0, n.variables)
+    rep(0, n.parameters)
 }
 
 getNumberOfChoices <- function(choices)
@@ -209,10 +209,10 @@ readExcelFile <- function(file.path)
     }
 }
 
-orderedAttributes <- function(input.prior.mean, n.attributes, n.variables)
+orderedAttributes <- function(input.prior.mean, n.attributes, n.parameters)
 {
     if (length(input.prior.mean) == 1 ||
-        length(input.prior.mean) == n.variables)
+        length(input.prior.mean) == n.parameters)
         rep(FALSE, n.attributes)
     else
         input.prior.mean != 0

@@ -65,7 +65,7 @@
 #' \item \code{n.questions} The number of questions per respondent.
 #' \item \code{n.choices} The number of choices per question.
 #' \item \code{n.attributes} The number of attributes.
-#' \item \code{n.variables} The number of variables in the analysis.
+#' \item \code{n.parameters} The number of parameters in the analysis.
 #' \item \code{time.taken} The time taken to run the analysis.
 #' }
 #' @examples
@@ -145,7 +145,7 @@ FitChoiceModel <- function(experiment.data = NULL, cho.file = NULL,
     result$n.questions <- dat$n.questions
     result$n.choices <- dat$n.choices
     result$n.attributes <- dat$n.attributes
-    result$n.variables <- dat$n.variables
+    result$n.parameters <- dat$n.parameters
     result$time.taken <- (end.time - start.time)[3]
     result
 }
@@ -216,9 +216,9 @@ RespondentParametersTable <- function(resp.pars, title, subtitle, footer)
     bin.max <- max(ceiling(max(resp.pars, na.rm = TRUE)), -floor(min(resp.pars, na.rm = TRUE)))
     bin.min <- -bin.max
 
-    n.variables <- ncol(resp.pars)
-    stats.table <- matrix(NA, nrow = n.variables, ncol = 2)
-    for (i in 1:n.variables)
+    n.parameters <- ncol(resp.pars)
+    stats.table <- matrix(NA, nrow = n.parameters, ncol = 2)
+    for (i in 1:n.parameters)
     {
         stats.table[i, 1] <- FormatAsReal(mean(resp.pars[, i], na.rm = TRUE), decimals = 1)
         stats.table[i, 2] <- FormatAsReal(sd(resp.pars[, i], na.rm = TRUE), decimals = 1)
@@ -332,7 +332,7 @@ print.FitChoice <- function(x, ...)
     }
     footer <- paste0(footer, "choices per question: ", x$n.choices, "; ")
     footer <- paste0(footer, "number of attributes: ", x$n.attributes, "; ")
-    footer <- paste0(footer, "number of variables: ", x$n.variables, "; ")
+    footer <- paste0(footer, "number of parameters: ", x$n.parameters, "; ")
     footer <- paste0(footer, "number of classes: ", x$n.classes, "; ")
     if (x$class.match.fail)
         footer <- paste0(footer, "parameter statistics not available; ")

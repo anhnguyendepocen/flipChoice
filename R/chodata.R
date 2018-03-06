@@ -22,21 +22,21 @@ processChoFile <- function(cho.file, attribute.levels.file,
              "has the same number of questions and choices per question.")
 
     n.attributes <- length(attribute.levels)
-    n.attribute.variables <- unlist(lapply(attribute.levels, length)) - 1
-    n.variables <-  sum(n.attribute.variables)
-    var.names <- variableNamesFromAttributes(attribute.levels)
+    n.attribute.parameters <- unlist(lapply(attribute.levels, length)) - 1
+    n.parameters <-  sum(n.attribute.parameters)
+    par.names <- parameterNamesFromAttributes(attribute.levels)
     all.names <- allNamesFromAttributes(attribute.levels)
 
     checkPriorParameters(input.prior.mean, input.prior.sd, n.choices,
-                         n.attributes, n.variables, include.choice.parameters)
+                         n.attributes, n.parameters, include.choice.parameters)
 
     ordered.attributes <- orderedAttributes(input.prior.mean, n.attributes,
-                                            n.variables)
+                                            n.parameters)
 
     n.questions.left.in <- n.questions - n.questions.left.out
     left.out <- LeftOutQuestions(n.respondents, n.questions, n.questions.left.out, seed)
 
-    X <- array(data = 0, dim = c(n.respondents, n.questions, n.choices, n.variables))
+    X <- array(data = 0, dim = c(n.respondents, n.questions, n.choices, n.parameters))
     Y <- matrix(NA, nrow = n.respondents, ncol = n.questions)
 
     ind <- 0
@@ -49,15 +49,15 @@ processChoFile <- function(cho.file, attribute.levels.file,
             for (k in 1:n.choices)
             {
                 if (has.none.of.these && k == n.choices)
-                    X[i, j, k, ] <- fillXNoneOfThese(n.variables,
+                    X[i, j, k, ] <- fillXNoneOfThese(n.parameters,
                                                      n.attributes,
-                                                     n.attribute.variables)
+                                                     n.attribute.parameters)
                 else
                 {
                     ind <- ind + 1 # attributes row
-                    X[i, j, k, ] <- fillXAttributes(n.variables,
+                    X[i, j, k, ] <- fillXAttributes(n.parameters,
                                                     n.attributes,
-                                                    n.attribute.variables,
+                                                    n.attribute.parameters,
                                                     ordered.attributes,
                                                     raw.num[[ind]])
                 }
@@ -69,14 +69,14 @@ processChoFile <- function(cho.file, attribute.levels.file,
 
     if (include.choice.parameters)
     {
-        output <- addChoiceParameters(X, n.attributes, n.variables,
-                                      n.attribute.variables, n.choices,
-                                      var.names, all.names, has.none.of.these)
+        output <- addChoiceParameters(X, n.attributes, n.parameters,
+                                      n.attribute.parameters, n.choices,
+                                      par.names, all.names, has.none.of.these)
         X <- output$X
         n.attributes <- output$n.attributes
-        n.variables <- output$n.variables
-        n.attribute.variables <- output$n.attribute.variables
-        var.names <- output$var.names
+        n.parameters <- output$n.parameters
+        n.attribute.parameters <- output$n.attribute.parameters
+        par.names <- output$par.names
         all.names <- output$all.names
     }
 
@@ -88,10 +88,10 @@ processChoFile <- function(cho.file, attribute.levels.file,
 
     split.data <- crossValidationSplit(X, Y, n.questions.left.out, seed)
 
-    prior.mean <- processInputPrior(input.prior.mean, n.variables,
-                                    n.attributes, n.attribute.variables)
-    prior.sd <- processInputPrior(input.prior.sd, n.variables, n.attributes,
-                                  n.attribute.variables)
+    prior.mean <- processInputPrior(input.prior.mean, n.parameters,
+                                    n.attributes, n.attribute.parameters)
+    prior.sd <- processInputPrior(input.prior.sd, n.parameters, n.attributes,
+                                  n.attribute.parameters)
 
     result <- list(n.questions = n.questions,
                    n.questions.left.in = n.questions.left.in,
@@ -99,9 +99,9 @@ processChoFile <- function(cho.file, attribute.levels.file,
                    n.choices = n.choices,
                    n.attributes = n.attributes,
                    n.respondents = n.respondents,
-                   n.variables = n.variables,
-                   n.attribute.variables = n.attribute.variables,
-                   var.names = var.names,
+                   n.parameters = n.parameters,
+                   n.attribute.parameters = n.attribute.parameters,
+                   par.names = par.names,
                    all.names = all.names,
                    X.in = split.data$X.in,
                    Y.in = split.data$Y.in,
@@ -109,7 +109,7 @@ processChoFile <- function(cho.file, attribute.levels.file,
                    Y.out = split.data$Y.out,
                    subset = subset,
                    weights = weights,
-                   variable.scales = rep(1, n.variables),
+                   parameter.scales = rep(1, n.parameters),
                    prior.mean = prior.mean,
                    prior.sd = prior.sd)
 
@@ -130,17 +130,17 @@ processAttributeLevelsFile <- function(attribute.levels.file)
     attribute.levels
 }
 
-variableNamesFromAttributes <- function(attribute.levels)
+parameterNamesFromAttributes <- function(attribute.levels)
 {
     n.attributes <- length(attribute.levels)
-    n.attribute.variables <- unlist(lapply(attribute.levels, length)) - 1
-    n.variables <- sum(n.attribute.variables)
+    n.attribute.parameters <- unlist(lapply(attribute.levels, length)) - 1
+    n.parameters <- sum(n.attribute.parameters)
     attribute.names <- names(attribute.levels)
-    result <- rep("", n.variables)
+    result <- rep("", n.parameters)
     ind <- 1
     for (i in 1:n.attributes)
     {
-        for (j in 1:n.attribute.variables[i])
+        for (j in 1:n.attribute.parameters[i])
         {
             result[ind] <- paste0(attribute.names[i], ": ",
                                   attribute.levels[[i]][j + 1])
@@ -169,20 +169,20 @@ allNamesFromAttributes <- function(attribute.levels)
     result
 }
 
-addChoiceParameters <- function(X, n.attributes, n.variables,
-                                n.attribute.variables, n.choices, var.names,
+addChoiceParameters <- function(X, n.attributes, n.parameters,
+                                n.attribute.parameters, n.choices, par.names,
                                 all.names, has.none.of.these)
 {
     X <- addChoiceParametersX(X)
     n.attributes <- n.attributes + 1
-    n.variables <- n.variables + n.choices - 1
-    n.attribute.variables <- c(n.choices, n.attribute.variables)
+    n.parameters <- n.parameters + n.choices - 1
+    n.attribute.parameters <- c(n.choices, n.attribute.parameters)
     alt.labels <- createAlternativeLabels(n.choices, has.none.of.these)
-    var.names <- c(alt.labels[-1], var.names)
+    par.names <- c(alt.labels[-1], par.names)
     all.names <- c(alt.labels, all.names)
-    list(X = X, n.attributes = n.attributes, n.variables = n.variables,
-         n.attribute.variables = n.attribute.variables,
-         var.names = var.names, all.names = all.names)
+    list(X = X, n.attributes = n.attributes, n.parameters = n.parameters,
+         n.attribute.parameters = n.attribute.parameters,
+         par.names = par.names, all.names = all.names)
 }
 
 addChoiceParametersX <- function(X)
@@ -206,29 +206,29 @@ createAlternativeLabels <- function(n.choices, has.none.of.these)
     result
 }
 
-fillXAttributes <- function(n.variables, n.attributes, n.attribute.variables,
+fillXAttributes <- function(n.parameters, n.attributes, n.attribute.parameters,
                             ordered.attributes, question.design)
 {
-    result <- rep(0, n.variables)
-    variable.index <- 0
+    result <- rep(0, n.parameters)
+    parameter.index <- 0
     for (l in 1:n.attributes)
     {
         if (ordered.attributes[l])
         {
             if (question.design[l] > 1)
             {
-                start.ind <- variable.index + 1
-                end.ind <- variable.index + question.design[l] - 1
+                start.ind <- parameter.index + 1
+                end.ind <- parameter.index + question.design[l] - 1
                 result[start.ind:end.ind] <- 1
             }
         }
         else
         {
             if (question.design[l] > 1)
-                result[variable.index + question.design[l] - 1] <- 1
+                result[parameter.index + question.design[l] - 1] <- 1
         }
 
-        variable.index <- variable.index + n.attribute.variables[l]
+        parameter.index <- parameter.index + n.attribute.parameters[l]
     }
     result
 }

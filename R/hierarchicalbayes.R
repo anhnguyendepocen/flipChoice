@@ -45,18 +45,18 @@ hierarchicalBayesChoiceModel <- function(dat, n.iterations = 500, n.chains = 8,
 
     result <- list()
     result$reduced.respondent.parameters <- ComputeRespPars(stan.fit,
-                                                        dat$var.names,
+                                                        dat$par.names,
                                                         dat$subset,
-                                                        dat$variable.scales)
+                                                        dat$parameter.scales)
     result$respondent.parameters <- ComputeRespPars(stan.fit,
-                                                    dat$var.names,
+                                                    dat$par.names,
                                                     dat$subset,
-                                                    dat$variable.scales,
+                                                    dat$parameter.scales,
                                                     dat$all.names)
     result$class.match.fail <- class.match.fail
     if (!class.match.fail)
         result$parameter.statistics <- GetParameterStatistics(stan.fit,
-                                                              dat$var.names,
+                                                              dat$par.names,
                                                               n.classes)
     if (include.stanfit)
     {
@@ -169,8 +169,8 @@ createStanData <- function(dat, n.classes, normal.covariance)
                      R = dat$n.respondents,
                      S = dat$n.questions.left.in,
                      A = dat$n.attributes,
-                     V = dat$n.variables,
-                     V_attribute = dat$n.attribute.variables,
+                     V = dat$n.parameters,
+                     V_attribute = dat$n.attribute.parameters,
                      Y = dat$Y.in,
                      X = dat$X.in,
                      prior_mean = dat$prior.mean,
@@ -180,7 +180,7 @@ createStanData <- function(dat, n.classes, normal.covariance)
         stan.dat$P <- n.classes
 
     if (normal.covariance == "Diagonal")
-        stan.dat$U <- dat$n.variables
+        stan.dat$U <- dat$n.parameters
     else if (normal.covariance == "Spherical")
         stan.dat$U <- 1
 
@@ -215,21 +215,21 @@ ReduceStanFitSize <- function(stan.fit)
 #' @title ComputeRespPars
 #' @description Compute respondent parameters from a stanfit object.
 #' @param stan.fit A stanfit object.
-#' @param var.names Variable names
+#' @param par.names Parameter names
 #' @param subset Subset vector
-#' @param variable.scales Scale factors for numeric parameters.
-#' @param all.names All variable names, including those set to zero (excluded
+#' @param parameter.scales Scale factors for numeric parameters.
+#' @param all.names All parameter names, including those set to zero (excluded
 #' from beta) due to dummy coding.
 #' @return A matrix of respondent parameters
 #' @importFrom rstan get_posterior_mean
 #' @export
-ComputeRespPars <- function(stan.fit, var.names, subset,
-                            variable.scales = NULL, all.names = NULL)
+ComputeRespPars <- function(stan.fit, par.names, subset,
+                            parameter.scales = NULL, all.names = NULL)
 {
     n.chains <- stan.fit@sim$chains
     n.respondents <- sum(subset)
     resp.pars <- t(matrix(get_posterior_mean(stan.fit, pars = "beta"),
-                          nrow = length(var.names)))
+                          nrow = length(par.names)))
     if (n.chains > 1)
     {
         ind.start <- n.respondents * n.chains + 1
@@ -237,8 +237,8 @@ ComputeRespPars <- function(stan.fit, var.names, subset,
         resp.pars <- resp.pars[ind.start:ind.end, ]
     }
 
-    if (!is.null(variable.scales))
-        resp.pars <- t(t(resp.pars) / variable.scales)
+    if (!is.null(parameter.scales))
+        resp.pars <- t(t(resp.pars) / parameter.scales)
 
     if (!is.null(all.names))
     {
@@ -246,8 +246,8 @@ ComputeRespPars <- function(stan.fit, var.names, subset,
         result <- matrix(NA, nrow = length(subset), ncol = n.all.names)
         for (i in 1:n.all.names)
         {
-            if (all.names[i] %in% var.names)
-                result[subset, i] <- resp.pars[, all.names[i] == var.names]
+            if (all.names[i] %in% par.names)
+                result[subset, i] <- resp.pars[, all.names[i] == par.names]
             else
                 result[subset, i] <- 0
         }
@@ -255,9 +255,9 @@ ComputeRespPars <- function(stan.fit, var.names, subset,
     }
     else
     {
-        result <- matrix(NA, nrow = length(subset), ncol = length(var.names))
+        result <- matrix(NA, nrow = length(subset), ncol = length(par.names))
         result[subset, ] <- resp.pars
-        colnames(result) <- var.names
+        colnames(result) <- par.names
     }
     result
 }

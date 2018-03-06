@@ -4,8 +4,8 @@ data {
     int<lower=1> S; // Number of questions per respondent
     int<lower=1> P; // Number of classes
     int<lower=1> A; // Number of attributes
-    int<lower=1> V; // Number of variables
-    int<lower=1> V_attribute[A]; // Number of variables in each attribute
+    int<lower=1> V; // Number of parameters
+    int<lower=1> V_attribute[A]; // Number of parameters in each attribute
     int<lower=1,upper=C> Y[R, S]; // choices
     matrix[C, V] X[R, S]; // matrix of attributes for each obs
     int<lower=1> U; // Number of standard deviation parameters

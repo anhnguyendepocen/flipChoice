@@ -19,31 +19,31 @@ processExperimentData <- function(experiment.data, subset, weights,
     n.qc <- n.questions * n.choices
     n.attributes <- (length(nms) - n.questions) / n.qc
     if (round(n.attributes) != n.attributes)
-        stop("The number of variables in the Experiment question is invalid.")
+        stop("The number of parameters in the Experiment question is invalid.")
     experiment.data <- experiment.data[subset, ]
     n.respondents <- nrow(experiment.data)
     Y <- sapply(experiment.data[, 1:n.questions], function(x) as.numeric(x))
     attribute.data <- experiment.data[, -1:-n.questions]
     names(attribute.data) <- nms[-1:-n.questions]
     attribute.data <- completeLevels(attribute.data)
-    n.attribute.variables <- nAttributeVariables(attribute.data, n.attributes, n.questions, n.choices)
-    n.variables <- sum(n.attribute.variables)
-    var.names <- variableNames(attribute.data, n.attributes, n.questions, n.choices, n.variables)
-    all.names <- allNames(attribute.data, n.attributes, n.questions, n.choices, n.variables)
+    n.attribute.parameters <- nAttributeParameters(attribute.data, n.attributes, n.questions, n.choices)
+    n.parameters <- sum(n.attribute.parameters)
+    par.names <- parameterNames(attribute.data, n.attributes, n.questions, n.choices, n.parameters)
+    all.names <- allNames(attribute.data, n.attributes, n.questions, n.choices, n.parameters)
 
     checkPriorParameters(input.prior.mean, input.prior.sd, n.choices,
-                         n.attributes, n.variables)
+                         n.attributes, n.parameters)
 
     X.list <- createDesignMatrix(attribute.data, n.attributes, n.questions,
-                                 n.choices, n.variables, n.attribute.variables,
+                                 n.choices, n.parameters, n.attribute.parameters,
                                  input.prior.mean)
-    variable.scales <- X.list$variable.scales
-    prior.mean <- processInputPrior(input.prior.mean, n.variables,
-                                    n.attributes, n.attribute.variables,
-                                    variable.scales)
-    prior.sd <- processInputPrior(input.prior.sd, n.variables,
-                                  n.attributes, n.attribute.variables,
-                                  variable.scales)
+    parameter.scales <- X.list$parameter.scales
+    prior.mean <- processInputPrior(input.prior.mean, n.parameters,
+                                    n.attributes, n.attribute.parameters,
+                                    parameter.scales)
+    prior.sd <- processInputPrior(input.prior.sd, n.parameters,
+                                  n.attributes, n.attribute.parameters,
+                                  parameter.scales)
     split.data <- crossValidationSplit(X.list$X, Y, n.questions.left.out, seed)
 
     result <- list(n.questions = n.questions,
@@ -52,9 +52,9 @@ processExperimentData <- function(experiment.data, subset, weights,
                    n.choices = n.choices,
                    n.attributes = n.attributes,
                    n.respondents = n.respondents,
-                   n.variables = n.variables,
-                   n.attribute.variables = n.attribute.variables,
-                   var.names = var.names,
+                   n.parameters = n.parameters,
+                   n.attribute.parameters = n.attribute.parameters,
+                   par.names = par.names,
                    all.names = all.names,
                    X.in = split.data$X.in,
                    Y.in = split.data$Y.in,
@@ -62,7 +62,7 @@ processExperimentData <- function(experiment.data, subset, weights,
                    Y.out = split.data$Y.out,
                    subset = subset,
                    weights = weights,
-                   variable.scales = variable.scales,
+                   parameter.scales = parameter.scales,
                    prior.mean = prior.mean,
                    prior.sd = prior.sd)
     result
@@ -97,18 +97,18 @@ completeLevels <- function(attribute.data)
 }
 
 createDesignMatrix <- function(attribute.data, n.attributes, n.questions,
-                               n.choices, n.variables, n.attribute.variables,
+                               n.choices, n.parameters, n.attribute.parameters,
                                input.prior.mean)
 {
     n.qc <- n.questions * n.choices
     n.respondents <- nrow(attribute.data)
 
-    meansAndSDs <- getVariableMeanAndSD(attribute.data, n.attributes,
+    meansAndSDs <- getParameterMeanAndSD(attribute.data, n.attributes,
                                             n.questions, n.choices)
-    variable.scales <- rep(1, n.variables)
+    parameter.scales <- rep(1, n.parameters)
 
     c <- 1
-    X <- array(dim = c(n.respondents, n.questions, n.choices, n.variables))
+    X <- array(dim = c(n.respondents, n.questions, n.choices, n.parameters))
     for (i in 1:n.attributes)
     {
         for (q in 1:n.questions)
@@ -151,7 +151,7 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions,
                     X[, q, j, c] <- 0.5 * (v - mn) / std
 
                     if (q == 1 && j == 1)
-                        variable.scales[c] <- 2 * std
+                        parameter.scales[c] <- 2 * std
                 }
             }
         }
@@ -160,10 +160,10 @@ createDesignMatrix <- function(attribute.data, n.attributes, n.questions,
         else
             c <- c + 1
     }
-    list(X = X, variable.scales = variable.scales)
+    list(X = X, parameter.scales = parameter.scales)
 }
 
-nAttributeVariables <- function(attribute.data, n.attributes, n.questions, n.choices)
+nAttributeParameters <- function(attribute.data, n.attributes, n.questions, n.choices)
 {
     result <- rep(NA, n.attributes)
     for (i in 1:n.attributes)
@@ -177,11 +177,11 @@ nAttributeVariables <- function(attribute.data, n.attributes, n.questions, n.cho
     result
 }
 
-variableNames <- function(attribute.data, n.attributes, n.questions, n.choices,
-                          n.variables)
+parameterNames <- function(attribute.data, n.attributes, n.questions, n.choices,
+                          n.parameters)
 {
     nms <- names(attribute.data)
-    result <- rep("", n.variables)
+    result <- rep("", n.parameters)
     ind <- 1
     for (i in 1:n.attributes)
     {
@@ -203,12 +203,12 @@ variableNames <- function(attribute.data, n.attributes, n.questions, n.choices,
     result
 }
 
-# Includes the names of variables left out
+# Includes the names of parameters left out
 allNames <- function(attribute.data, n.attributes, n.questions,
-                              n.choices, n.variables)
+                              n.choices, n.parameters)
 {
     nms <- names(attribute.data)
-    result <- rep("", n.variables)
+    result <- rep("", n.parameters)
     ind <- 1
     for (i in 1:n.attributes)
     {
@@ -249,35 +249,35 @@ LeftOutQuestions <- function(n.respondents, n.questions, n.questions.left.out,
     })
 }
 
-processInputPrior <- function(prior.par, n.variables, n.attributes,
-                              n.attribute.variables, variable.scales = NULL)
+processInputPrior <- function(prior.par, n.parameters, n.attributes,
+                              n.attribute.parameters, parameter.scales = NULL)
 {
-    if (is.null(variable.scales))
-        variable.scales <- rep(1, n.variables)
-    result <- rep(NA, n.variables)
+    if (is.null(parameter.scales))
+        parameter.scales <- rep(1, n.parameters)
+    result <- rep(NA, n.parameters)
     if (length(prior.par) == 1)
-        result <- rep(prior.par, n.variables)
+        result <- rep(prior.par, n.parameters)
     else if (length(prior.par) == n.attributes)
     {
-        result <- rep(NA, n.variables)
+        result <- rep(NA, n.parameters)
         for (i in 1:n.attributes)
         {
-            if (n.attribute.variables[i] == 1) # numeric
+            if (n.attribute.parameters[i] == 1) # numeric
             {
-                ind <- sum(n.attribute.variables[1:i])
-                result[ind] <- prior.par[i] * variable.scales[ind]
+                ind <- sum(n.attribute.parameters[1:i])
+                result[ind] <- prior.par[i] * parameter.scales[ind]
             }
             else # categorical
             {
-                ind.end <- sum(n.attribute.variables[1:i])
-                ind.start <- ind.end - n.attribute.variables[i] + 1
+                ind.end <- sum(n.attribute.parameters[1:i])
+                ind.start <- ind.end - n.attribute.parameters[i] + 1
                 for (j in ind.start:ind.end)
                     result[j] <- prior.par[i]
             }
         }
     }
-    else # length(prior.par) == n.variables
-        result <- prior.par * variable.scales
+    else # length(prior.par) == n.parameters
+        result <- prior.par * parameter.scales
 
     result
 }
@@ -289,12 +289,12 @@ crossValidationSplit <- function(X, Y, n.questions.left.out, seed)
         n.respondents <- dim(X)[1]
         n.questions <- dim(X)[2]
         n.choices <- dim(X)[3]
-        n.variables <- dim(X)[4]
+        n.parameters <- dim(X)[4]
         n.questions.left.in <- n.questions - n.questions.left.out
         left.out <- LeftOutQuestions(n.respondents, n.questions, n.questions.left.out, seed)
-        X.in <- array(dim = c(n.respondents, n.questions.left.in, n.choices, n.variables))
+        X.in <- array(dim = c(n.respondents, n.questions.left.in, n.choices, n.parameters))
         Y.in <- matrix(NA, nrow = n.respondents, ncol = n.questions.left.in)
-        X.out <- array(dim = c(n.respondents, n.questions.left.out, n.choices, n.variables))
+        X.out <- array(dim = c(n.respondents, n.questions.left.out, n.choices, n.parameters))
         Y.out <- matrix(NA, nrow = n.respondents, ncol = n.questions.left.out)
         for (r in 1:n.respondents)
         {
@@ -315,21 +315,21 @@ crossValidationSplit <- function(X, Y, n.questions.left.out, seed)
 }
 
 checkPriorParameters <- function(input.prior.mean, input.prior.sd, n.choices,
-                                 n.attributes, n.variables,
+                                 n.attributes, n.parameters,
                                  include.choice.parameters = FALSE)
 {
     if (include.choice.parameters)
     {
         n.attributes <- n.attributes + 1
-        n.variables <- n.variables + n.choices - 1
+        n.parameters <- n.parameters + n.choices - 1
     }
     if (!is.numeric(input.prior.mean) ||
-        (length(input.prior.mean) != n.variables &&
+        (length(input.prior.mean) != n.parameters &&
          length(input.prior.mean) != n.attributes &&
          length(input.prior.mean) != 1))
         stop(paste0("The supplied parameter hb.prior.mean is inappropriate."))
     if (!is.numeric(input.prior.sd) ||
-        (length(input.prior.sd) != n.variables &&
+        (length(input.prior.sd) != n.parameters &&
          length(input.prior.sd) != n.attributes &&
          length(input.prior.sd) != 1))
         stop(paste0("The supplied parameter hb.prior.sd is inappropriate."))
@@ -347,7 +347,7 @@ prepareWeights <- function(weights, subset)
         rep(1, sum(subset))
 }
 
-getVariableMeanAndSD <- function(attribute.data, n.attributes, n.questions,
+getParameterMeanAndSD <- function(attribute.data, n.attributes, n.questions,
                                  n.choices)
 {
     n.qc <- n.questions * n.choices

@@ -3,8 +3,8 @@ data {
     int<lower=1> R; // Number of respondents
     int<lower=1> S; // Number of scenarios per respondent
     int<lower=1> A; // Number of attributes
-    int<lower=1> V; // Number of variables
-    int<lower=1> V_attribute[A]; // Number of variables in each attribute
+    int<lower=1> V; // Number of parameters
+    int<lower=1> V_attribute[A]; // Number of parameters in each attribute
     int<lower=1,upper=C> Y[R, S]; // choices
     matrix[C, V] X[R, S]; // matrix of attributes for each obs
     vector[V] prior_mean; // Prior mean for theta
