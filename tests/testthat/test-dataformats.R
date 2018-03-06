@@ -27,20 +27,6 @@ for (i in 1:8)
 }
 tasks.jmp <- data.frame(t(matrix(1:3040, nrow = 8)))
 
-cho.file <- findInstDirFile("Training.cho")
-cho.none.file <- findInstDirFile("none_option.cho")
-sawtooth.design.file <- findInstDirFile("Education_Design_(Sawtooth_format).xlsx")
-jmp.design.file <- findInstDirFile("Choice_Profiles_(JMP).xlsx")
-jmp.levels.design.file <- findInstDirFile("Psuedo-JMP_Design_3.xlsx")
-attribute.levels.file.cho <- findInstDirFile("Attribute_labels_-_Training.xlsx")
-attribute.levels.file.dual <- findInstDirFile("Education_Design_Labels.xlsx")
-attribute.levels.file.jmp <- findInstDirFile("Labels_for_Choice_Profiles.xlsx")
-
-data(sawtooth, package = "flipChoice")
-data(jmp, package = "flipChoice")
-data(jmplevels, package = "flipChoice")
-data(eggs, package = "flipChoice")
-
 test_that("cho file", {
     result <- FitChoiceModel(cho.file = cho.file,
                              attribute.levels.file = attribute.levels.file.cho,
