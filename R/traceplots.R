@@ -16,6 +16,12 @@
 TracePlots <- function(fit)
 {
     checkValidFit(fit)
+
+    is.multi.class <- fit$n.classes > 1L
+    if (is.multi.class && fit$class.match.fail)
+        stop("Traceplots are not available as classes from ",
+             "different chains could not be matched.")
+
     trace.plot <- rstan::traceplot(fit$stan.fit, pars = c('theta', 'sigma'),
                                    inc_warmup = TRUE)
     levels(trace.plot$data$parameter) <- makeLabels(fit, FALSE)

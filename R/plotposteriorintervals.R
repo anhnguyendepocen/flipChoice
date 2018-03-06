@@ -18,6 +18,12 @@
 PlotPosteriorIntervals <- function(fit)
 {
     checkValidFit(fit)
+
+    is.multi.class <- fit$n.classes > 1L
+    if (is.multi.class && fit$class.match.fail)
+        stop("Posterior intervals are not available as classes from ",
+             "different chains could not be matched.")
+
     p <- rstan::plot(fit$stan.fit, pars = c('theta', 'sigma'))
     lbls <- makeLabels(fit, FALSE)
     p$plot_env <- new.env()
