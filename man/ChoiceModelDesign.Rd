@@ -5,16 +5,17 @@
 \title{Choice modeling experimental design}
 \usage{
 ChoiceModelDesign(design.algorithm = c("Random", "Shortcut",
-  "Balanced overlap", "Complete enumeration", "Efficient"),
+  "Balanced overlap", "Complete enumeration", "Efficient", "Partial profiles"),
   attribute.levels = NULL, prior = NULL, n.questions, n.versions = 1,
   alternatives.per.question, prohibitions = NULL, none.alternatives = 0,
-  labeled.alternatives = FALSE, output = "Labeled design", seed = 54123)
+  labeled.alternatives = FALSE, n.constant.attributes = NULL,
+  output = "Labeled design", seed = 54123)
 }
 \arguments{
 \item{design.algorithm}{The algorithm used to create the
 design. One of \code{"Random"}, \code{"Shortcut"},
-\code{"Balanced overlap"} and \code{"Complete enumeration"},
-and \code{"Efficient"}.}
+\code{"Balanced overlap"}, \code{"Complete enumeration"},
+\code{"Efficient"} and \code{Partial profiles}.}
 
 \item{attribute.levels}{\code{\link{list}} of \code{\link{vector}}s
 containing the labels of levels for each attribute, with names
@@ -47,6 +48,9 @@ questions.}
 
 \item{labeled.alternatives}{Logical; whether the first attribute
 labels the alternatives.}
+
+\item{n.constant.attributes}{Integer; the number of attributes to keep
+constant.}
 
 \item{output}{One of \code{"Labeled design"} or \code{"Inputs"}.}
 
