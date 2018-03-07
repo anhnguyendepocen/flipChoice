@@ -138,8 +138,7 @@ totalCostPrecomputed <- function(alternative, singles.costs, pairs.costs, qn.cou
 }
 
 
-
-
+# Precompute the single cost of incrementing any level of an attribute
 precomputeCosts <- function(single) {
     n <- length(single)
     range <- range(single)
@@ -156,7 +155,7 @@ precomputeCosts <- function(single) {
     return(costs)
 }
 
-
+# Precompute the pairwise costs of incrementing any pair of level of any attributes
 precomputePairsCosts <- function(pairs) {
 
     for (i in 1:(length(pairs))) {
@@ -189,11 +188,12 @@ precomputePairsCosts <- function(pairs) {
 }
 
 
-
+# The single level cost of adding an alternative
 singlePrecomputed <- function(alternative, precomputed) {
     return(sum(mapply(function(x, y) y[x], alternative, precomputed)))
 }
 
+# The pairwise level cost of adding an alternative
 pairPrecomputed <- function(alternative, precomputed) {
     cost <- 0
     if (length(alternative) > 1)

@@ -50,17 +50,13 @@ K. Sorensen (2016).
 }
 \examples{
 \dontrun{
-    attribute.levels <- list(Att1 = 1:2, Att2 = 1:2, Att3 = 1:2,
-                         Att4 = 1:4, Att5 = 1:4)
-result <- ChoiceModelDesign(design.algorithm = "Partial profiles",
-                            attribute.levels = attribute.levels,
-                            prior = NULL,
-                            n.questions = 18,
-                            n.versions = 1,
-                            alternatives.per.question = 2,
-                            n.constant.attributes = 3,
-                            seed = 1)
-print(result)
+result <- partialProfilesDesign(levels.per.attribute = c(2, 2, 2),
+                                prior = NULL,
+                                alternatives.per.question = 2,
+                                n.questions = 6,
+                                n.constant.attributes = 1,
+                                seed = 123)
+result$design
 }
 }
 \references{

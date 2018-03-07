@@ -153,7 +153,7 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut",
 
     # Call the algorithm to create the design
     # Design algorithms     - use only unlabeled levels (i.e. integer level indices)
-    #                       - simply multiply question per respondent by n.versions
+    #                       - simply multiply questions per respondent by n.versions
     #                       - ignore None alternatives, these are added later
     args <- list(levels.per.attribute = levels.per.attribute,
                        prior = prior,
@@ -198,7 +198,6 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut",
     result$labeled.design <- labelDesign(result$design.with.none, attribute.levels)
     result$balances.and.overlaps <- balancesAndOverlaps(result)
 
-    # TODO incorporate None with d.error and standard.errors
     result$d.error <- dErrorHZ(result$design, sapply(result$attribute.levels, length), effects = FALSE)
     ml.model <- mlogitModel(result)
     result$standard.errors <- summary(ml.model)$CoefTable[, 1:2]
@@ -431,7 +430,6 @@ mlogitModel <- function(cmd, choices = NULL) {
     if (is.null(choices))
         choices <- randomChoices(cmd)
 
-    # TODO use design.with.none
     labeled <- as.data.frame(labelDesign(cmd$design, cmd$attribute.levels))
 
     copies <- length(choices) / nrow(labeled)
