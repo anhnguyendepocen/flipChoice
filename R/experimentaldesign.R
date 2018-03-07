@@ -128,8 +128,8 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut",
             prior <- parsed.data[["prior"]]
     }
     else
-        stop("Input must be either a list of vectors containing the labels of levels for each",
-             " attribute, with names corresponding to the attribute labels; or a character",
+        stop("Input must be either a list of vectors containing the labels of levels for each ",
+             "attribute, with names corresponding to the attribute labels; or a character ",
              "matrix with first row containing attribute names and subsequent rows containing attribute levels.")
 
     if(any(sapply(attribute.levels, length) < 2))
