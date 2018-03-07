@@ -71,7 +71,7 @@ efficientDesign <- function(
                                alternatives.per.question,
                                n.questions,
                                labeled.alternatives = FALSE,
-                               dummy.coding = FALSE,
+                               dummy.coding = TRUE,
                                seed = 1776,
                                n.sim = 10)
 {

@@ -220,6 +220,7 @@ test_that("Correct prior specification improves fit on sim data",
 {
     seed <- 378
     seed.resp.sim <- 202
+    n.respondents <- 15
     price.mean <- c(-2, 0, 2)
     time.mean <- 0:2
     type.mean <- 0:1
@@ -241,9 +242,11 @@ test_that("Correct prior specification improves fit on sim data",
     set.seed(seed.resp.sim)
 
     true.coef <- c(price.mean[-1], time.mean[-1], type.mean[-1])
-    y <- as.vector(replicate(15, idefix::RespondMNL(true.coef,
-                                                     out$model.matrix,
-                                                    n.alts = apq)))
+    cfun <- contr.treatment
+    mm <- model.matrix(~as.factor(price)+as.factor(time)+as.factor(type),
+                       data = as.data.frame(out$design), contrasts.arg = cfun)[, -1]
+    y <- as.vector(replicate(n.respondents, idefix::RespondMNL(true.coef,
+                                                     mm, n.alts = apq)))
     ml.model <- mlogitModel(out, as.logical(y))
     res.good <- summary(ml.model)$CoefTable
     sd.good <- summary(ml.model)$CoefTable[, 2]
@@ -264,9 +267,15 @@ test_that("Correct prior specification improves fit on sim data",
                              attribute.levels = pd.bad.prior, prior = NULL, n.questions = n.q,
                              alternatives.per.question = apq, seed = seed,
                              output = "Labeled design")
+    mm <- model.matrix(~as.factor(price)+as.factor(time)+as.factor(type),
+                       data = as.data.frame(out.bad.prior$design), contrasts.arg = cfun)[, -1]
+    y <- as.vector(replicate(n.respondents, idefix::RespondMNL(true.coef,
+                                                     mm, n.alts = apq)))
     ml.model.bad <- mlogitModel(out.bad.prior, y)
     sd.bad <- summary(ml.model.bad)$CoefTable[, 2]
     pval.bad <- summary(ml.model.bad)$CoefTable[, 4]
     summary(ml.model.bad)$CoefTable
-    expect_true(pval.good["price300"] < pval.bad["price300"])
+    expect_true(sd.good["price300"] < sd.bad["price300"])
 })
+
+

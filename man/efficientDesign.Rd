@@ -6,7 +6,7 @@
 \usage{
 efficientDesign(levels.per.attribute = NULL, prior = NULL,
   alternatives.per.question, n.questions, labeled.alternatives = FALSE,
-  dummy.coding = FALSE, seed = 1776, n.sim = 10)
+  dummy.coding = TRUE, seed = 1776, n.sim = 10)
 }
 \arguments{
 \item{levels.per.attribute}{A \emph{named} vector containing the

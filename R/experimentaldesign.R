@@ -120,7 +120,7 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut",
     }
     else if (is.character(attribute.levels))
     {
-        parsed.data <- parsePastedData(attribute.levels, n.sim = 10, coding = "E",
+        parsed.data <- parsePastedData(attribute.levels, n.sim = 10, coding = "D",
                                        labeled.alternatives)
         levels.per.attribute <- parsed.data[["lvls"]]
         attribute.levels <- parsed.data[["attribute.list"]]
