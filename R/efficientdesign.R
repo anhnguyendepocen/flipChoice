@@ -111,7 +111,7 @@ efficientDesign <- function(
     out$model.matrix <- out$design
 
     out$design <- modelMatrixToUnlabeledDesign(out$design, levels.per.attribute,
-                                                alternatives.per.question)
+                                                alternatives.per.question, labeled.alternatives)
     out
 }
 
@@ -129,20 +129,46 @@ pastedAttributesToVector <- function(attributes)
 modelMatrixToUnlabeledDesign <- function(
                                    model,
                                    lvls,
-                                   alternatives.per.question)
+                                   alternatives.per.question,
+                                   labeled.alternatives)
 {
-    attr.list <- lapply(lvls, seq.int)
+    if (labeled.alternatives)
+    {
+        alt.lab <- names(lvls)[1L]
+        lvls <- lvls[-1L]
+    }
+
+    ## attr.list <- lapply(lvls, seq.int)
     code <- ifelse(any(model == -1), "E", "D")
-    alt.specific.const <- integer(alternatives.per.question)
-    alt.specific.const[1] <- 0
-    idx <- 1:length(attr.list)
-    out <- decode(model, attr.list[idx], coding = rep(code, length(lvls[idx])),
-                  alt.cte = alt.specific.const)
-    ## out <- as.data.frame(out)
+    ## alt.specific.const <- integer(alternatives.per.question)
+    ## alt.specific.const[1] <- 0
+    ## idx <- 1:length(attr.list)
+    ## out <- decode(model, attr.list[idx], coding = rep(code, length(lvls[idx])),
+    ##               alt.cte = alt.specific.const)
+    out <- vector("list", length(lvls))
+    names(out) <- names(lvls)
+    idx <- sum(grepl("^alt[0-9]+.cte", colnames(model)))
+    for (i in seq_along(lvls))
+    {
+        lab <- seq_len(lvls[i])
+        tvec <- lab[-length(lab)]
+        lvl <- if (code == "E" )
+                   c(tvec, -sum(tvec))
+                else
+                   0:(lvls[i] - 1L)
+        out[[i]] <- factor(model[, idx + tvec, drop = FALSE]%*%tvec,
+                           levels = lvl, labels = lab)
+        idx <- idx + tvec[length(tvec)]
+    }
+    ##out <- as.data.frame(out)
+    out <- do.call(cbind, lapply(out, as.numeric))
+
     question <- as.numeric(sub("set([0-9]+)[.]alt[0-9]+", "\\1", rownames(model)))
     alternative <- as.numeric(sub("set[0-9]+[.]alt([0-9]+)", "\\1", rownames(model)))
-    out <- cbind(question, alternative, out)
-    colnames(out) <- c("Question", "Alternative", names(lvls))
+    out <- cbind(question, alternative,
+                 if (labeled.alternatives) alternative, out)
+    colnames(out) <- c("Question", "Alternative", if (labeled.alternatives) alt.lab,
+                       names(lvls))
     ## rownames(out) <- rownames(model)
     out
 }
