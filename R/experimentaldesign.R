@@ -180,7 +180,15 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut",
 
     if (design.algorithm == "Efficient")
     {
-        result$model.matrix <- design$model.matrix
+        code <- ifelse(any(design$model.matrix == -1), "E", "D")
+        cfun <- if (code == "E") contr.sum else contr.treatment
+        name.idx <- -(1:2)
+        df <- as.data.frame(apply(design$design[, name.idx], 2, as.factor))
+        form <- as.formula(paste0("~",
+                                  paste(colnames(design$design)[name.idx],
+                                        collapse = "+", sep = "")))
+        result$model.matrix <- model.matrix(form,
+                                            df, contrasts.arg = cfun)[, -1]
         result$db.error <- design$error
         design <- design$design
     }
