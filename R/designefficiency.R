@@ -9,7 +9,7 @@ dScore <- function(design)
     return(d.score)
 }
 
-# Compute the D-error of an unlabeled design
+# Compute the D-error of an unlabeled design (according to Huber and Zwerina 1996)
 # design.matrix is a matrix for an unlabeled choice design in the long format, meaning that
 #   each row describes one of the alternatives in one of the choice tasks. Complete data for
 #   each task is spread across several rows. The columns are:
@@ -24,47 +24,65 @@ dScore <- function(design)
 #   effects coding (TRUE) or dummy coding (FALSE).
 # prior is a vector of prior parameters for the attribute levels. Keeping prior = NULL uses a flat prior
 # See https://faculty.fuqua.duke.edu/~jch8/bio/Papers/Huber%20Zwerina%201996%20Marketing%20Research.pdf
-DerrorHZ <- function(design.matrix, attribute.levels, effects = TRUE, prior = NULL)
+dErrorHZ <- function(design.matrix, attribute.levels, effects = TRUE, prior = NULL)
 {
-    K = sum(attribute.levels - 1) # Total number of parameters
-    J = max(design.matrix[, 3]) # Number of alts per task
+    K <- sum(attribute.levels - 1) # Total number of parameters
+    J <- max(design.matrix[, 3]) # Number of alts per task
 
     # Treat multiple versions as additional questions
     n.versions <- design.matrix[NROW(design.matrix), 1]
     n.questions <- max(design.matrix[, 2])
-    N = n.versions * n.questions  # Number of tasks
+    N <- n.versions * n.questions  # Number of tasks
     design.matrix[, 2] <- rep(seq(N), each = J)
     design.matrix <- design.matrix[, -1]
 
-    M = N * J
+    M <- N * J
 
     # Generate a coded version of the design using dummy coding or effects coding
     des.att <- design.matrix[, 3:ncol(design.matrix)] # Part of the design matrix containing the attributes
-
-    if (effects) {
-        coded.design <- encode.design(des.att, effects = TRUE)
-    } else {
-        coded.design <- encode.design(des.att, effects = FALSE)
-    }
+    coded.design <- encode.design(des.att, effects = effects)
 
     # Generate choice probabilities of each alternative
-    if (!is.null(prior)) {
+    if (!is.null(prior))
         diagP <- logitChoiceProbs(coded.design, prior, J, N)
-    } else {
-        diagP <- rep(1/J, M)
-    }
+    else
+        diagP <- rep(1 / J, M)
 
-    # Compute the D-error (according to Huber and Zwerina 1996)
-    xbars = vector("numeric")
-    for (j in 1L:N) {
-        xbars = rbind(xbars, rep.row(colSums(coded.design[design.matrix[, 1] == j, ] * diagP[design.matrix[, 1] == j]), J))
-    }
-    Z = as.matrix(coded.design - xbars)
-    Omega = crossprod(Z, diagP*Z)   # t(Z) %*% P %*% Z
-    Derror = det(Omega)^(-1/K)      # det of inverse == inverse of det
-    return(Derror)
+    # det of inverse == inverse of det
+    dPCriterion(coded.design, diagP, N, J) ^ (-1 / K)
 }
 
+dPCriterion <- function(coded.design, choice.probs, n.questions,
+                        alternatives.per.question)
+{
+    xbars <- vector("numeric")
+    for (s in 1L:n.questions)
+    {
+        question.indices <- (s - 1) * alternatives.per.question +
+                            (1:alternatives.per.question)
+        sums <- colSums(coded.design[question.indices, ] *
+                            choice.probs[question.indices])
+        xbars <- rbind(xbars, rep.row(sums, alternatives.per.question))
+    }
+    Z <- as.matrix(coded.design - xbars)
+    omega <- crossprod(Z, choice.probs * Z)   # t(Z) %*% P %*% Z
+    det(omega)
+}
+
+d0Criterion <- function(coded.design, n.questions, alternatives.per.question)
+{
+    n.parameters <- ncol(coded.design)
+    result <- matrix(0, nrow = n.parameters, ncol = n.parameters)
+    for (s in 1:n.questions)
+    {
+        question.indices <- (s - 1) * alternatives.per.question +
+                            (1:alternatives.per.question)
+        xs <- coded.design[question.indices, ]
+        result <- result + crossprod(xs) - tcrossprod(colSums(xs)) /
+                  alternatives.per.question
+    }
+    det(result / alternatives.per.question)
+}
 
 logitChoiceProbs = function(coded.matrix, prior, number.alternatives, number.tasks) {
     if (ncol(coded.matrix) != length(prior)) {

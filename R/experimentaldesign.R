@@ -4,8 +4,8 @@
 #'
 #' @param design.algorithm The algorithm used to create the
 #'     design. One of \code{"Random"}, \code{"Shortcut"},
-#'     \code{"Balanced overlap"} and \code{"Complete enumeration"},
-#'     and \code{"Efficient"}.
+#'     \code{"Balanced overlap"}, \code{"Complete enumeration"},
+#'     \code{"Efficient"} and \code{Partial profiles}.
 #' @param attribute.levels \code{\link{list}} of \code{\link{vector}}s
 #'     containing the labels of levels for each attribute, with names
 #'     corresponding to the attribute labels; \emph{or} a character
@@ -30,6 +30,8 @@
 #'     questions.
 #' @param labeled.alternatives Logical; whether the first attribute
 #'     labels the alternatives.
+#' @param n.constant.attributes Integer; the number of attributes to keep
+#'     constant.
 #' @param output One of \code{"Labeled design"} or \code{"Inputs"}.
 #' @param seed Integer; random seed to be used by the algorithms.
 #' @return A list with components
@@ -79,8 +81,11 @@
 #'     alternatives.per.question = 4, prohibitions = x$prohibitions)
 #' @importFrom utils getFromNamespace modifyList
 #' @export
-ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanced overlap", "Complete enumeration",
-                                                    "Efficient"),
+ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut",
+                                                   "Balanced overlap",
+                                                   "Complete enumeration",
+                                                   "Efficient",
+                                                   "Partial profiles"),
                               attribute.levels = NULL,
                               prior = NULL,
                               n.questions,
@@ -89,6 +94,7 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
                               prohibitions = NULL,
                               none.alternatives = 0,
                               labeled.alternatives = FALSE,
+                              n.constant.attributes = NULL,
                               output = "Labeled design",
                               seed = 54123) {
 
@@ -133,11 +139,15 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
     if (labeled.alternatives)
         alternatives.per.question <- length(attribute.levels[[1]])
 
-    # Convert prohibitions from labels to numeric and factors
-    if (!is.null(prohibitions) && length(prohibitions) > 0 && design.algorithm %in% c("Efficient", "Shortcut"))
+    # Check if prohibitions are valid for the algorithm
+    algorithms.without.prohibitions <- c("Efficient", "Shortcut",
+                                          "Partial profiles")
+    if (!is.null(prohibitions) && length(prohibitions) > 0 &&
+        design.algorithm %in% algorithms.without.prohibitions)
         warning(gettextf("Prohibitions are not yet implemented for algorithm %s and will be ignored.",
                     sQuote(design.algorithm)))
 
+    # Convert prohibitions from labels to numeric and factors
     prohibitions <- encodeProhibitions(prohibitions, attribute.levels)
     integer.prohibitions <- data.frame(lapply(prohibitions, as.integer))
 
@@ -151,6 +161,7 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
                        alternatives.per.question = alternatives.per.question,
                        prohibitions = integer.prohibitions,
                        labeled.alternatives = labeled.alternatives,
+                       n.constant.attributes = n.constant.attributes,
                        seed = seed)
 
     f <- formals(design.function)
@@ -173,6 +184,12 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
         result$db.error <- design$error
         design <- design$design
     }
+    else if (design.algorithm == "Partial profiles")
+    {
+        result$d.criterion <- design$d.criterion
+        result$const.attributes.list <- design$const.attributes.list
+        design <- design$design
+    }
 
     # Add designs and diagnostics
     result$design <- addVersions(design, n.versions)
@@ -182,7 +199,7 @@ ChoiceModelDesign <- function(design.algorithm = c("Random", "Shortcut", "Balanc
     result$balances.and.overlaps <- balancesAndOverlaps(result)
 
     # TODO incorporate None with d.error and standard.errors
-    result$d.error <- DerrorHZ(result$design, sapply(result$attribute.levels, length), effects = FALSE)
+    result$d.error <- dErrorHZ(result$design, sapply(result$attribute.levels, length), effects = FALSE)
     ml.model <- mlogitModel(result)
     result$standard.errors <- summary(ml.model)$CoefTable[, 1:2]
 
