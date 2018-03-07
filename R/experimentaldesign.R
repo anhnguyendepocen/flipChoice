@@ -311,7 +311,7 @@ pairLevelBalances <- function(design) {
 }
 
 labelSingleBalanceLevels <- function(singles, attribute.levels) {
-    return(mapply(function(x, y) {names(x) <- y; x}, singles, attribute.levels, SIMPLIFY = FALSE))
+    return(mapply(function(x, y) {names(x) <- y[as.integer(names(x))]; x}, singles, attribute.levels, SIMPLIFY = FALSE))
 }
 
 labelPairBalanceLevels <- function(pairs, attribute.levels) {
@@ -320,8 +320,8 @@ labelPairBalanceLevels <- function(pairs, attribute.levels) {
     n.attributes <- length(attribute.levels)
     for (i in 1:(n.attributes - 1))
         for (j in (i + 1):n.attributes) {
-            rownames(pairs[[i]][[j]]) <- attribute.levels[[i]]
-            colnames(pairs[[i]][[j]]) <- attribute.levels[[j]]
+            rownames(pairs[[i]][[j]]) <- attribute.levels[[i]][as.integer(rownames(pairs[[i]][[j]]))]
+            colnames(pairs[[i]][[j]]) <- attribute.levels[[j]][as.integer(colnames(pairs[[i]][[j]]))]
         }
     return(pairs)
 }
