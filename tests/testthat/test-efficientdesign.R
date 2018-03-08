@@ -278,4 +278,13 @@ test_that("Correct prior specification improves fit on sim data",
     expect_true(sd.good["price300"] < sd.bad["price300"])
 })
 
-
+test_that("D-error calculation agress with Huber Zwerina ex.",
+{
+    data("hz.design", package = "flipChoice")
+    mm <- model.matrix(~as.factor(Attribute_1)+as.factor(Attribute_2)+as.factor(Attribute_3),
+                       as.data.frame(hz.design))[, -1]
+    expect_equal(idefix:::Derr(numeric(ncol(mm)), mm, 3),
+          DerrorHZ(cbind(1, hz.design), attribute.levels = c(3,3,3), TRUE))
+    expect_equal(idefix:::Derr(numeric(ncol(mm)), mm, 3),
+                 .192, tolerance = .0005)
+})
