@@ -288,3 +288,25 @@ test_that("D-error calculation agrees with Huber Zwerina ex.",
     expect_equal(idefix:::Derr(numeric(ncol(mm)), mm, 3),
                  .192, tolerance = .0005)
 })
+
+test_that("Efficient outperforms choiceDes",
+{
+    seed <- 777
+
+    levs1 <- c(3,3,5,4)
+    names(levs1) <- letters[seq_along(levs1)]
+    n.q <- 16
+    apq <- 4
+
+    des <- choiceDes::dcm.design(levs1, nb = 1, sets = n.q, apq)
+    cd.df <- des$levels
+    attr.list <- lapply(levs1, seq.int)
+    out <- ChoiceModelDesign(design.algorithm = "Efficient",
+                             attribute.levels = attr.list, prior = NULL, n.questions = n.q,
+                             alternatives.per.question = apq, seed = seed,
+                             output = "Labeled design")
+    mm <- model.matrix(~as.factor(a)+as.factor(b)+as.factor(c)+as.factor(d),
+                       as.data.frame(out$design))[, -1]
+    expect_true(idefix:::Derr(numeric(ncol(mm)), mm, apq) <
+                idefix:::Derr(numeric(ncol(mm)), as.matrix(des$effects$design), apq))
+})

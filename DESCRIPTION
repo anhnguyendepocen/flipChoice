@@ -22,7 +22,8 @@ Imports: flipData,
          utils,
          ggplot2
 Suggests: testthat,
-         withr
+         withr,
+         choiceDes	 
 Remotes: Displayr/flipData,
          Displayr/flipFormat,
          Displayr/flipTime,
