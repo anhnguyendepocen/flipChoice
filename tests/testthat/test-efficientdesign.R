@@ -278,7 +278,7 @@ test_that("Correct prior specification improves fit on sim data",
     expect_true(sd.good["price300"] < sd.bad["price300"])
 })
 
-test_that("D-error calculation agress with Huber Zwerina ex.",
+test_that("D-error calculation agrees with Huber Zwerina ex.",
 {
     data("hz.design", package = "flipChoice")
     mm <- model.matrix(~as.factor(Attribute_1)+as.factor(Attribute_2)+as.factor(Attribute_3),
